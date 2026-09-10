@@ -2,7 +2,18 @@
 
 2026-09-10. User requested uniform shirt spawn over the four existing boxes,
 actual randomization/support verification, an HTML report and a commit.
-Branch remains `feat/policy-learning-env`, based on `d4bd2c4` for this change.
+Maintained checkout: `/home/seoyul/PhyRC_2027`.
+Branch: `feat/policy-learning-env`, tracking `origin/feat/policy-learning-env`.
+Implementation and report commit `e409213` was pushed to GitHub after validation.
+Remote: `git@github.com:0x4A656F6E2053656F79756C/PhyRC_2027.git`.
+The user also requested this handoff refresh to be committed and pushed on the
+same branch. No merge into `main` has been requested or performed.
+
+Start from this latest section; the sections marked Previous below are historical
+records. Their old branches, paths, pending-commit statements and restrictions do
+not override the current state. There is no outstanding implementation request;
+continue with the user's next patch. Keep the learning adapter modular because
+the user expects further simulation fixes before full dressing training.
 
 - `Env_Config/Garment/RandomSpawn.py` is a pure sampler, shared by teleop startup
   and `Policy/environment.py` reset. Only the blue shirt's translation changes;
@@ -33,8 +44,37 @@ Branch remains `feat/policy-learning-env`, based on `d4bd2c4` for this change.
   traces and report remain under ignored `output/verification/garment-spawn/`.
   Reproduction commands are in `docs/VERIFICATION.md`.
 - Runtime prepared; no image rebuild needed. The separate participant checkout
-  still contains the earlier learning-environment version; it was not changed.
-  Current task requests a local commit, not a push or main merge.
+  `/home/seoyul/PhyRC_2027_participant` is clean at `d4bd2c4`, the earlier
+  learning-environment version. It does not yet include garment randomization.
+  Preserve this checkout and its generated assets/caches for the user.
+
+## Next-agent operation notes
+
+- Edit maintained `src/DexGarmentLab`, then run `./run.sh prepare` to refresh
+  generated `.runtime` for GUI/teleop. Do not edit `.runtime` as the source.
+- Current policy API: schema 0.2.0, three configurable RGB-D views (default
+  256x256), two robots with float32[2,9] actions, 20Hz policy steps. Read
+  `docs/POLICY_INTERFACE.md` before changing sensors, action or reset semantics.
+- Default reward is zero, with no validated dressing-success evaluator or force
+  sensor. The existing fast training demo is lift behavior cloning only.
+- Preserve ignored `output/` user slots and verification artifacts. Run only one
+  GPU SimulationApp at a time. CPU/schema checks and GPU support, teleop and
+  policy regressions passed for `e409213`; this handoff update changes docs only.
+- Evidence entry points: `docs/VERIFICATION.md`,
+  `docs/verification-results/garment-spawn.html` and its adjacent JSON. Report
+  source metadata records the tested working changes on base `d4bd2c4`; those
+  changes were committed as `e409213` afterward.
+
+```bash
+cd /home/seoyul/PhyRC_2027
+export PHYRC_ACCEPT_EULA=1
+./run.sh gui                            # collision visualization
+STRETCH4_SHOW_COLLIDER=0 ./run.sh gui    # visual mesh
+# After editing maintained simulation source:
+./run.sh prepare
+./run.sh smoke
+./run.sh policy-smoke
+```
 
 ---
 
