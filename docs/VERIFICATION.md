@@ -1,3 +1,49 @@
+# Native two-robot contact and rotation audit: 2026-09-10
+
+The user clarified that both robots were holding opposite shirt sides while
+trying to insert the human arms, and the whole hand appeared through the cloth.
+A visible/physical finger distinction does not establish the cause of this report.
+Code review found that collision caches are constructed after spawn rotation,
+body and sphere geometry use final world transforms, and native gripper offsets
+use actual robot link quaternions. No rotation-frame mix-up was identified.
+
+`scripts/verify_native_human_contact.py` prepares the unchanged shirt as a vertical
+panel in front of the human and two real robot grasps on opposite sides. It then
+runs production native attachments and base controllers for four seconds. This
+is a loaded grasp/contact test, not autonomous pickup, sleeve insertion, or a
+replay of the user's unavailable action sequence. User slots are never loaded
+or overwritten; an optional slot supplies only human/chair placement matrices.
+
+The recorded placement (~-26.88 degrees) had zero raw or accepted body cuts in
+960 physics substeps. The closest analytic wrist-sphere/cloth surface gap was
+5.808mm, with 36 control frames within 10mm. Both actual grippers and attached
+cloth moved, with maximum attachment lag 9.798mm. PhysX resolved this contact;
+the additional sweep guard needed zero corrections. Gap and lag were sampled
+at 60Hz, body triangle intersections at 240Hz. This does not reproduce or rule
+out the user's full sleeve-threading failure.
+
+Fixed placement also passed all 960 steps with zero cuts: minimum sphere gap
+5.714mm, maximum attachment lag 10.099mm, and 35 frames within 10mm. All
+960 post callbacks ran. Its 883 detailed sweeps reflect the legitimate broad-phase
+skip when cloth/body bounds are disjoint. The fixed-scene rotation audit below
+had a maximum inverse-transform difference of 0.00592mm.
+
+A separate geometric audit rotated the actual body/sphere triangle mesh and
+1,017 crossing paths together by 0/-30/+30 degrees. All 3,051 crossings were
+blocked. Transforming the corrected points back produced at most 0.00264mm
+difference. These are guard-geometry checks, not a rotated PhysX scene replay.
+
+Evidence: [native contact measurements](verification-results/native-human-contact.json).
+No runtime parameters or physics implementation changed in this follow-up.
+
+```bash
+PHYRC_ACCEPT_EULA=1 ./run.sh python /scripts/verify_native_human_contact.py --fixed
+# Optional read-only recorded human/chair placement:
+PHYRC_ACCEPT_EULA=1 ./run.sh python /scripts/verify_native_human_contact.py --placement-slot /output/states_randomspawn_mesh4/slot_F1.npz
+```
+
+---
+
 # Continuous cloth face contact: 2026-09-10
 
 The reported run's F1 placement was read without loading or changing user

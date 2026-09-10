@@ -1,4 +1,48 @@
-# Latest: Cloth triangle interval contact
+# Latest: Native grasp contact and rotation audit
+
+2026-09-10. Follows pushed contact fix `55b9ded` on
+`feat/policy-learning-env`. The user clarified that two robots held opposite
+ends of the shirt while trying to insert the human arms. The whole hand seemed
+to pass through in visual-mesh mode; the user suspects rotation-dependent math.
+Treat physical wrist-sphere penetration as a real hypothesis. No exact robot
+input sequence or already-pierced state has been captured; F1 stores placement.
+
+- Audited startup order and coordinate conversions: human/chair randomization
+  precedes physics initialization and contact-cache construction. Body mesh and
+  wrist centers use final world transforms; normals are derived from world
+  triangles. Native attachment offsets use actual physics link quaternions.
+  No stale pre-randomization transform or position/direction mix-up was found.
+- Added `scripts/verify_native_human_contact.py`: two real robot articulations
+  with production native cloth attachments and continuous base control pull the
+  actual shirt toward the left wrist. Grasp patches and start poses are prepared;
+  this is NOT autonomous pickup, sleeve threading, or exact user input replay.
+  It verifies actual gripper/attached-node movement and lag, every physics-step
+  body intersection, and analytic wrist-sphere/cloth separation at 60Hz.
+- Recorded placement (~-26.88 degrees) passed 960 steps / 4 seconds: raw and
+  accepted body intersections were zero; minimum sphere gap 5.808mm; maximum
+  attachment lag 9.798mm. Both grippers and held cloth moved. There were 36
+  control frames within 10mm of the sphere. PhysX handled contact with ZERO
+  extra guard corrections; do not misreport these as corrected penetrations.
+- Fixed-placement comparison also passed 960 steps: zero body cuts, minimum
+  sphere gap 5.714mm, max grasp lag 10.099mm, and 35 frames within 10mm.
+  All 960 post callbacks ran; only 883 detailed sweeps were needed because
+  broad-phase disjoint bounds legitimately bypass the detailed guard.
+- Rotation audit transforms the actual body/sphere triangle mesh and 1,017
+  crossing paths together by 0/-30/+30 degrees. All 3,051 paths were blocked;
+  max inverse-transform position difference was 0.00264mm. This exercises the
+  geometric guard, not a proof of every PhysX FEM trajectory or sleeve insertion.
+- No further runtime physics/shape/gripper values were changed. The prior
+  interval-face defect is fixed, but the user's precise failure remains
+  unreproduced and its sole cause unconfirmed. The next useful reproduction is
+  two held shirt sides threading the arms, with the actual failed cloth/robot
+  pose or input sequence. Preserve the user's slots while investigating.
+- See docs/VERIFICATION.md and docs/verification-results/native-human-contact.json
+  for final evidence and commands. Raw traces are in ignored output/verification.
+  Preserve unrelated docs/PhyRC_proposals.pdf and the participant checkout.
+
+---
+
+# Previous: Cloth triangle interval contact
 
 2026-09-10. User reported human arms/hands easily piercing the shirt in the
 last rotated teleop run, and asked whether arm pose/length, mannequin, garment
@@ -36,9 +80,10 @@ or gripper settings had changed. Maintained checkout and branch remain
 - Existing visual fingers are NOT the default physical hands: sphere mode drops
   finger collision triangles in favor of wrist spheres; rendered finger vertices
   extend ~9cm past these proxies. Do not confuse this with collision-proxy
-  penetration or silently change the selected hand proxy. A question about
-  finger-shaped versus sphere-shaped display is pending; the user has so far
-  confirmed only that human arms/hands, not the robot, were involved.
+  penetration or silently change the selected hand proxy. The user subsequently
+  clarified that the whole hand appeared through the cloth in visual-mesh mode,
+  with two robots holding opposite shirt sides while inserting human arms.
+  Do not dismiss this as a finger-display issue; see the latest section above.
 - Runtime must be prepared after source changes. Current startup/reset toggle
   `--no-randomization` remains available; user data and the separate participant
   checkout were preserved. Untracked docs/PhyRC_proposals.pdf is unrelated.
