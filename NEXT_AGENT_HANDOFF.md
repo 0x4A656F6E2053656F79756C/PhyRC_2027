@@ -1,4 +1,31 @@
-# Latest: environment-aware setup and safe re-cloning
+# Latest: Home-directory working clone and final verification
+
+2026-09-10. The maintained working checkout is now `~/PhyRC_2027`.
+Use this checkout for future source/configuration changes and Git commits.
+
+- At the user's explicit request, deleted `~/Documents/PhyRC_2027` and `~/Documents/PhyRC_2027_clone_check` completely. Both had clean tracked working trees and no unpushed commits before deletion; local and remote `main` matched `0f8780a447f5f55aa2d1629a7aa492d0e6d467ad`.
+- Preserved the original `~/Documents/PhyRC_6.0.1` tree, including its source, user states and backups. No Docker images or host tools were removed.
+- Cloned the private GitHub repository over SSH into `~/PhyRC_2027` from commit `0f8780a`. No downloaded assets, generated runtime, output or project caches were copied from an older checkout.
+- `PHYRC_ACCEPT_EULA=1 ./run.sh build` and `prepare` succeeded. The existing host OS, NVIDIA driver, Docker installation and cached image layers were reused; this was not a fresh-OS installation test.
+- `doctor --gpu --json` returned exit 0 with all 14 checks PASS. Actual GPU smoke also passed two-robot unloaded motion, gripper toggle and checkpoint save/perturb/load.
+- `compare_reports.py` matched the new smoke scene against `docs/verification-results/original-smoke.json`, including geometry hashes, material, rounded head, poses and solver settings.
+- A real local GUI session initialized with collider visualization enabled. Screenshot inspection confirmed the shirt/yellow hem, textured floor, chair, robots and rounded head were visible. F2/F3 saved isolated test slots; holding W changed robot 1's lift command by 0.2333333333 m while robot 2's controls stayed unchanged. Differential joint motion was 0.1653811955, confirming actual selective motion rather than common startup settling. The F2 load key was sent and Escape closed the application normally; the exact numerical restore round-trip was verified by smoke.
+- Test artifacts are under `output/verification/` and `output/gui-verification/`; temporary host logs use `/tmp/phyrc2027-home-*.log` and the doctor report is `/tmp/phyrc2027-home-doctor.json`. These generated artifacts are ignored by Git. A compact result record is committed as `docs/verification-results/home-clone.json`.
+- Runtime source and physical configuration were not changed during this move. Verification does not establish full dressing-task success or grasp retention under load.
+
+Older `Documents/PhyRC_2027` paths below describe historical working/verification
+copies, not the current checkout. The two deleted folders must not be used as
+the source for future work. Launch from the maintained checkout:
+
+```bash
+cd ~/PhyRC_2027
+export PHYRC_ACCEPT_EULA=1
+./run.sh gui
+```
+
+---
+
+# Previous: environment-aware setup and safe re-cloning
 
 2026-09-10. The user chose to keep this handoff in Git. It is maintenance
 documentation, not an installation/runtime dependency.
