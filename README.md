@@ -8,47 +8,6 @@ Isaac Sim **6.0.1**에서 두 대의 Stretch4로 티셔츠를 조작하는 로�
 Conda/ROS/시스템 CUDA Toolkit을 추가로 설치할 필요는 없습니다. NVIDIA 드라이버는 호스트에 필요합니다.
 아래 순서를 처음부터 따르면 컨테이너 안에 Isaac Sim 6.0.1과 프로젝트 실행 환경이 설치됩니다.
 
-<a id="environment-route"></a>
-## 먼저: 내 환경에 맞는 시작점
-
-**이미 설치되어 정상 동작하는 OS·드라이버·Docker를 지우거나 재설치하지 마세요.**
-처음 사용하는 PC와 기존 개발 PC는 아래 표에 따라 다른 단계부터 시작하면 됩니다.
-
-| 현재 상태 | 해야 할 작업 | 생략할 작업 |
-|---|---|---|
-| Ubuntu가 없음 | 1~4절에서 OS, 드라이버, Docker, GPU 접근 준비 | 없음 |
-| Ubuntu 22.04/24.04가 있음 | 기본 도구와 드라이버 상태 확인 | OS 설치 |
-| Ubuntu 20.04/26.04 또는 다른 Linux | 공식 지원 범위 확인; 이 릴리스에서는 미검증 | 자동 OS 변경 금지 |
-| 다른 NVIDIA 드라이버가 이미 동작함 | 버전 번호를 맞추지 말고 컨테이너 GPU 검사와 smoke 수행 | 정상 드라이버 재설치 |
-| Docker가 있고 `docker info`가 성공함 | GPU 접근을 검사 | Docker 재설치와 daemon 재시작 |
-| Docker 접근 권한 오류 또는 daemon 정지 | 권한/daemon 문제만 해결 | Docker 무조건 재설치 |
-| Docker는 되지만 컨테이너 GPU가 안 됨 | 4절의 Toolkit·GPU 접근 설정 점검 | OS·Docker 전체 재설치 |
-| 기존 환경이 모두 준비됨 | 5절 clone 후 진단, 6절 프로젝트 설치 | 1~4절 설치 작업 |
-
-호스트 버전은 **지원 범위와 실제 기능**으로 판단합니다. 반면 Isaac Sim 이미지,
-프로젝트 Python 의존성, 자산 revision/SHA256은 이 저장소의 고정값을 사용합니다.
-이 컴퓨터의 드라이버580.178.04나 Docker29.1.3과 다르다는 사실 자체는 오류가 아닙니다.
-Ubuntu 버전 변경은 다른 작업에 영향을 줄 수 있으므로 설치 스크립트가 자동으로 수행하지 않습니다.
-Windows/macOS에서 이 Linux 실행기를 그대로 사용하는 것은 지원하지 않습니다.
-
-저장소를 clone한 후에는 먼저 다음을 실행합니다. 기본 진단은 다운로드나 시스템 변경을 하지 않습니다.
-
-```bash
-./run.sh doctor
-```
-
-| 표시 | 의미 / 다음 행동 |
-|---|---|
-| `PASS` | 표시된 범위의 검사 통과. 해당 구성 요소를 무조건 재설치할 필요 없음 |
-| `MISSING` | 필요한 도구·이미지·자산 등이 없음. 안내된 README 절만 수행 |
-| `FAIL` | 명령 실패 또는 이 실행기의 지원 대상 아님. 안내된 문제를 먼저 해결 |
-| `CHECK` | 추가 확인 필요. 비표준 OS, GUI 세션 부재, 아직 실행하지 않은 GPU 검사 등 |
-
-종료 코드는 `0`=기본 점검 통과, `1`=누락/문제, `2`=추가 확인입니다.
-처음 clone했을 때 이미지·자산·생성 파일이 없어 `MISSING`이 나오는 것은 예상된 상태입니다.
-`doctor` 자체를 실행할 Python3/Bash가 없다면 [기본 도구](#host-tools)를 먼저 준비하세요.
-`PASS`는 전체 Isaac Sim·Vulkan·FEM 호환성 보증이 아닙니다. 최종 판단은 [실행 검사](#simulation-check)로 합니다.
-
 ## 1. 준비할 컴퓨터와 계정
 
 1. NVIDIA RTX GPU가 있는 x86-64 PC에 Ubuntu Desktop 22.04 또는 24.04 LTS를 설치합니다.
@@ -61,7 +20,6 @@ CPU 전용 PC나 RTX 기능이 없는 GPU에서 작동한다고 보장하지 않
 기존 작업 호스트는 Ubuntu 22.04.5 / RTX 5080 16GB / 드라이버 580.178.04였습니다.
 다른 호스트의 드라이버 버전을 무조건 이 숫자로 내리지 말고 해당 GPU와 Isaac 버전의 호환성을 확인하세요.
 
-<a id="host-tools"></a>
 ## 2. Ubuntu와 NVIDIA 드라이버
 
 Ubuntu가 없다면 [Ubuntu Desktop 설치 안내](https://ubuntu.com/tutorials/install-ubuntu-desktop)를 따라 설치합니다.
@@ -74,9 +32,6 @@ sudo apt-get install -y git curl ca-certificates gnupg python3 xauth util-linux 
 ubuntu-drivers devices
 ```
 
-<a id="driver"></a>
-드라이버가 이미 있다면 아래 `nvidia-smi` 확인부터 하세요. 정상 동작하는 기존 드라이버는 유지하고
-컨테이너 GPU 검사와 smoke로 실제 호환성을 확인합니다. 없거나 호환 문제가 확인된 경우에만
 `소프트웨어 및 업데이트 > 추가 드라이버`에서 GPU에 맞는 NVIDIA 권장 드라이버를 선택하고 재부팅합니다.
 Secure Boot 사용 시 설치 중 안내되는 MOK 등록도 완료해야 합니다.
 재부팅 후 다음 명령이 GPU 정보를 출력해야 합니다.
@@ -88,12 +43,7 @@ nvidia-smi
 드라이버 설치에 문제가 있으면 [NVIDIA 드라이버 설치 안내](https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/)를 확인합니다.
 로그인 화면의 톱니바퀴에서 `Ubuntu on Xorg`를 선택하면 아래 Xauthority 기반 GUI 실행 경로가 단순해집니다.
 
-<a id="docker"></a>
 ## 3. Docker Engine
-
-이미 Docker가 있다면 먼저 `docker info`를 실행합니다. 성공하면 아래 설치 명령을 건너뛰고
-[컨테이너 GPU 확인](#container-gpu)으로 이동하세요. 권한 오류는 현재 사용자의 Docker 접근 권한을,
-연결 오류는 daemon 상태와 Docker context를 확인합니다. 명령 실패만으로 재설치하지 않습니다.
 
 아래는 새 Ubuntu용 설치 흐름입니다. 이미 Docker/Podman이 설치된 PC라면 먼저
 [Docker 공식 Ubuntu 설치 문서](https://docs.docker.com/engine/install/ubuntu/)의 충돌 패키지 안내를 확인하세요.
@@ -120,23 +70,7 @@ sudo usermod -aG docker "$USER"
 docker run --rm hello-world
 ```
 
-<a id="container-gpu"></a>
 ## 4. NVIDIA Container Toolkit
-
-이미 GPU 컨테이너를 사용하는 PC라면 Toolkit을 재설치하거나 Docker를 재시작하지 말고
-기존 GPU 접근부터 확인합니다. 프로젝트 이미지를 만든 뒤에는 다음 진단을 사용할 수 있습니다.
-NVIDIA 라이선스 동의 변수는 [6절](#project-install)에서 설명합니다.
-
-```bash
-./run.sh doctor --gpu
-./run.sh doctor --gpu --json
-```
-
-`--gpu`는 **로컬에 이미 있는 프로젝트 이미지**에서 `nvidia-smi`만 실행하고 진단 컨테이너를 제거합니다.
-이미지가 없으면 내려받지 않고 build 단계를 안내하며, 동의 변수가 없으면 컨테이너를 시작하지 않습니다.
-이 검사는 NVML 접근 확인이지 RTX 렌더링이나 FEM 실행 검사가 아닙니다.
-이미지 설치 전에는 아래 절의 `docker ... nvidia-smi`로 확인할 수 있으며, 그 명령은 Ubuntu 이미지를 받을 수 있습니다.
-GPU 접근이 정상이라면 아래 Toolkit 설치·설정·재시작을 생략하세요.
 
 [NVIDIA 공식 설치 문서](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)에 따라
 Docker가 호스트 GPU를 사용할 수 있도록 설정합니다. 이 단계의 Docker 재시작은 다른 실행 중 컨테이너에도 영향을 줄 수 있습니다.
@@ -174,7 +108,6 @@ cd PhyRC_2027
 현재는 submodule이 없으므로 `--recursive`가 필요 없습니다. 이유와 자산별 출처는 [THIRD_PARTY.md](THIRD_PARTY.md)에 있습니다.
 소유자 계정의 SSH 키를 다른 컴퓨터에 복사하지 마세요. 각 사용자는 자기 계정과 인증 수단을 사용합니다.
 
-<a id="project-install"></a>
 ## 6. Isaac Sim 6.0.1 설치와 자산 생성
 
 먼저 [Isaac Sim 컨테이너 설치 및 라이선스 안내](https://docs.isaacsim.omniverse.nvidia.com/latest/installation/install_container.html),
@@ -187,7 +120,6 @@ cd PhyRC_2027
 export PHYRC_ACCEPT_EULA=1
 ./run.sh build
 ./run.sh prepare
-./run.sh doctor --gpu
 ```
 
 `build`가 공식 NVIDIA 컨테이너를 내려받고 최소 Python 의존성을 설치합니다.
@@ -209,7 +141,6 @@ NGC 다운로드가 인증을 요구하면 공식 컨테이너 문서에 따라 
 | Isaac/셰이더/패키지 캐시 | `cache/` | 제외 |
 | 사용자 저장과 녹화 | `output/` | 제외 |
 
-<a id="simulation-check"></a>
 ## 7. 설치 확인
 
 다른 Isaac Sim GUI/시뮬레이션을 종료한 뒤 실행합니다. 동일 GPU에서 여러 SimulationApp을 동시에 띄우지 않습니다.
@@ -227,7 +158,6 @@ NGC 다운로드가 인증을 요구하면 공식 컨테이너 문서에 따라 
 GUI 첫 실행에서도 `Physics Tasks` 준비 화면에 몇 분 머무를 수 있습니다.
 이 검사는 설치 smoke test이지 강한 당김/완전 착의/장시간 안정성을 보증하는 시험은 아닙니다.
 
-<a id="gui-session"></a>
 ## 8. GUI teleop 튜토리얼
 
 ```bash
@@ -338,43 +268,3 @@ git push -u origin HEAD
 이미지/패키지 버전 변경은 별도 작업으로 검증하세요.
 
 이관 검증 결과와 한계는 [docs/VERIFICATION.md](docs/VERIFICATION.md)에 기록합니다.
-
-## 13. 로컬 폴더 삭제와 GitHub에서 재설치
-
-**push가 완료된 추적 파일은 다시 clone해서 복원할 수 있지만, 폴더 전체가 GitHub에 백업되는 것은 아닙니다.**
-`output/`의 저장 슬롯·녹화, 미커밋 변경, `.gitignore`로 제외된 파일은 별도로 보존해야 합니다.
-이미지·캐시·다운로드 자산은 재생성할 수 있지만 사용자 데이터는 자동 복구되지 않습니다.
-로컬 폴더 삭제는 Docker의 별도 이미지 저장 공간이나 GitHub 원격 저장소를 삭제하지 않습니다.
-
-삭제 전에는 GUI를 종료하고 다음을 확인하세요. `git status`는 ignored 사용자 데이터를 보여주지 않으므로
-`output/`과 따로 추가한 파일도 확인해야 합니다.
-
-```bash
-git status --short
-git log --oneline origin/main..HEAD
-```
-
-두 번째 명령에 커밋이 나오면 아직 로컬에만 있는 커밋일 수 있습니다. 원격 상태가 오래되었다면
-먼저 `git fetch origin`으로 갱신한 뒤 확인하세요. 개인 저장 데이터는 원격 소스 코드와 별도 백업합니다.
-
-가장 안전한 재설치 검증은 **기존 폴더를 지우지 않고 다른 빈 경로로 clone하는 것**입니다.
-아래 목적지가 이미 있으면 다른 새 이름을 사용하세요.
-
-```bash
-cd "$HOME/Documents"
-git clone https://github.com/0x4A656F6E2053656F79756C/PhyRC_2027.git PhyRC_2027_fresh
-cd PhyRC_2027_fresh
-./run.sh doctor
-# NVIDIA 약관에 동의하는 경우:
-export PHYRC_ACCEPT_EULA=1
-./run.sh build
-./run.sh prepare
-./run.sh doctor --gpu
-./run.sh smoke
-./run.sh gui
-```
-
-이 과정에서는 예전 `.runtime/`, `cache/`, `assets/downloads/`를 복사하지 않습니다.
-기존 Docker 이미지 레이어를 재사용할 수는 있으며, 이것은 완전히 빈 OS에서 설치한 시험과는 다릅니다.
-새 clone이 정상 동작하고 사용자 데이터 백업까지 확인한 다음에만 이전 폴더를 삭제하세요.
-`NEXT_AGENT_HANDOFF.md`는 현재 운영·인계 상태를 기록하는 문서로 Git에 유지하지만 실행 의존성은 아닙니다.

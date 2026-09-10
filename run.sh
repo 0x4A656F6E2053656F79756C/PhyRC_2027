@@ -5,16 +5,16 @@ cd "$ROOT"
 IMAGE=${PHYRC_IMAGE:-phyrc-2027:isaac-6.0.1}
 COMMAND=${1:-help}
 if [[ "$COMMAND" == help ]]; then
-    printf 'Usage: ./run.sh {doctor [--gpu] [--json]|build|prepare|gui|smoke|python SCRIPT [ARGS...]|cpu SCRIPT [ARGS...]}\n'
+    printf 'Usage: ./run.sh {doctor|build|prepare|gui|smoke|python SCRIPT [ARGS...]|cpu SCRIPT [ARGS...]}\n'
     exit 0
 fi
 if [[ "$COMMAND" == doctor ]]; then
-    command -v python3 >/dev/null || {
-        printf '[MISSING] Python3: install the basic tools in README.md#host-tools first.\n' >&2
-        exit 1
-    }
-    shift
-    exec python3 "$ROOT/scripts/doctor.py" "$@"
+    for tool in docker python3 git curl xauth flock; do command -v "$tool"; done
+    docker info --format 'Docker {{.ServerVersion}}; runtimes={{json .Runtimes}}'
+    nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv
+    printf 'DISPLAY=%s; session=%s\n' "${DISPLAY:-unset}" "${XDG_SESSION_TYPE:-unset}"
+    printf 'Read README.md for hardware requirements and NVIDIA license acceptance.\n'
+    exit 0
 fi
 if [[ "${PHYRC_ACCEPT_EULA:-0}" != 1 ]]; then
     printf 'Read NVIDIA EULA/privacy links in README.md, then export PHYRC_ACCEPT_EULA=1 if you agree.\n' >&2
