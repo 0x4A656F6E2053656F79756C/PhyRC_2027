@@ -1,4 +1,4 @@
-"""Uniform shirt/collar resizing, followed by an explicit length-only scale."""
+"""Uniform shirt resizing with a separately specified final collar area."""
 import numpy as np
 
 
@@ -18,8 +18,8 @@ def opening_area(points):
     return float(np.linalg.norm(np.cross(centred, np.roll(centred, -1, axis=0)).sum(axis=0))) * 0.5
 
 
-def resize_shirt(points, counts, indices, scale=1.2, neck_area_scale=1.2, length_scale=10.0 / 12.0):
-    if not np.isfinite([scale, neck_area_scale, length_scale]).all() or min(scale, neck_area_scale, length_scale) <= 0:
+def resize_shirt(points, counts, indices, scale=1.2, neck_area_scale=1.2):
+    if not np.isfinite([scale, neck_area_scale]).all() or min(scale, neck_area_scale) <= 0:
         raise ValueError('Shirt size and collar area scales must be positive and finite')
     p = np.asarray(points, dtype=float).copy()
     reference_area = surface_area(p, counts, indices)
@@ -67,15 +67,11 @@ def resize_shirt(points, counts, indices, scale=1.2, neck_area_scale=1.2, length
     for vertices, factor in ((neck, local_scale), (ring, (1.0 + local_scale) * 0.5)):
         p[vertices] = centre + (p[vertices] - centre) * factor
     p *= scale
-    # Restore ONLY the neck-to-hem axis. This deliberately also scales the
-    # collar's component along that axis, exactly like the rest of the shirt.
-    p[:, 1] *= length_scale
     area = surface_area(p, counts, indices)
     if min(reference_area, area, neck_before) <= 0:
         raise ValueError('Shirt and collar areas must be nonzero')
     return p, {
         'resizeScale': float(scale),
-        'lengthScale': float(length_scale),
         'massAreaRatio': reference_area / area,
         'referenceSurfaceArea': reference_area,
         'neckAreaBefore': neck_before,

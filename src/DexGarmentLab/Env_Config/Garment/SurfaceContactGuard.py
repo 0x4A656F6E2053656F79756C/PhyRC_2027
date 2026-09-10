@@ -4,6 +4,7 @@ PhysX owns normal contact and friction. This guard rejects residual triangle
 crossings after the legacy position-writing controller and FEM have run. It
 does not infer inside/outside from an open body mesh or close garment openings.
 """
+import os
 import numpy as np
 import torch
 import warp as wp
@@ -163,21 +164,25 @@ def _overlap_body(lower: wp.array(dtype=float), upper: wp.array(dtype=float),
 
 
 @wp.kernel
-def _repair_mode(attempt: wp.array(dtype=int), resolve: wp.array(dtype=int), reject: wp.array(dtype=int)):
-    resolve[0] = int(attempt[0] < 8)
-    reject[0] = int(attempt[0] >= 8)
+def _repair_mode(attempt: wp.array(dtype=int), resolve: wp.array(dtype=int),
+                 reject: wp.array(dtype=int), max_iterations: int):
+    # The final pass checks the last repair; it must not modify the surface.
+    resolve[0] = int(attempt[0] < 8 and attempt[0] < max_iterations)
+    reject[0] = int(attempt[0] >= 8 and attempt[0] < max_iterations)
 
 
 @wp.kernel
 def _advance_iteration(count: wp.array(dtype=int), attempt: wp.array(dtype=int),
-                        active: wp.array(dtype=int), fallback: wp.array(dtype=int)):
+                        active: wp.array(dtype=int), fallback: wp.array(dtype=int),
+                        max_iterations: int):
     if count[0] == 0:
         active[0] = 0
+    elif attempt[0] >= max_iterations:
+        # This count describes the surface AFTER the final permitted repair.
+        active[0] = 0
+        fallback[0] = 1
     else:
         attempt[0] = attempt[0] + 1
-        if attempt[0] >= 16:
-            active[0] = 0
-            fallback[0] = 1
 
 
 class _GpuSweep:
@@ -232,7 +237,9 @@ class _GpuSweep:
             wp.capture_if(self.active, self._iteration)
         self.graph = capture.graph
         with wp.ScopedCapture(device=self.device, force_module_load=False) as capture:
-            for _ in range(15):
+            # First check is in graph. Allow max_iterations repairs, followed
+            # by one final check, instead of rejecting on a stale pre-repair count.
+            for _ in range(owner.max_iterations):
                 wp.copy(self.mesh.points, self.result)
                 self.mesh.refit()
                 wp.capture_if(self.active, self._iteration)
@@ -247,10 +254,12 @@ class _GpuSweep:
                   self.owner.mesh.points, self.owner.body_edges, self.triangles,
                   self.blocked, self.count], device=self.device)
         wp.capture_if(self.count, self._repair)
-        wp.launch(_advance_iteration, 1, inputs=[self.count, self.attempt, self.active, self.fallback], device=self.device)
+        wp.launch(_advance_iteration, 1, inputs=[self.count, self.attempt, self.active,
+                  self.fallback, self.owner.max_iterations], device=self.device)
 
     def _repair(self):
-        wp.launch(_repair_mode, 1, inputs=[self.attempt, self.resolve, self.reject], device=self.device)
+        wp.launch(_repair_mode, 1, inputs=[self.attempt, self.resolve, self.reject,
+                  self.owner.max_iterations], device=self.device)
         wp.capture_if(self.resolve, self._resolve)
         wp.capture_if(self.reject, self._reject)
 
@@ -279,9 +288,8 @@ class _GpuSweep:
         wp.copy(self.target, wp.from_torch(target, dtype=wp.vec3))
         wp.copy(self.velocity, wp.from_torch(velocity, dtype=wp.vec3))
         wp.capture_launch(self.graph)
-        # This stream-ordered scalar read avoids fifteen unused mesh refits
-        # after the exact original stopping condition. Repairs and fallback
-        # still have the same sixteen-iteration budget.
+        # Skip the tail when the first check is already clear. The final
+        # budget check is included in the tail and never performs a repair.
         if int(self.active.numpy()[0]):
             wp.capture_launch(self.tail_graph)
         self.calls += 1
@@ -290,8 +298,15 @@ class _GpuSweep:
 
 
 class SurfaceContactGuard:
-    def __init__(self, points, triangles, device, use_graph=True):
+    def __init__(self, points, triangles, device, use_graph=True, max_iterations=None):
         self.device = device
+        # This custom geometric repair budget is independent of FEM iterations.
+        # There is always one additional check after the last allowed repair.
+        if max_iterations is None:
+            max_iterations = os.environ.get('STRETCH4_CONTACT_GUARD_ITERATIONS', '24')
+        self.max_iterations = int(max_iterations)
+        if not 1 <= self.max_iterations <= 128:
+            raise ValueError('STRETCH4_CONTACT_GUARD_ITERATIONS must be in [1, 128]')
         self.lower = wp.vec3(*np.min(points, axis=0))
         self.upper = wp.vec3(*np.max(points, axis=0))
         self.lower_tensor = torch.as_tensor(np.min(points, axis=0), dtype=torch.float32, device=device)
@@ -402,7 +417,7 @@ class SurfaceContactGuard:
             # cuts through it. Reject those local solver/controller movements.
             # The mask grows monotonically, so neighbouring repairs cannot
             # oscillate or sum oversized push-out corrections onto shared nodes.
-            for attempt in range(16):
+            for attempt in range(self.max_iterations + 1):
                 count = wp.zeros(1, dtype=wp.int32, device=self.device)
                 wp.launch(_mark_cut_edges, len(edges), inputs=[self.mesh.id,
                           wp.from_torch(result, dtype=wp.vec3), wp.from_torch(edges, dtype=wp.vec2i),
@@ -418,6 +433,12 @@ class SurfaceContactGuard:
                               wp.from_torch(triangles, dtype=wp.vec3i), blocked, count],
                               device=self.device)
                 if int(count.numpy()[0]) == 0:
+                    break
+                if attempt == self.max_iterations:
+                    # Reject only after checking the final repaired geometry.
+                    # This is not a checkpoint reload or a robot-state rollback.
+                    result = start.clone()
+                    out_velocity = torch.zeros_like(velocity)
                     break
                 if cloth_mesh is not None and attempt < 8:
                     # Resolve against the contacted surface before rejecting
@@ -442,10 +463,4 @@ class SurfaceContactGuard:
                           wp.from_torch(start, dtype=wp.vec3), blocked,
                           wp.from_torch(result, dtype=wp.vec3),
                           wp.from_torch(out_velocity, dtype=wp.vec3)], device=self.device)
-            else:
-                # A severely conflicting command may propagate across a large
-                # patch. Reject this one candidate step instead of accepting an
-                # intersecting surface. This is not a checkpoint/state reload.
-                result = start.clone()
-                out_velocity = torch.zeros_like(velocity)
         return result, out_velocity

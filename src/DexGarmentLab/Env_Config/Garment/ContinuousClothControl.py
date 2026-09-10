@@ -126,12 +126,12 @@ def constrain_drive(rig, cloths, before, indices, positions, linear, angular, dt
         model=ClothLoad(cloth);cloth._continuous_load=model
     p,levels=model.measure(cloth)
     p95,p99=map(float,levels)
-    # F4 crown+10cm replay with cloth/human friction .6 and native damping.
-    # These remain control thresholds, not a constitutive strain/failure limit.
-    start=float(os.environ.get('STRETCH4_COMPLIANCE_START','.35'))
-    end=float(os.environ.get('STRETCH4_COMPLIANCE_END','.50'))
-    local=float(os.environ.get('STRETCH4_COMPLIANCE_LOCAL','.80'))
-    local_start=float(os.environ.get('STRETCH4_COMPLIANCE_LOCAL_START','.55'))
+    # 2026-09-11 tuning: restrict pulling at 90% of the previous strain levels.
+    # These are control thresholds, not a constitutive strain/failure limit.
+    start=float(os.environ.get('STRETCH4_COMPLIANCE_START','.315'))
+    end=float(os.environ.get('STRETCH4_COMPLIANCE_END','.45'))
+    local=float(os.environ.get('STRETCH4_COMPLIANCE_LOCAL','.72'))
+    local_start=float(os.environ.get('STRETCH4_COMPLIANCE_LOCAL_START','.495'))
     if not (0<start<end<local and 0<local_start<local):
         raise ValueError('invalid compliance strain envelope')
     history=st.get('_compliance_history')

@@ -335,18 +335,19 @@ else:
               f"{_SHIRT_PATH}, falling back to the shipped mesh")
     TSHIRT_USD = build_reshaped_tshirt_usd(TSHIRT_USD)
 
-LIFT_RATE = _feel("LIFT_RATE", 1.4)
-ARM_RATE = _feel("ARM_RATE", 1.1)
-WRIST_RATE = _feel("WRIST_RATE", 5.0)
+# 2026-09-11 tuning: 90% of the original command rates (10% slower).
+LIFT_RATE = _feel("LIFT_RATE", 1.26)
+ARM_RATE = _feel("ARM_RATE", 0.99)
+WRIST_RATE = _feel("WRIST_RATE", 4.5)
 GRIPPER_OPEN = 0.5
 # 0.0 was the joint limit, not the point of contact -- see patch_meet.
 GRIPPER_CLOSED = _feel("GRIPPER_CLOSED", 0.103)
 GRIPPER_CLOSE_TIME = 0.4
 GRIPPER_RATE = (GRIPPER_OPEN - GRIPPER_CLOSED) / GRIPPER_CLOSE_TIME
-BASE_LINEAR_RATE = _feel("BASE_LINEAR_RATE", 0.56)
-BASE_ANGULAR_RATE = _feel("BASE_ANGULAR_RATE", 2.6)
-BASE_LINEAR_ACCEL = _feel("BASE_LINEAR_ACCEL", 1.2)
-BASE_ANGULAR_ACCEL = _feel("BASE_ANGULAR_ACCEL", 4.0)
+BASE_LINEAR_RATE = _feel("BASE_LINEAR_RATE", 0.504)
+BASE_ANGULAR_RATE = _feel("BASE_ANGULAR_RATE", 2.34)
+BASE_LINEAR_ACCEL = _feel("BASE_LINEAR_ACCEL", 1.08)
+BASE_ANGULAR_ACCEL = _feel("BASE_ANGULAR_ACCEL", 3.6)
 
 # Ported over from Teleop_TShirt_Stretch4_Hand_Env.py's grab-follow fix
 # (same underlying bug, confirmed there first): the old formula here
@@ -722,7 +723,7 @@ GARMENT_SOLID_REST_OFFSET = _feel("GARMENT_SOLID_REST_OFFSET", 0.009 if _SHIRT_F
 # under it afterwards, and NOT the held ones, so no amount of grab clamping
 # reaches it. Position iterations are the solver's own budget for pushing
 # contacts apart, and they cost frame rate rather than feel.
-GARMENT_SOLVER_ITERATIONS = int(_feel("GARMENT_SOLVER_ITERATIONS", 32))
+GARMENT_SOLVER_ITERATIONS = int(_feel("GARMENT_SOLVER_ITERATIONS", 64))
 GARMENT_BEND_STIFFNESS = _feel("GARMENT_BEND_STIFFNESS", 3000.0)
 GARMENT_SHEAR_STIFFNESS = _feel("GARMENT_SHEAR_STIFFNESS", 3000.0)
 # Per "옷 끝단(목/소매/밑단) 강체처럼" -- ported from
@@ -1174,7 +1175,7 @@ RESET_KEY = "P"
 # scripts/probe_camstate.py rather than assumed.
 STATE_SLOT_KEYS = ("F1", "F2", "F3", "F4", "F5")
 STATE_CLEAR_KEY = "F12"
-STATE_DIR = os.environ.get("STRETCH4_STATE_DIR", "/output/states_shortheight_roundhead_mesh4" if int(os.environ.get("STRETCH4_MESH_REFINEMENT", "1")) else "/output/states_shortheight_roundhead")
+STATE_DIR = os.environ.get("STRETCH4_STATE_DIR", "/output/states_large20_neck20_near1m_mesh4" if int(os.environ.get("STRETCH4_MESH_REFINEMENT", "1")) else "/output/states_large20_neck20_near1m")
 # One key that throws away every checkpoint in the session is worth a
 # confirmation. ~3s at 60fps, and the arming lapses if it isn't answered.
 STATE_CLEAR_CONFIRM_FRAMES = 180
@@ -2691,7 +2692,7 @@ class TeleopTShirtStretch4_Env(BaseEnv):
             # doing nothing at all, which is why fingers kept coming through
             # even after the collider itself was switched on. Convert.
             #
-            # [rounded head: trim visual before copying collision]
+            # Trim the visual skull before deriving its collision surface.
             from Env_Config.Human.RoundHead import round_human_head
             round_human_head(self.stage, self.human.prim_path)
             # Default: small wrist spheres replace hand/finger mesh collision.

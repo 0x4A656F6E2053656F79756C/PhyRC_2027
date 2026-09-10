@@ -429,8 +429,7 @@ if str(source_mesh.GetPath()) == "/t_shirt/t_shirt_001/t_shirt_001":
     _p, _resize_metadata = resize_shirt(
         _p, counts, idxs,
         float(os.environ.get("SHIRT_UNIFORM_SCALE", "1.2")),
-        float(os.environ.get("SHIRT_NECK_AREA_SCALE", "1.2")),
-        float(os.environ.get("SHIRT_HEIGHT_SCALE", "0.8333333333333334")))
+        float(os.environ.get("SHIRT_NECK_AREA_SCALE", "1.2")))
     for _name, _value in _resize_metadata.items():
         mesh.GetPrim().CreateAttribute("phyrc:" + _name, Sdf.ValueTypeNames.Double, custom=True).Set(_value)
     print(f"SHIRT-CONV: uniform resize {_resize_metadata}", flush=True)
