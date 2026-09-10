@@ -21,7 +21,17 @@
   dressing baseline. The final committed checkout is also tested in a fresh clone.
 - CPU schema/frame/action checks, Python compilation and shell syntax checks passed.
 
-Evidence: [policy environment](verification-results/policy-environment.json).
+- Fresh GitHub clone at `~/PhyRC_2027_participant`, clean source commit `d152661`,
+  passed build, independent asset/runtime preparation, all 14 doctor checks and
+  actual learning. Cold training took 408.86s (RTX shader compilation confirmed
+  in Kit logs); warm rerun took 109.55s. Both reached 0.002088m held-out lift MAE.
+- The same committed source also passed full sensor/action/reset checks at
+  non-square 160×96 resolution. Expected depth 0.9/1.2m measured
+  0.8999999/1.1999998m. Robot q repeated exactly; settled cloth varied by 1.25mm.
+  Runtime source hashes matched the maintained checkout. Source trees were clean.
+
+Evidence: [policy environment](verification-results/policy-environment.json),
+[fresh participant clone](verification-results/participant-clone.json).
 Raw RGB/NPZ/JSON are in `output/policy-smoke/`; training artifacts in
 `output/train-demo/`. Full dressing success, force sensing and grasp under load
 remain unverified. Gymnasium was pinned to 1.2.3; the Isaac base image is unchanged.

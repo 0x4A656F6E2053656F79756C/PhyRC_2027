@@ -4,6 +4,17 @@
 reset/step, validate and commit; also try quick training from a new GitHub clone.
 This supersedes the earlier restriction to specification/read-only inspection.
 Branch: `feat/policy-learning-env`, including random-spawn commit `a5c3824`.
+Implementation commit: `d152661`, pushed to GitHub. Final verification/documentation
+is committed on the same branch. The participant checkout is
+`~/PhyRC_2027_participant`; leave it available for the user to run the demo.
+
+Fresh clone build/prepare and 14 GPU doctor checks passed. No project runtime,
+asset downloads or caches were copied. Existing host/Docker layers were reused.
+`train-demo` passed twice: first run 408.86s including RTX shader compilation,
+warm run 109.55s; held-out lift error 0.14688m -> 0.002088m. A 160x96 sensor
+smoke passed on the exact clean committed source, including depth freshness,
+all action channels, reset and termination. Evidence: participant-clone.json.
+The executable source is unchanged by the final verification-only commit.
 
 - Read `docs/POLICY_INTERFACE.md` (schema 0.2.0) and participant quickstart.
   `Policy/environment.py` provides one Isaac/Gymnasium scene per process,
@@ -38,8 +49,8 @@ Branch: `feat/policy-learning-env`, including random-spawn commit `a5c3824`.
 - SimulationApp.close() can immediately terminate Python. Write artifacts first;
   CLI exception handling forwards exit_code=1 to prevent false-success exits.
 - CPU/schema checks and real teleop regression passed. See docs/VERIFICATION.md
-  and policy-environment.json; final fresh-clone evidence is recorded separately
-  after cloning the pushed feature branch. No main merge is part of this task.
+  and policy-environment.json; final fresh-clone evidence is in
+  docs/verification-results/participant-clone.json. No main merge is part of this task.
 
 ---
 

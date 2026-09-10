@@ -24,6 +24,20 @@ export PHYRC_ACCEPT_EULA=1
 처음 설치 전체가 수 초 안에 끝나지는 않는다. 준비된 환경의 학습 예제는
 작은 실제 rollout을 이용하며 실행 시간은 `output/train-demo/report.json`에 나온다.
 
+2026-09-10, RTX 5080 16GB에서 새 GitHub clone으로 위 과정을 검증했다.
+프로젝트 runtime/자산/캐시를 복사하지 않았고, 기존 호스트와 Docker 이미지
+레이어는 재사용했다. 같은 코드 `d152661`에서 측정한 결과는 다음과 같다.
+
+| 실행 | 시작부터 학습·평가 완료까지 |
+|---|---:|
+| 새 clone의 첫 학습 실행(첫 RTX 셰이더 컴파일 포함) | 약 6분 49초 |
+| 캐시 생성 후 재실행 | 약 1분 50초 |
+
+두 실행 모두 22cm 목표의 마지막 8스텝 평균 오차가 학습 전 14.69cm에서
+학습 후 **2.09mm**로 줄었다. 이 시간은 build/prepare 다운로드 시간을 포함하지
+않으며, 다른 컴퓨터의 실행 속도를 보장하지 않는다.
+[새 clone 검증 기록](verification-results/participant-clone.json)에 수치를 남겼다.
+
 추가 센서/API 검증은 `./run.sh policy-smoke`로 수행한다. 세 카메라의 PNG와
 RGB-D NPZ, 상세 검증 JSON은 `output/policy-smoke/`에 저장된다.
 

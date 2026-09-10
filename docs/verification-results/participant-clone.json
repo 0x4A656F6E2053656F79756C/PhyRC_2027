@@ -1,0 +1,193 @@
+{
+  "passed": true,
+  "date": "2026-09-10",
+  "checkout": "/home/seoyul/PhyRC_2027_participant",
+  "branch": "feat/policy-learning-env",
+  "source_commit": "d15266127c3f82ffaf0e274d5f3e0f0b1bf3f2a8",
+  "source_is_dirty": false,
+  "image": "sha256:6908220b276d84a38802d5ae6f81442905c36db983c6c4d30b2f3262428a6e41",
+  "reused": [
+    "Ubuntu 22.04.5",
+    "RTX 5080 16GB / driver 580.178.04",
+    "Docker and NVIDIA Container Toolkit",
+    "cached Docker image layers"
+  ],
+  "new_from_github_clone": [
+    "checkout",
+    "downloaded assets",
+    "generated runtime",
+    "project caches",
+    "training artifacts"
+  ],
+  "doctor_checks": [
+    {
+      "check": "OS",
+      "status": "PASS",
+      "detail": "Ubuntu 22.04.5 LTS: supported OS range; no OS reinstall needed",
+      "next": ""
+    },
+    {
+      "check": "git",
+      "status": "PASS",
+      "detail": "/usr/bin/git",
+      "next": ""
+    },
+    {
+      "check": "curl",
+      "status": "PASS",
+      "detail": "/usr/bin/curl",
+      "next": ""
+    },
+    {
+      "check": "xauth",
+      "status": "PASS",
+      "detail": "/usr/bin/xauth",
+      "next": ""
+    },
+    {
+      "check": "flock",
+      "status": "PASS",
+      "detail": "/usr/bin/flock",
+      "next": ""
+    },
+    {
+      "check": "Host NVIDIA driver",
+      "status": "PASS",
+      "detail": "NVIDIA GeForce RTX 5080, driver 580.178.04, 16303 MiB",
+      "next": "README.md#driver"
+    },
+    {
+      "check": "RTX / VRAM precheck",
+      "status": "PASS",
+      "detail": "RTX-class GPU and approximately 16GB+ VRAM reported; actual compatibility still needs smoke",
+      "next": "README.md#simulation-check"
+    },
+    {
+      "check": "Docker",
+      "status": "PASS",
+      "detail": "Server 29.1.3; daemon reachable as current user",
+      "next": ""
+    },
+    {
+      "check": "Project image",
+      "status": "PASS",
+      "detail": "phyrc-2027:isaac-6.0.1: sha256:6908220b276d",
+      "next": ""
+    },
+    {
+      "check": "Container GPU",
+      "status": "PASS",
+      "detail": "NVML access works: NVIDIA GeForce RTX 5080, 580.178.04; not a Vulkan/PhysX test",
+      "next": "README.md#simulation-check"
+    },
+    {
+      "check": "Local GUI session",
+      "status": "PASS",
+      "detail": "Local DISPLAY and Xauthority cookie found; monitor/rendering not tested",
+      "next": "README.md#gui-session"
+    },
+    {
+      "check": "Project disk space",
+      "status": "PASS",
+      "detail": "263.1 GiB free on project filesystem; Docker may use another disk",
+      "next": ""
+    },
+    {
+      "check": "Input assets",
+      "status": "PASS",
+      "detail": "All inputs present; prepare checks SHA256",
+      "next": ""
+    },
+    {
+      "check": "Prepared runtime",
+      "status": "PASS",
+      "detail": "Generated shirt exists; rerun prepare after source/config changes",
+      "next": ""
+    }
+  ],
+  "cold_training": {
+    "task": "robot_0 lift calibration; behavior cloning, not full dressing",
+    "source_commit": "d15266127c3f82ffaf0e274d5f3e0f0b1bf3f2a8",
+    "source_is_dirty": false,
+    "source_sha256": {
+      "__init__.py": "71d223fb5d8acf29318a57b7363b233dd78a126632dbd26a9fa193eb2845cc4a",
+      "contract.py": "f8c3ddb105417c337dab04ad0a32f7235902fad28989cb7476c026c1d8d100ee",
+      "environment.py": "05947fffc00d312b8cf2fcef00ebd48475c74a581d8886b926804d6dac7f8329",
+      "sensors.py": "f4612ebac14fff2cb081ac1892e7dd0384d57420fd895716d924425e4af661d4",
+      "state.py": "7f51612c66650070b0bea00b07495cc16059c8e29973a1764eaf3eb6e8a064f3",
+      "contract": "a6c3e205f9b0606b2bb10aa0ffa67abc28c00b2e5a5710c5fae9190d5a4406c9",
+      "teleop": "d115cb0bd563bbfe42ab793b4c813d2eccf8e1004a0e59fd7f2a4e328b2dbfd3"
+    },
+    "seed": 7,
+    "demonstration_transitions": 64,
+    "epochs": 500,
+    "loss_before": 0.017983581870794296,
+    "loss_after": 0.0009655801113694906,
+    "held_out_goal_m": 0.22,
+    "untrained_final_window_mae_m": 0.14687547087669373,
+    "trained_final_window_mae_m": 0.0020881537348031998,
+    "elapsed_wall_s": 408.8572577640007,
+    "passed": true
+  },
+  "warm_training": {
+    "task": "robot_0 lift calibration; behavior cloning, not full dressing",
+    "source_commit": "d15266127c3f82ffaf0e274d5f3e0f0b1bf3f2a8",
+    "source_is_dirty": false,
+    "source_sha256": {
+      "__init__.py": "71d223fb5d8acf29318a57b7363b233dd78a126632dbd26a9fa193eb2845cc4a",
+      "contract.py": "f8c3ddb105417c337dab04ad0a32f7235902fad28989cb7476c026c1d8d100ee",
+      "environment.py": "05947fffc00d312b8cf2fcef00ebd48475c74a581d8886b926804d6dac7f8329",
+      "sensors.py": "f4612ebac14fff2cb081ac1892e7dd0384d57420fd895716d924425e4af661d4",
+      "state.py": "7f51612c66650070b0bea00b07495cc16059c8e29973a1764eaf3eb6e8a064f3",
+      "contract": "a6c3e205f9b0606b2bb10aa0ffa67abc28c00b2e5a5710c5fae9190d5a4406c9",
+      "teleop": "d115cb0bd563bbfe42ab793b4c813d2eccf8e1004a0e59fd7f2a4e328b2dbfd3"
+    },
+    "seed": 7,
+    "demonstration_transitions": 64,
+    "epochs": 500,
+    "loss_before": 0.017983581870794296,
+    "loss_after": 0.0009655801113694906,
+    "held_out_goal_m": 0.22,
+    "untrained_final_window_mae_m": 0.14687547087669373,
+    "trained_final_window_mae_m": 0.0020881537348031998,
+    "elapsed_wall_s": 109.54936395899858,
+    "passed": true
+  },
+  "cold_start_note": "Kit log confirmed RtPso async compilation and GPU-driver ray tracing shader compilation waits during first execution.",
+  "sensor_check": {
+    "passed": true,
+    "depth_probe_m": [
+      0.8999998569488525,
+      1.1999998092651367
+    ],
+    "lift_delta_m": 0.07965782284736633,
+    "repeat_seed_q_max_abs": 0.0,
+    "repeat_seed_cloth_max_abs": 0.0012496709823608398,
+    "elapsed_wall_s": 87.2005615659873
+  },
+  "sensor_resolution_wh": [
+    160,
+    96
+  ],
+  "reset_settling": {
+    "control_ticks": 90,
+    "cloth_restore_max_abs_m": 0.0,
+    "max_base_linear_speed_m_s": 0.0024806796573102474,
+    "max_finger_open_error_rad": 0.0003002285957336426
+  },
+  "commands": [
+    "git clone --branch feat/policy-learning-env git@github.com:0x4A656F6E2053656F79756C/PhyRC_2027.git PhyRC_2027_participant",
+    "PHYRC_ACCEPT_EULA=1 ./run.sh build",
+    "PHYRC_ACCEPT_EULA=1 ./run.sh prepare",
+    "PHYRC_ACCEPT_EULA=1 ./run.sh doctor --gpu --json",
+    "PHYRC_ACCEPT_EULA=1 ./run.sh train-demo",
+    "PHYRC_ACCEPT_EULA=1 ./run.sh policy-smoke --resolution 160 96",
+    "PHYRC_ACCEPT_EULA=1 ./run.sh train-demo --output /output/train-demo-warm"
+  ],
+  "limitations": [
+    "same host, not a fresh OS installation",
+    "lift behavior cloning, not full dressing learning or a success evaluator",
+    "GPU FEM settling is not bitwise reproducible",
+    "no loaded-grasp retention certification"
+  ]
+}
