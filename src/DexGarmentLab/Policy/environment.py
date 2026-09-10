@@ -90,7 +90,7 @@ class DressingEnv(gym.Env):
         self._source_dirty = None if self._source_dirty is None else self._source_dirty == '1'
         garment_sampler = Path(M.__file__).resolve().parents[1] / 'Env_Config/Garment/RandomSpawn.py'
         self._hashes['garment_random_spawn.py'] = hashlib.sha256(garment_sampler.read_bytes()).hexdigest()
-        for name in ('Human/RandomSpawn.py', 'Randomization.py'):
+        for name in ('Human/RandomSpawn.py', 'Randomization.py', 'Garment/SurfaceContactGuard.py'):
             source = garment_sampler.parents[1] / name
             self._hashes['Env_Config/' + name] = hashlib.sha256(source.read_bytes()).hexdigest()
         self._hashes['contract'] = hashlib.sha256(contract_path.read_bytes()).hexdigest()

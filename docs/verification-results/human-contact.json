@@ -1,0 +1,321 @@
+{
+  "passed": true,
+  "date": "2026-09-10",
+  "source_base_commit": "91107e237fd5b5fdce817ba446cc18725daf32fb",
+  "source_guard_sha256": "8bc067381e15aee3e5396350fc82885edd3215799607296b61031aa00df9951c",
+  "baseline_guard_sha256": "3059adfb7947c20bb7ec389dbbfb4e6a1043e3cbec97d9397d1ffc9a9fc69984",
+  "reported_run": {
+    "placement_replayed": true,
+    "exact_robot_input_trajectory_available": false,
+    "sole_cause_of_user_observation_confirmed": false
+  },
+  "before_fix_thin_tip": {
+    "start_cuts": 0,
+    "mid_cuts": 3,
+    "end_cuts": 0,
+    "accepted_all_the_way": true
+  },
+  "controls": {
+    "passed": true,
+    "polynomial_controls": 283,
+    "edge_controls": [
+      true,
+      false
+    ],
+    "thin_tip_controls": [
+      {
+        "graph": false,
+        "yaw_deg": 0,
+        "tilt_deg": 0,
+        "passed": true
+      },
+      {
+        "graph": false,
+        "yaw_deg": -30,
+        "tilt_deg": 20,
+        "passed": true
+      },
+      {
+        "graph": false,
+        "yaw_deg": 30,
+        "tilt_deg": -20,
+        "passed": true
+      },
+      {
+        "graph": false,
+        "yaw_deg": -26.88,
+        "tilt_deg": 0,
+        "passed": true
+      },
+      {
+        "graph": true,
+        "yaw_deg": 0,
+        "tilt_deg": 0,
+        "passed": true
+      },
+      {
+        "graph": true,
+        "yaw_deg": -30,
+        "tilt_deg": 20,
+        "passed": true
+      },
+      {
+        "graph": true,
+        "yaw_deg": 30,
+        "tilt_deg": -20,
+        "passed": true
+      },
+      {
+        "graph": true,
+        "yaw_deg": -26.88,
+        "tilt_deg": 0,
+        "passed": true
+      }
+    ],
+    "scope": "8mm triangle travel across a 2mm tip; tangential and free paths preserved"
+  },
+  "live_cases": [
+    {
+      "case": "recorded",
+      "passed": true,
+      "config": {
+        "speed": 1.2,
+        "post_reset": true,
+        "fixed": false,
+        "seed": 42,
+        "placement_slot": "/output/states_randomspawn_mesh4/slot_F1.npz",
+        "output": "/output/verification/human-contact-recorded.json"
+      },
+      "human_world": [
+        [
+          0.846011046229067,
+          -0.4288870350013676,
+          0.0,
+          0.0
+        ],
+        [
+          0.4288870350013676,
+          0.846011046229067,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.9485139846801757,
+          0.0
+        ],
+        [
+          -0.05923482399130975,
+          0.43698334736409683,
+          -0.3627831935882568,
+          0.9999999999999999
+        ]
+      ],
+      "sample_count": 1017,
+      "node_sweep_uncorrected": 0,
+      "visible_hand_coverage": {
+        "left": {
+          "visible_hand_vertices": 781,
+          "outside_sphere_vertices": 766,
+          "max_outside_m": 0.09192129195328175
+        },
+        "right": {
+          "visible_hand_vertices": 778,
+          "outside_sphere_vertices": 757,
+          "max_outside_m": 0.0849094655859012
+        }
+      },
+      "thin_tip_swept_face": {
+        "start_cuts": 0,
+        "mid_cuts": 3,
+        "end_cuts": 0,
+        "accepted_all_the_way": false
+      },
+      "source_guard_sha256": "8bc067381e15aee3e5396350fc82885edd3215799607296b61031aa00df9951c",
+      "elapsed_wall_s": 37.71724314498715,
+      "wrist_push": {
+        "calls": {
+          "pre": 180,
+          "post": 180,
+          "sweeps": 180,
+          "corrections": 135
+        },
+        "max_intersections": 0,
+        "elapsed_wall_s": 6.67479548000847,
+        "duration_sim_s": 0.75
+      }
+    },
+    {
+      "case": "recorded-fast",
+      "passed": true,
+      "config": {
+        "speed": 12.0,
+        "post_reset": false,
+        "fixed": false,
+        "seed": 42,
+        "placement_slot": "/output/states_randomspawn_mesh4/slot_F1.npz",
+        "output": "/output/verification/human-contact-recorded-fast.json"
+      },
+      "human_world": [
+        [
+          0.846011046229067,
+          -0.4288870350013676,
+          0.0,
+          0.0
+        ],
+        [
+          0.4288870350013676,
+          0.846011046229067,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.9485139846801757,
+          0.0
+        ],
+        [
+          -0.05923482399130975,
+          0.43698334736409683,
+          -0.3627831935882568,
+          0.9999999999999999
+        ]
+      ],
+      "sample_count": 1017,
+      "node_sweep_uncorrected": 0,
+      "visible_hand_coverage": {
+        "left": {
+          "visible_hand_vertices": 781,
+          "outside_sphere_vertices": 766,
+          "max_outside_m": 0.09192129195328175
+        },
+        "right": {
+          "visible_hand_vertices": 778,
+          "outside_sphere_vertices": 757,
+          "max_outside_m": 0.0849094655859012
+        }
+      },
+      "thin_tip_swept_face": {
+        "start_cuts": 0,
+        "mid_cuts": 3,
+        "end_cuts": 0,
+        "accepted_all_the_way": false
+      },
+      "source_guard_sha256": "8bc067381e15aee3e5396350fc82885edd3215799607296b61031aa00df9951c",
+      "elapsed_wall_s": 37.67813381500309,
+      "wrist_push": {
+        "calls": {
+          "pre": 180,
+          "post": 180,
+          "sweeps": 180,
+          "corrections": 177
+        },
+        "max_intersections": 0,
+        "elapsed_wall_s": 7.7602177989901975,
+        "duration_sim_s": 0.75
+      }
+    },
+    {
+      "case": "fixed-fast",
+      "passed": true,
+      "config": {
+        "speed": 12.0,
+        "post_reset": false,
+        "fixed": true,
+        "seed": 42,
+        "placement_slot": null,
+        "output": "/output/verification/human-contact-fixed-fast.json"
+      },
+      "human_world": [
+        [
+          0.9485139846801758,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.9485139846801758,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.9485139846801758,
+          0.0
+        ],
+        [
+          0.0,
+          0.44999998807907104,
+          -0.36278319358825684,
+          1.0
+        ]
+      ],
+      "sample_count": 1017,
+      "node_sweep_uncorrected": 0,
+      "visible_hand_coverage": {
+        "left": {
+          "visible_hand_vertices": 781,
+          "outside_sphere_vertices": 766,
+          "max_outside_m": 0.0919212919532822
+        },
+        "right": {
+          "visible_hand_vertices": 778,
+          "outside_sphere_vertices": 757,
+          "max_outside_m": 0.08490946558590169
+        }
+      },
+      "thin_tip_swept_face": {
+        "start_cuts": 0,
+        "mid_cuts": 3,
+        "end_cuts": 0,
+        "accepted_all_the_way": false
+      },
+      "source_guard_sha256": "8bc067381e15aee3e5396350fc82885edd3215799607296b61031aa00df9951c",
+      "elapsed_wall_s": 37.554877859016415,
+      "wrist_push": {
+        "calls": {
+          "pre": 180,
+          "post": 180,
+          "sweeps": 179,
+          "corrections": 177
+        },
+        "max_intersections": 0,
+        "elapsed_wall_s": 7.538546418014448,
+        "duration_sim_s": 0.75
+      }
+    }
+  ],
+  "unchanged_settings": {
+    "reference_commit": "104d6b0",
+    "arm_spread_deg": 10,
+    "arm_elevation_input_deg": 20,
+    "arm_length_scale": 1.0,
+    "garment_and_gripper_physics_source_unchanged": true,
+    "fixed_scene_fingerprints_exactly_equal": true
+  },
+  "teleop": {
+    "passed": true,
+    "save_load_max_position_error_m": 0.0,
+    "mismatched_placement_rejected": true,
+    "gripper_toggle": true
+  },
+  "policy": {
+    "passed": true,
+    "repeat_seed_q_max_abs": 0.0,
+    "repeat_seed_cloth_max_abs": 0.0015635490417480469,
+    "depth_probe_m": [
+      0.8999996185302734,
+      1.1999998092651367
+    ],
+    "elapsed_wall_s": 84.59450352602289
+  },
+  "limits": [
+    "Linear vertex trajectories within one step; coplanar motion uses existing endpoint/contact tests.",
+    "Velocity-driven full-shirt tests are not full native robot grasp or dressing trials.",
+    "Default wrist sphere proxies do not cover the full rendered fingers; this pre-existing distinction remains unchanged."
+  ]
+}

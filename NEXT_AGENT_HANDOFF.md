@@ -1,4 +1,59 @@
-# Latest: Optional fixed placement (randomization disabled)
+# Latest: Cloth triangle interval contact
+
+2026-09-10. User reported human arms/hands easily piercing the shirt in the
+last rotated teleop run, and asked whether arm pose/length, mannequin, garment
+or gripper settings had changed. Maintained checkout and branch remain
+`/home/seoyul/PhyRC_2027`, `feat/policy-learning-env`; base commit `91107e2`.
+
+- Compared with pre-randomization `104d6b0`: arm pose/length and physical/grasp
+  defaults are unchanged. The only changed module-level assignment was the
+  checkpoint folder. HandSphereColliders, NativeGrasp, Particle_Garment and
+  ContinuousClothControl source bytes are unchanged. Whole human/chair placement
+  and the shirt's selected box account for the intended scene differences.
+- Read the latest user F1 placement without writing slots: approximately -26.88
+  degrees yaw. Live probes found working pre/post callbacks, rotated guard data
+  and no residual endpoint cuts in wrist-directed velocity stress, including
+  after reset. The user's exact native-grasp input trajectory was not recorded.
+- Confirmed a distinct real defect: 8mm triangle motion over a 2mm tip passed
+  entirely through its interior between endpoint snapshots. Old node sweeps and
+  endpoint edge/face tests accepted it despite three mid-step intersections.
+  This defect predates randomization, so do not claim its introduction was caused
+  by the random sampler or that it definitively explains the user's entire run.
+- `SurfaceContactGuard.py` adds interval vertex/face and edge/edge checks for
+  linear per-step motion, with bounded cubic-root solving. Existing local repair
+  and final candidate rejection remain in place. No pose, length, proxy size,
+  friction, margin or gripper control changes were made to mask the issue.
+- Performance matters: run interval tests only after endpoint cuts are repaired;
+  reject candidates by swept bounds and Bernstein coefficient bounds first.
+  The initial unconditional implementation was far too slow and is not shipped.
+  Optimized recorded-scene probe was ~36.5s including startup (earlier ~36.0s).
+- `scripts/check_surface_contact.py` validates roots, edge crossings, thin-tip
+  tunnelling and permitted tangent/free movement in graph and ordinary paths.
+  `scripts/verify_human_contact.py` is a full-shirt velocity stress test, supports
+  seeded/fixed scenes and optional read-only human/chair slot placement replay.
+  It does not certify loaded native robot grasps. See docs/VERIFICATION.md and
+  docs/verification-results/human-contact.json for evidence and reproduction.
+- Existing visual fingers are NOT the default physical hands: sphere mode drops
+  finger collision triangles in favor of wrist spheres; rendered finger vertices
+  extend ~9cm past these proxies. Do not confuse this with collision-proxy
+  penetration or silently change the selected hand proxy. A question about
+  finger-shaped versus sphere-shaped display is pending; the user has so far
+  confirmed only that human arms/hands, not the robot, were involved.
+- Runtime must be prepared after source changes. Current startup/reset toggle
+  `--no-randomization` remains available; user data and the separate participant
+  checkout were preserved. Untracked docs/PhyRC_proposals.pdf is unrelated.
+- Current source was prepared and verified: recorded-pose contact after reset,
+  recorded/fixed high-speed stress, analytic GPU controls, teleop/checkpoint
+  regression and full RGB-D policy smoke passed. All three 180-step contact
+  runs had zero endpoint cuts. Policy repeat cloth error was 1.564mm. Runtime
+  guard bytes and measured guard source hashes match the maintained source.
+
+Prior sections below are historical; follow the latest user clarification when
+investigating any remaining reported visual/native-grasp penetration.
+
+---
+
+# Previous: Optional fixed placement (randomization disabled)
 
 2026-09-10. User requested an execution argument to restore the placement before
 human/chair and garment randomization, followed by handoff update, commit and

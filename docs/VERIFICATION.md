@@ -1,3 +1,62 @@
+# Continuous cloth face contact: 2026-09-10
+
+The reported run's F1 placement was read without loading or changing user
+cloth/robot slots. Its human yaw was approximately -26.88 degrees. Comparison
+with pre-randomization commit `104d6b0` found unchanged arm pose/length settings,
+garment physics, hand proxy construction and grasp control. Randomization changes
+the shared human/chair placement and the selected garment support box.
+
+A separate, reproducible contact defect was confirmed: an 8mm linear triangle
+movement across a 2mm thin tip had zero intersections at both endpoints, three
+intersections halfway through, and was entirely accepted by the old guard. Node
+rays plus endpoint edge/face tests missed intermediate triangle-interior motion.
+The defect also existed in fixed placement; the user's exact grasp trajectory
+was not recorded, so this is not proof of the sole cause of that particular run.
+
+- The guard now checks body-vertex/moving-face and body-edge/moving-edge
+  intersections over each linear per-step interval. It repairs or rejects an
+  unsafe candidate using the existing bounded loop. Garment openings and
+  visible geometry are unchanged; no material/friction/margin values were raised.
+- GPU controls passed 283 polynomial root cases, crossing/free edge controls,
+  and both ordinary and CUDA graph paths at zero yaw, -30/+20 degrees yaw/tilt,
+  +30/-20 degrees and -26.88 degrees yaw. Thin-tip crossings were blocked;
+  tangential and obstacle-free movements remained available.
+- Actual full-shirt stress tests force nodal velocity toward the wrist and
+  run production pre/post physics callbacks for 180 steps (0.75 simulated
+  seconds). These are contact tests, not a full robot grasp/dressing trial.
+  Recorded placement after reset at 1.2m/s, recorded placement at 12m/s stress,
+  and fixed placement at 12m/s each had zero endpoint intersections across all
+  180 steps, with 135/177/177 guard corrections. Push phases took 6.67/7.76/7.54s.
+- Prepared-runtime teleop regression passed with exact original scene
+  fingerprints, zero checkpoint restore error and mismatched placement rejection.
+  Full 256x256 RGB-D policy regression passed; repeat joint error was zero and
+  settled cloth error was 1.564mm. Schema checks and compilation passed.
+- Interval work runs only after endpoint repairs, with geometric and polynomial
+  bounds rejecting irrelevant candidates. An initial slow implementation was
+  replaced before delivery. The optimized recorded-placement run took about
+  36.5s including startup, comparable to the earlier 36.0s probe on this host.
+- Entirely coplanar motion still uses the existing contact/endpoint checks;
+  this is not a proof of all possible FEM trajectories or dressing success.
+
+There is also an existing visual/physical distinction: default `sphere` hand
+collision removes finger triangles and uses wrist spheres. Visible finger mesh
+vertices extend up to 91.9mm/84.9mm beyond those spheres. This predates
+randomization and was not silently resized by this patch. `STRETCH4_SHOW_COLLIDER=1`
+displays the actual collision proxy; visual-mesh mode displays the fingers too.
+Distinguish these display modes when reproducing apparent finger penetration.
+
+Evidence: [contact controls and live measurements](verification-results/human-contact.json).
+
+```bash
+PHYRC_ACCEPT_EULA=1 ./run.sh python /scripts/check_surface_contact.py
+PHYRC_ACCEPT_EULA=1 ./run.sh python /scripts/verify_human_contact.py --seed 42
+PHYRC_ACCEPT_EULA=1 ./run.sh python /scripts/verify_human_contact.py --fixed --speed 12
+# Optional read-only replay of the human/chair placement in a local user slot:
+PHYRC_ACCEPT_EULA=1 ./run.sh python /scripts/verify_human_contact.py --placement-slot /output/states_randomspawn_mesh4/slot_F1.npz --post-reset
+```
+
+---
+
 # Optional fixed placement: 2026-09-10
 
 - `./run.sh gui --no-randomization` (equivalently `STRETCH4_RANDOMIZE=0`)
