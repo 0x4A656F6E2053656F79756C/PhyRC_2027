@@ -1,3 +1,38 @@
+# Optional fixed placement: 2026-09-10
+
+- `./run.sh gui --no-randomization` (equivalently `STRETCH4_RANDOMIZE=0`)
+  disables both human/chair and garment placement randomization. The default
+  remains randomized. Learning commands accept the same launcher option.
+- CPU/USD tests passed 1,000 randomized assemblies and unchanged authored USD
+  in disabled mode, even with different seed settings. The garment test passed
+  10,000 random samples and fixed original-third-box selection for every seed.
+- Prepared-runtime GPU smoke with the disabling option and both spawn seeds
+  explicitly set passed. All 13 human/chair descendant transforms remained
+  exactly unchanged, and measured cloth positions were over box 3 (index 2).
+  All scene fingerprints, including the human pose, matched
+  `original-smoke.json` from before randomization. Robot movement, gripper
+  toggle, checkpoint restoration and mismatched-placement rejection passed.
+- GPU RGB-D policy smoke exercised reset seeds 42→43→42 in fixed mode, checking
+  unchanged human/chair transforms and garment placement across different seeds,
+  plus the existing sensor/action/reset/termination checks. Settled cloth errors
+  were 1.886mm across different seeds and 1.002mm on repeat seed; fixed placement
+  does not promise identical FEM settling trajectories.
+- Shell syntax, Python compilation and policy contract checks passed. This
+  option changes initial placement only; material/solver/shape settings and
+  existing explicit human/box configuration overrides remain active.
+
+Evidence: [fixed placement and regression measurements](verification-results/fixed-spawn.json).
+
+```bash
+python3 scripts/check_garment_spawn.py
+PHYRC_ACCEPT_EULA=1 ./run.sh cpu /scripts/check_random_spawn.py
+PHYRC_ACCEPT_EULA=1 HUMAN_SPAWN_SEED=42 STRETCH4_GARMENT_SPAWN_SEED=1 ./run.sh smoke --no-randomization
+python3 scripts/compare_reports.py docs/verification-results/original-smoke.json output/verification/smoke.json
+PHYRC_ACCEPT_EULA=1 ./run.sh policy-smoke --no-randomization
+```
+
+---
+
 # Random garment support: 2026-09-10
 
 - The blue shirt now selects uniformly among the four existing boxes at startup

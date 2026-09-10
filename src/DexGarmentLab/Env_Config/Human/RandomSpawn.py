@@ -3,6 +3,7 @@ import os
 
 import numpy as np
 from pxr import Gf, Usd, UsdGeom
+from Env_Config.Randomization import spawn_randomization_enabled
 
 
 def randomize_human_and_chair(stage, human_path):
@@ -13,6 +14,13 @@ def randomize_human_and_chair(stage, human_path):
     outer rigid transform preserves all existing local transforms and points.
     HUMAN_SPAWN_SEED optionally reproduces a placement for debugging.
     """
+    human = UsdGeom.Xformable(stage.GetPrimAtPath(human_path))
+    pivot = human.ComputeLocalToWorldTransform(Usd.TimeCode.Default()).ExtractTranslation()
+    if not spawn_randomization_enabled():
+        # Leave the authored assembly untouched, including its transform stack.
+        print('[Teleop] human/chair spawn: randomization disabled; original placement', flush=True)
+        return {"offset_m": [0.0, 0.0, 0.0], "yaw_deg": 0.0, "seed": None,
+                "pivot_m": list(pivot), "randomized": False}
     seed = os.environ.get("HUMAN_SPAWN_SEED")
     seed = np.random.SeedSequence().entropy if seed is None else int(seed)
     rng = np.random.default_rng(seed)
@@ -20,8 +28,6 @@ def randomize_human_and_chair(stage, human_path):
     azimuth = rng.uniform(0.0, 2.0 * np.pi)
     offset = np.array([radius * np.cos(azimuth), radius * np.sin(azimuth), 0.0])
     yaw = float(rng.uniform(-30.0, 30.0))
-    human = UsdGeom.Xformable(stage.GetPrimAtPath(human_path))
-    pivot = human.ComputeLocalToWorldTransform(Usd.TimeCode.Default()).ExtractTranslation()
     # USD uses row vectors: first subtract the shared pivot, then rotate,
     # then return to the pivot plus the sampled horizontal displacement.
     delta = (Gf.Matrix4d().SetTranslate(-pivot)
@@ -40,7 +46,7 @@ def randomize_human_and_chair(stage, human_path):
     print(f"[Teleop] human/chair spawn: offset=({offset[0]:+.5f}, {offset[1]:+.5f}) m, "
           f"radius={radius:.5f} m, yaw={yaw:.2f} deg, seed={seed}", flush=True)
     return {"offset_m": offset.tolist(), "yaw_deg": yaw, "seed": seed,
-            "pivot_m": list(pivot)}
+            "pivot_m": list(pivot), "randomized": True}
 
 
 def placement_snapshot(stage):

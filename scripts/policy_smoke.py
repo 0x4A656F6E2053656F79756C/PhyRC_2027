@@ -84,7 +84,20 @@ try:
 except RuntimeError:
     pass
 obs2, info2 = env.reset(seed=43)
-assert info2['state']['static'] != first_matrix
+if info['human_spawn']['randomized']:
+    assert info2['state']['static'] != first_matrix
+else:
+    assert info2['state']['static'] == first_matrix
+    for reset_info in (info, info2):
+        assert reset_info['human_spawn']['offset_m'] == [0, 0, 0]
+        assert reset_info['human_spawn']['yaw_deg'] == 0
+        assert reset_info['garment_spawn']['table_index'] == 2
+        assert reset_info['garment_spawn']['randomized'] is False
+    assert info2['garment_spawn'] == info['garment_spawn']
+    fixed_error = max(float((c.get_world_positions()-first).abs().max())
+                      for c, first in zip(env.cloths, first_cloth))
+    assert fixed_error < .005
+    report['different_seed_fixed_cloth_max_abs_m'] = fixed_error
 obs3, info3 = env.reset(seed=42)
 assert info3['state']['static'] == first_matrix
 assert not obs3['gripper_close_command'].any()

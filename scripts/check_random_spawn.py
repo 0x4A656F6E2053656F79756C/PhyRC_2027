@@ -9,6 +9,7 @@ from pxr import Gf, Usd, UsdGeom
 
 sys.path.insert(0, '/project/src/DexGarmentLab')
 from Env_Config.Human.RandomSpawn import randomize_human_and_chair, placement_snapshot, placement_matches
+os.environ['STRETCH4_RANDOMIZE'] = '1'
 
 
 def scene():
@@ -56,4 +57,13 @@ samples = np.asarray(samples)
 assert np.max(np.abs(samples[:, :2].mean(axis=0))) < 0.006
 assert abs(np.mean(np.sum(samples[:, :2] ** 2, axis=1)) - 0.005) < 0.0005
 assert np.all(np.histogram(samples[:, 2], bins=4, range=(-30, 30))[0] > 200)
+os.environ['STRETCH4_RANDOMIZE'] = '0'
+for seed in ('42', '43', 'unused-when-disabled'):
+    os.environ['HUMAN_SPAWN_SEED'] = seed
+    stage = scene()
+    authored = stage.GetRootLayer().ExportToString()
+    result = randomize_human_and_chair(stage, '/World/Human')
+    assert stage.GetRootLayer().ExportToString() == authored
+    assert result['offset_m'] == [0, 0, 0] and result['yaw_deg'] == 0
+    assert result['randomized'] is False and result['seed'] is None
 print('RANDOM-SPAWN-PASS: 1000 placements; disk/yaw distribution, height, rigid assembly, seeds and slot validation')

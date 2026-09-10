@@ -1,0 +1,180 @@
+{
+  "passed": true,
+  "date": "2026-09-10",
+  "source_base_commit": "a47b300fc6c2a5fddd470ea7b8d522d9526af601",
+  "scope": "Fixed original placement; real teleop and RGB-D policy regression on working changes before commit",
+  "launcher_argument": "--no-randomization",
+  "environment_equivalent": "STRETCH4_RANDOMIZE=0",
+  "cpu": {
+    "random_human_samples": 1000,
+    "disabled_human_authored_usd_unchanged": true,
+    "random_garment_samples": 10000,
+    "box_counts": [
+      2521,
+      2452,
+      2549,
+      2478
+    ],
+    "disabled_garment_original_box_for_all_seeds": true
+  },
+  "original_scene_exactly_equal": true,
+  "teleop": {
+    "passed": true,
+    "human_spawn": {
+      "offset_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "yaw_deg": 0.0,
+      "seed": null,
+      "pivot_m": [
+        0.0,
+        0.44999998807907104,
+        -0.36278319358825684
+      ],
+      "randomized": false,
+      "checked_descendants": 13,
+      "rigid_transform_max_error": 2.220446049250313e-16,
+      "local_mesh_points_unchanged": true
+    },
+    "garment_spawn": {
+      "observed_table_index": 2,
+      "seed": "1",
+      "table_bounds_min_world_m": [
+        0.6000000238418579,
+        -1.8208399713039398,
+        0.0
+      ],
+      "table_bounds_max_world_m": [
+        1.533120036125183,
+        -1.120999962091446,
+        0.5699999928474426
+      ],
+      "cloth_centroid_world_m": [
+        1.0508716106414795,
+        -1.5034798383712769,
+        0.7699382305145264
+      ],
+      "whole_cloth_inside_selected_table_xy": true,
+      "all_table_bounds_from_cube_geometry": [
+        [
+          [
+            -3.666240096092224,
+            -1.8208399713039398,
+            0.0
+          ],
+          [
+            -2.733120083808899,
+            -1.120999962091446,
+            0.5699999928474426
+          ]
+        ],
+        [
+          [
+            -1.533120036125183,
+            -1.8208399713039398,
+            0.0
+          ],
+          [
+            -0.6000000238418579,
+            -1.120999962091446,
+            0.5699999928474426
+          ]
+        ],
+        [
+          [
+            0.6000000238418579,
+            -1.8208399713039398,
+            0.0
+          ],
+          [
+            1.533120036125183,
+            -1.120999962091446,
+            0.5699999928474426
+          ]
+        ],
+        [
+          [
+            2.733120083808899,
+            -1.8208399713039398,
+            0.0
+          ],
+          [
+            3.666240096092224,
+            -1.120999962091446,
+            0.5699999928474426
+          ]
+        ]
+      ]
+    },
+    "save_load_max_position_error_m": 0.0,
+    "mismatched_placement_rejected": true,
+    "gripper_toggle": true,
+    "finite_cloth": true,
+    "requested_seed_note": "garment_spawn.seed is the requested override in the smoke measurement; fixed mode ignores it."
+  },
+  "policy": {
+    "passed": true,
+    "depth_probe_m": [
+      0.8999996185302734,
+      1.1999998092651367
+    ],
+    "lift_delta_m": 0.07965782284736633,
+    "repeat_seed_q_max_abs": 0.0,
+    "repeat_seed_cloth_max_abs": 0.0010020732879638672,
+    "different_seed_fixed_cloth_max_abs_m": 0.0018857717514038086,
+    "elapsed_wall_s": 84.34069038400776,
+    "human_spawn": {
+      "offset_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "yaw_deg": 0.0,
+      "seed": null,
+      "pivot_m": [
+        0.0,
+        0.44999998807907104,
+        -0.36278319358825684
+      ],
+      "randomized": false
+    },
+    "garment_spawn": {
+      "seed": null,
+      "randomized": false,
+      "table_index": 2,
+      "table_count": 4,
+      "table_prim_path": "/World/garment_table_2",
+      "table_center_world_m": [
+        1.06656,
+        -1.47092,
+        0.285
+      ],
+      "table_size_m": [
+        0.9331200000000002,
+        0.69984,
+        0.57
+      ],
+      "spawn_position_world_m": [
+        1.06656,
+        -1.47092,
+        0.77
+      ],
+      "clearance_m": 0.2
+    },
+    "source_sha256": {
+      "__init__.py": "71d223fb5d8acf29318a57b7363b233dd78a126632dbd26a9fa193eb2845cc4a",
+      "contract.py": "f8c3ddb105417c337dab04ad0a32f7235902fad28989cb7476c026c1d8d100ee",
+      "environment.py": "07da5b4645ca160da7d90bf5e1840e46ffeb9b5e6d98e90ca93b732a27ca0582",
+      "sensors.py": "f4612ebac14fff2cb081ac1892e7dd0384d57420fd895716d924425e4af661d4",
+      "state.py": "7f51612c66650070b0bea00b07495cc16059c8e29973a1764eaf3eb6e8a064f3",
+      "garment_random_spawn.py": "d72e453725e71d4f62e4db39408a9bce12eb638789099dd9ab5dd69fbd879683",
+      "Env_Config/Human/RandomSpawn.py": "e5f46e6e96eb52e3b021664c8982aebb3c3aa7b6efadbe4177d26667c6c3eebd",
+      "Env_Config/Randomization.py": "dafe6944f71dd937c59bff438120e411de1948169de4061ffe23a78bf45f8ee7",
+      "contract": "85991b966eb20a29e1ac36d86d188e11f89b021a06673f7f9924cda18f35ca6c",
+      "teleop": "6e55a8991875311f2048e8afbae15d64fbecd7b60bb99ef5115ef5acddd24cd6"
+    }
+  },
+  "limitations": "Fixed authored placement; GPU FEM settling need not be bitwise identical. Explicit scene configuration overrides still apply."
+}

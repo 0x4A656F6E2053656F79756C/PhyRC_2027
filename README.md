@@ -278,6 +278,22 @@ GUI의 `P`는 해당 실행의 초기 배치를 유지합니다.
 [네 박스의 동일 시각 스크린샷과 안정성 검증 보고서](docs/verification-results/garment-spawn.html)를
 브라우저에서 열어 비교할 수 있습니다.
 
+랜덤화 도입 전 배치로 고정하려면 다음처럼 실행하세요.
+
+```bash
+./run.sh gui --no-randomization
+# 렌더용 visual mesh로 표시하면서 고정 배치 사용
+STRETCH4_SHOW_COLLIDER=0 ./run.sh gui --no-randomization
+```
+
+사람·의자의 랜덤 이동·회전을 모두 끄고 티셔츠는 원래의 세 번째 박스 위에 둡니다.
+옵션을 생략하면 기존처럼 랜덤화합니다. `STRETCH4_RANDOMIZE=0 ./run.sh gui`도 동일하며,
+고정 모드에서는 스폰 시드를 무시합니다. `--no-randomization`은 명령 바로 뒤에 넣습니다.
+학습 실행에도 적용됩니다: `./run.sh train-demo --no-randomization` 또는
+`./run.sh python --no-randomization /project/your_script.py`.
+고정 모드의 `env.reset(seed=...)`도 시드와 관계없이 원래 배치를 유지합니다.
+이는 초기 배치 고정이며, 옷의 물리 시뮬레이션을 정지시키는 옵션은 아닙니다.
+
 ## 9. 저장, 복원, 녹화
 
 - `F1`은 **실행할 때마다 초기 상태로 덮어씁니다.** 장기 저장에 쓰지 마세요.

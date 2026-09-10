@@ -1,4 +1,57 @@
-# Latest: Random garment box and stability report
+# Latest: Optional fixed placement (randomization disabled)
+
+2026-09-10. User requested an execution argument to restore the placement before
+human/chair and garment randomization, followed by handoff update, commit and
+push. Maintained checkout: `/home/seoyul/PhyRC_2027`; branch:
+`feat/policy-learning-env`, tracking `origin/feat/policy-learning-env`.
+This change follows pushed handoff commit `a47b300`. The code, verification and
+this handoff are delivered together on the same branch; use `git log -1` for
+the delivery commit. No `main` merge is requested.
+
+```bash
+cd /home/seoyul/PhyRC_2027
+export PHYRC_ACCEPT_EULA=1
+./run.sh gui --no-randomization
+STRETCH4_SHOW_COLLIDER=0 ./run.sh gui --no-randomization
+# Omit the option for the default randomized scene:
+./run.sh gui
+# Learning scripts use the same switch, immediately after the command:
+./run.sh train-demo --no-randomization
+./run.sh python --no-randomization /project/your_script.py
+```
+
+- `STRETCH4_RANDOMIZE=0` is the equivalent environment setting; default is 1.
+  `Env_Config/Randomization.py` shares this switch between both spawn helpers.
+  Values other than 0/1 are rejected. The CLI switch overrides an enabled env.
+- Disabled mode leaves the authored human/chair transform stack untouched and
+  puts the blue shirt on the original third box (zero-based index 2). Explicit
+  human/box configuration overrides still apply; shapes and physics are unchanged.
+  All learning resets retain this placement regardless of episode seed. Episode
+  seed remains recorded, but spawn metadata has `seed=null`, `randomized=false`.
+  Randomized mode records `randomized=true` and keeps its previous seed streams.
+- Fixed placement does not freeze dynamics or guarantee bitwise GPU FEM repeatability.
+  Existing checkpoint placement validation stays enabled. Do not load randomized
+  human-placement slots into the fixed scene; the loader will reject them.
+- Runtime was prepared from maintained source. Read `docs/VERIFICATION.md` and
+  `docs/verification-results/fixed-spawn.json` for current checks and evidence.
+  No Docker image rebuild is needed. Edit `src/`, not generated `.runtime`.
+- CPU/USD checks and actual fixed-mode teleop/policy smoke passed. The teleop
+  scene exactly matches the original baseline including human pose. Policy
+  reset seeds 42→43→42 kept the fixed placement; settled cloth errors were
+  1.886mm across different seeds and 1.002mm on repeat seed. RGB-D, all action
+  channels, termination and checkpoint regression passed.
+- Participant checkout `/home/seoyul/PhyRC_2027_participant` remains clean at
+  `d4bd2c4`; these later randomization features have not been pulled there.
+  Preserve that checkout, user slots and ignored output/caches.
+- Unrelated untracked `docs/PhyRC_proposals.pdf` appeared during this task and
+  was left untouched; it is not part of the randomization-switch commit.
+
+The following sections are historical. Continue with the user's next patch,
+preserving the modular policy API and the current default randomization behavior.
+
+---
+
+# Previous: Random garment box and stability report
 
 2026-09-10. User requested uniform shirt spawn over the four existing boxes,
 actual randomization/support verification, an HTML report and a commit.

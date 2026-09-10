@@ -1,10 +1,12 @@
 """Offline uniform-box sampler and translation invariants."""
 import json
+import os
 from pathlib import Path
 import sys
 import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src/DexGarmentLab'))
 from Env_Config.Garment.RandomSpawn import sample_garment_spawn
+os.environ['STRETCH4_RANDOMIZE'] = '1'
 centers = np.array([[-3., -1., .3], [-1., -1., .3], [1., -1., .3], [3., -1., .3]])
 size = [1., .8, .6]
 counts = np.zeros(4, int)
@@ -32,4 +34,10 @@ for bad in ([], [[0, 0, float('nan')]], [[0, 0]]):
         raise AssertionError('Invalid table centers accepted')
     except ValueError:
         pass
-print('GARMENT-SPAWN-CPU-PASS ' + json.dumps({'samples':10000, 'box_counts':counts.tolist(), 'representative_seeds':representatives}))
+os.environ['STRETCH4_RANDOMIZE'] = '0'
+for seed in (None, 0, 42, 43):
+    sampled = sample_garment_spawn(centers, size, seed=seed)
+    assert sampled['table_index'] == 2 and sampled['randomized'] is False
+    assert sampled['seed'] is None
+    assert np.allclose(sampled['spawn_position_world_m'], centers[2] + [0, 0, .5])
+print('GARMENT-SPAWN-CPU-PASS ' + json.dumps({'samples':10000, 'box_counts':counts.tolist(), 'representative_seeds':representatives, 'disabled_original_box':True}))

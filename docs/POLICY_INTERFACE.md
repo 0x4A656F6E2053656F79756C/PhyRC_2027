@@ -181,6 +181,14 @@ GUI 실행의 옷 seed는 `STRETCH4_GARMENT_SPAWN_SEED`, 없으면
 변하지 않는다. GUI의 P는 해당 실행의 초기 박스를 유지하고 학습 reset은 다시 선택한다.
 기존 checkpoint는 옷의 실제 world-space 위치를 저장·복원하므로 계속 사용할 수 있다.
 
+`./run.sh python --no-randomization /project/your_script.py` 또는 실행 전
+`STRETCH4_RANDOMIZE=0`으로 사람·의자·옷 스폰 랜덤화를 함께 끈다. 이때 모든 reset은
+기존 사람·의자 배치(추가 이동·회전 0)와 원래 세 번째 박스를 사용하며, 스폰 seed는
+무시한다. `episode_seed`는 계속 기록하지만 두 spawn metadata의 `seed`는 `null`,
+`randomized`는 `false`이다. 기본 랜덤 모드에서는 `randomized=true`이다.
+관측/action shape와 물리 동작은 바뀌지 않는다. 같은 초기 배치라도 GPU FEM settling은
+bitwise 동일하지 않을 수 있다. 명시적 `HUMAN_*`, `BOX_*` 배치 설정은 그대로 적용된다.
+
 reset은 physics callback을 해제하고 native attachment를 제거한 뒤 물리 뷰를
 재생성한다. 초기 로봇/천 상태, 속도, 제어 의도와 이력을 초기화하고 새 배치의
 body contact guard를 다시 만든다. 기본 90 제어틱(1.5초)을 중립 상태로 진행한다.

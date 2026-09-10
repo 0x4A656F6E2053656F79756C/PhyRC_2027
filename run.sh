@@ -4,8 +4,18 @@ ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 cd "$ROOT"
 IMAGE=${PHYRC_IMAGE:-phyrc-2027:isaac-6.0.1}
 COMMAND=${1:-help}
+# Launcher option precedes any script-specific arguments.
+if [[ "${2:-}" == --no-randomization ]]; then
+    case "$COMMAND" in
+        gui|smoke|policy-smoke|train-demo|python)
+            export STRETCH4_RANDOMIZE=0
+            set -- "$1" "${@:3}";;
+        *) printf -- '--no-randomization requires a simulation command.\n' >&2; exit 2;;
+    esac
+fi
 if [[ "$COMMAND" == help ]]; then
     printf 'Usage: ./run.sh {doctor [--gpu] [--json]|build|prepare|gui|smoke|policy-smoke|train-demo [ARGS...]|python SCRIPT [ARGS...]|cpu SCRIPT [ARGS...]}\n'
+    printf 'Simulation commands accept --no-randomization immediately after the command (e.g. ./run.sh gui --no-randomization).\n'
     exit 0
 fi
 if [[ "$COMMAND" == doctor ]]; then

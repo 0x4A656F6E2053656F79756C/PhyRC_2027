@@ -41,6 +41,11 @@ def observed_spawn(stage, human_path):
     points = {str(p.GetPath()): np.asarray(UsdGeom.Mesh(p).GetPointsAttr().Get()).copy()
               for p in prims if p.IsA(UsdGeom.Mesh)}
     spawn = original_spawn(stage, human_path)
+    if not spawn['randomized']:
+        assert spawn['offset_m'] == [0, 0, 0] and spawn['yaw_deg'] == 0
+        for path, matrix in before.items():
+            assert np.array_equal(matrix, np.asarray(UsdGeom.Xformable(stage.GetPrimAtPath(path))
+                                  .ComputeLocalToWorldTransform(Usd.TimeCode.Default())))
     assert np.linalg.norm(spawn['offset_m'][:2]) <= 0.10
     assert spawn['offset_m'][2] == 0 and -30 <= spawn['yaw_deg'] <= 30
     after = {str(p.GetPath()): np.asarray(UsdGeom.Xformable(p)
@@ -121,6 +126,9 @@ def observed_save(key, cloths, rigs):
         assert np.allclose(centers, expected_centers, atol=1e-6)
         points = array(cloths[0].get_world_positions())[0]
         chosen = int(np.argmin(np.linalg.norm(centers[:,:2]-points.mean(0)[:2], axis=1)))
+        from Env_Config.Randomization import spawn_randomization_enabled
+        if not spawn_randomization_enabled():
+            assert chosen == 2, 'Fixed mode must restore the original third box'
         lo, hi = bounds[chosen]
         assert np.all(points.min(0)[:2] >= lo[:2]) and np.all(points.max(0)[:2] <= hi[:2]), (points.min(0), points.max(0), chosen, lo, hi, centers)
         assert points[:,2].min() >= hi[2] - .01
