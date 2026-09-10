@@ -1,0 +1,15 @@
+/cache/
+/.runtime/
+/output/
+/assets/downloads/
+/.venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+*.npz
+*.mp4
+*.log
+*.pem
+*.key
+.DS_Store

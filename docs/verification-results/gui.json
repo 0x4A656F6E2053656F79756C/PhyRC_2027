@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "robot1_lift_command_change_m": 0.23333333333333328,
+  "robot1_vs_robot2_joint_motion_difference": 0.16538141790459182,
+  "robot2_commands_unchanged": true,
+  "keyboard_save_F2": true,
+  "keyboard_save_F3": true,
+  "keyboard_load_F2_confirmed_in_log": true,
+  "escape_closed_application": true,
+  "visual_scene_inspected": true
+}

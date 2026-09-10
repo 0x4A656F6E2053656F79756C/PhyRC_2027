@@ -1,0 +1,17 @@
+{
+  "Assets/Garment/Tops/Modelink/t_shirt.usd": {
+    "max_vertex_difference_m": 0.0,
+    "meshes": 1,
+    "passed": true
+  },
+  "Assets/Garment/Tops/Modelink/t_shirt_short.usd": {
+    "max_vertex_difference_m": 0.0,
+    "meshes": 1,
+    "passed": true
+  },
+  "Assets/Human/Mesh/manikin_exports/female2_c4-c5.usd": {
+    "max_vertex_difference_m": 0.0,
+    "meshes": 1,
+    "passed": true
+  }
+}
