@@ -1,4 +1,50 @@
-# Latest: Home-directory working clone and final verification
+# Latest: Random human/chair placement
+
+2026-09-10. Working branch: `feat/random-human-chair-spawn`, based on `104d6b0`.
+GitHub SSH read access was verified with `git ls-remote`; local and remote
+`main` both pointed to `104d6b03f78a2284d626d502328bcc1d037027b9` before edits.
+The user approved this change for a local Git commit. No push has been requested.
+
+- Default launches sample uniformly inside a 0.10 m XY disk around the existing
+  human root (default X=0, Y=0.45), plus a uniform yaw from -30 to +30 degrees
+  relative to the original facing direction (narrowed at the user's request).
+- `Env_Config/Human/RandomSpawn.py` applies one identical outer rigid transform
+  to `/World/Human` and `/World/Chair`, pivoting around the original human root.
+  It runs after pose baking, chair fitting, head rounding and collider creation,
+  before physics initialization and world-space contact-cache construction.
+  Local points, existing transforms, scale, height and human/chair relationship
+  are preserved. Do not move randomization ahead of the geometry fitting code.
+- Fresh entropy is used each launch; `HUMAN_SPAWN_SEED=<integer>` reproduces a
+  placement. The effective seed is logged, including automatically chosen seeds.
+  `P` preserves this run's placement.
+- Default slots now use `output/states_randomspawn_mesh4` (or
+  `states_randomspawn` with refinement disabled). Previous folders are preserved.
+  Slots record human/chair world transforms. Loads reject mismatched placement
+  or legacy slots without placement data before modifying simulation state.
+  Cross-launch reuse requires the same seed/configuration; this avoids loading
+  world-space cloth coordinates against a different static contact surface.
+- Prepared `.runtime` from maintained source. CPU/USD checks passed for 1,000
+  placements, distribution, rigid assembly, seed behavior and slot validation.
+  GPU smoke passed with 13 descendants transformed together, exactly unchanged
+  mesh points, zero-error checkpoint restoration and mismatched-slot rejection.
+  All old scene report fields except the intended human world pose exactly
+  match `original-smoke.json`.
+- The earlier full-turn version's GUI visually verified the rotated whole body seated on the intact chair;
+  isolated F1/F2 matrices confirmed `P` retains both human/chair placements.
+  Escape closed the test session. Compact evidence is in
+  `docs/verification-results/random-spawn.json`; screenshots and temporary slots
+  are under ignored `output/verification/`. Logs:
+  `/tmp/phyrc-randomspawn-{prepare,smoke,gui}.log`.
+- Current +/-30-degree visual-mesh GUI verification also passed five fresh
+  random placements, with yaw -27.667, +11.793, +19.699, +25.442, -18.965 degrees.
+  All camera snapshots match, offsets stay within 10 cm, and screenshots were
+  captured at ready +5.004..5.005 seconds. Run 5 was recaptured with its exact
+  original seed after desktop-window occlusion; this was not a new random draw.
+  Local gallery: `output/verification/randomspawn-five-runs/comparison.html`.
+
+---
+
+# Previous: Home-directory working clone and final verification
 
 2026-09-10. The maintained working checkout is now `~/PhyRC_2027`.
 Use this checkout for future source/configuration changes and Git commits.

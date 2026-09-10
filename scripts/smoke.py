@@ -24,6 +24,36 @@ context = {'stop': False}
 original_save = M.save_state_slot
 original_drive = M.drive_robot
 original_running = M.simulation_app.is_running
+original_spawn = M.randomize_human_and_chair
+
+
+def observed_spawn(stage, human_path):
+    # Inspect the real posed meshes and all chair/hand-collider descendants.
+    roots = [stage.GetPrimAtPath(p) for p in (human_path, '/World/Chair')]
+    prims = [p for root in roots if root
+             for p in Usd.PrimRange(root, Usd.TraverseInstanceProxies())
+             if UsdGeom.Xformable(p)]
+    before = {str(p.GetPath()): np.asarray(UsdGeom.Xformable(p)
+              .ComputeLocalToWorldTransform(Usd.TimeCode.Default())) for p in prims}
+    points = {str(p.GetPath()): np.asarray(UsdGeom.Mesh(p).GetPointsAttr().Get()).copy()
+              for p in prims if p.IsA(UsdGeom.Mesh)}
+    spawn = original_spawn(stage, human_path)
+    assert np.linalg.norm(spawn['offset_m'][:2]) <= 0.10
+    assert spawn['offset_m'][2] == 0 and -30 <= spawn['yaw_deg'] <= 30
+    after = {str(p.GetPath()): np.asarray(UsdGeom.Xformable(p)
+             .ComputeLocalToWorldTransform(Usd.TimeCode.Default())) for p in prims}
+    delta = np.linalg.inv(before[human_path]) @ after[human_path]
+    error = max(float(np.max(np.abs(before[path] @ delta - after[path])))
+                for path in before)
+    assert error < 1e-8, f'Human/chair descendants did not move together: {error}'
+    assert np.allclose(delta[:3, :3] @ delta[:3, :3].T, np.eye(3), atol=1e-10)
+    assert np.isclose(np.linalg.det(delta[:3, :3]), 1.0)
+    for path, original in points.items():
+        assert np.array_equal(original, UsdGeom.Mesh(stage.GetPrimAtPath(path)).GetPointsAttr().Get())
+    assert np.allclose(after[human_path][3, :3] - before[human_path][3, :3], spawn['offset_m'])
+    report['human_spawn'] = dict(spawn, checked_descendants=len(prims),
+                                rigid_transform_max_error=error, local_mesh_points_unchanged=True)
+    return spawn
 
 
 def array(value):
@@ -97,6 +127,14 @@ def observed_drive(rig, keymap, held, cloths, dt, frame):
         rigs = context['rigs']
         assert original_save('F2', cloths, rigs), 'Save failed'
         before = [array(c.get_world_positions()) for c in cloths]
+        # A checkpoint from another random placement must not modify the scene.
+        with np.load(M._state_slot_path('F2')) as saved:
+            mismatched = {key: saved[key].copy() for key in saved.files}
+        mismatched['placement_human'][3, 0] += 0.01
+        np.savez_compressed(M._state_slot_path('F3'), **mismatched)
+        assert not M.load_state_slot('F3', cloths, rigs), 'Mismatched placement was accepted'
+        assert all(np.array_equal(array(c.get_world_positions()), p) for c, p in zip(cloths, before))
+        report['mismatched_placement_rejected'] = True
         for cloth in cloths:
             positions = cloth.get_world_positions().clone()
             positions[..., 0] += 0.001
@@ -119,6 +157,7 @@ def observed_drive(rig, keymap, held, cloths, dt, frame):
 
 
 M.save_state_slot = observed_save
+M.randomize_human_and_chair = observed_spawn
 M.drive_robot = observed_drive
 M.simulation_app.is_running = lambda: not context['stop'] and original_running()
 try:

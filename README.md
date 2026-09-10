@@ -258,6 +258,13 @@ GUI 첫 실행에서도 `Physics Tasks` 준비 화면에 몇 분 머무를 수 �
 `STRETCH4_SHOW_COLLIDER=0 ./run.sh gui`로 충돌 메시 표시 없이 볼 수 있습니다.
 기본값 `1`은 기존 작업의 collision 시각화 모드입니다. 렌더용 메시와 충돌 메시 모두 뒤통수 수정이 적용됩니다.
 
+실행할 때마다 사람과 의자는 기존 사람 위치(기본 X=0, Y=0.45m)를 중심으로
+반경 **10cm 원 내부에서 균일하게** 위치를 뽑고, 기존 방향 기준 수직축 회전각을 **-30°~+30°**에서
+무작위로 정합니다. 몸 전체·충돌체·의자에 같은 이동과 회전을 적용하므로 자세,
+형상, 크기, 바닥 높이와 사람·의자의 상대 배치는 유지됩니다. `P`는 해당 실행의
+초기 배치로 돌아갑니다. 특정 배치를 재현하려면 `HUMAN_SPAWN_SEED=42 ./run.sh gui`처럼
+시드를 지정하세요. 자동 생성한 시드도 시작 로그의 `human/chair spawn`에 표시됩니다.
+
 ## 9. 저장, 복원, 녹화
 
 - `F1`은 **실행할 때마다 초기 상태로 덮어씁니다.** 장기 저장에 쓰지 마세요.
@@ -266,11 +273,12 @@ GUI 첫 실행에서도 `Physics Tasks` 준비 화면에 몇 분 머무를 수 �
 - `F12` 두 번: 슬롯 전체 삭제입니다. 복구 기능이 없으므로 주의하세요.
 - `P`: 현재 실행의 시작 상태로 초기화합니다.
 - `F9` / `F10`: 녹화 시작 / 종료. 영상은 `output/recordings/`에 남습니다.
-- 기본 슬롯은 `output/states_shortheight_roundhead_mesh4/`입니다. `output/`은 Git에 들어가지 않으므로 따로 백업하세요.
+- 기본 슬롯은 `output/states_randomspawn_mesh4/`입니다. 기존 슬롯 폴더는 보존됩니다. `output/`은 Git에 들어가지 않으므로 따로 백업하세요.
+- 슬롯은 사람·의자 배치가 같은 경우에만 불러옵니다. 다른 실행의 슬롯을 재사용하려면 저장 당시의 `HUMAN_SPAWN_SEED`와 같은 설정으로 실행하세요. 배치 정보가 없는 이전 버전 슬롯은 불러오지 않습니다.
 
 ```bash
-# 저장해 둔 F2에서 시작
-STRETCH4_LOAD_SLOT=F2 ./run.sh gui
+# 시드 42로 실행하며 저장해 둔 F2에서 시작
+HUMAN_SPAWN_SEED=42 STRETCH4_LOAD_SLOT=F2 ./run.sh gui
 # 다른 실험의 저장 슬롯과 분리
 STRETCH4_STATE_DIR=/output/my_experiment ./run.sh gui
 ```

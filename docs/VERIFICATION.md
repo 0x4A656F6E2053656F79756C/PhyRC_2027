@@ -1,3 +1,34 @@
+# Random human/chair spawn verification: 2026-09-10
+
+- `./run.sh cpu /scripts/check_random_spawn.py`: 1,000 placements passed
+  disk bounds/distribution, -30 to +30 degree yaw coverage, unchanged height, shared
+  rigid transformation (including nonuniformly scaled input), reproducible
+  seeds, fresh default entropy and checkpoint placement validation.
+- `./run.sh smoke`: real GPU main loop passed. All 13 human/chair transformable
+  descendants moved together, with maximum transform error below 1e-8 and exactly
+  unchanged local mesh points. Sampled placement persisted after initialization.
+- Geometry, rounded-head hashes, collision mesh, materials, robot initial poses
+  and solver settings exactly match the migration baseline. Human world pose is
+  intentionally different; the old full-pose `compare_reports.py` comparison
+  therefore does not apply between a random run and the migration baseline.
+- Two-robot unloaded motion, gripper toggle, finite cloth and checkpoint
+  save/perturb/load passed with zero position error. A different placement's
+  checkpoint was rejected without modifying cloth positions.
+- Local GUI of the earlier full-turn version showed a second random placement with the whole body rotated and
+  seated on the intact chair. Isolated F1/F2 transform snapshots confirmed `P`
+  preserves the human/chair placement; Escape closed the session.
+- Current +/-30-degree visual-mesh GUI: five independent sampled placements
+  produced three positive and two negative yaw angles. All five camera snapshots
+  matched and screenshot timing was ready +5.004..5.005 seconds. The fifth
+  placement was recaptured with the same seed after another desktop window
+  obscured the screenshot. Raw images/gallery remain in ignored
+  `output/verification/randomspawn-five-runs/`; compact metadata is in the report.
+
+Evidence: [random spawn GPU report](verification-results/random-spawn.json).
+The migration results below describe the earlier fixed-placement version.
+
+---
+
 # Migration verification: 2026-09-10
 
 Status: **installation and teleop smoke verification passed**.

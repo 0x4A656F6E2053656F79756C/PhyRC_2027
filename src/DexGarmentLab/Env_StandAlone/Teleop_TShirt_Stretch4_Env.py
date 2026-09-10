@@ -98,6 +98,8 @@ sys.path.append(os.getcwd())
 from Env_StandAlone.BaseEnv import BaseEnv
 from Env_Config.Garment.Particle_Garment import Particle_Garment, SurfaceClothPrim
 from Env_Config.Human.Human import Human
+from Env_Config.Human.RandomSpawn import (
+    randomize_human_and_chair, placement_snapshot, placement_matches)
 
 from isaacsim.core.prims import SingleArticulation
 from isaacsim.core.utils.types import ArticulationAction
@@ -1174,7 +1176,7 @@ RESET_KEY = "P"
 # scripts/probe_camstate.py rather than assumed.
 STATE_SLOT_KEYS = ("F1", "F2", "F3", "F4", "F5")
 STATE_CLEAR_KEY = "F12"
-STATE_DIR = os.environ.get("STRETCH4_STATE_DIR", "/output/states_shortheight_roundhead_mesh4" if int(os.environ.get("STRETCH4_MESH_REFINEMENT", "1")) else "/output/states_shortheight_roundhead")
+STATE_DIR = os.environ.get("STRETCH4_STATE_DIR", "/output/states_randomspawn_mesh4" if int(os.environ.get("STRETCH4_MESH_REFINEMENT", "1")) else "/output/states_randomspawn")
 # One key that throws away every checkpoint in the session is worth a
 # confirmation. ~3s at 60fps, and the arming lapses if it isn't answered.
 STATE_CLEAR_CONFIRM_FRAMES = 180
@@ -1376,6 +1378,7 @@ def save_state_slot(key, garment_cloths, rigs):
         "n_garments": np.array(len(garment_cloths)),
         "n_rigs": np.array(len(rigs)),
     }
+    payload.update(placement_snapshot(garment_cloths[0].prim.GetStage()))
     for i, cloth in enumerate(garment_cloths):
         payload[f"g{i}_pos"] = _to_np(cloth.get_world_positions())[0].astype(np.float32)
         payload[f"g{i}_vel"] = _to_np(cloth.get_velocities())[0].astype(np.float32)
@@ -1441,6 +1444,11 @@ def load_state_slot(key, garment_cloths, rigs):
         return False
 
     with data:
+        if not placement_matches(garment_cloths[0].prim.GetStage(), data):
+            print(f"[Teleop] {key} NOT loaded: human/chair placement differs from this run. "
+                  "Use a slot from this run or restart with the same HUMAN_SPAWN_SEED. "
+                  "The saved file has been preserved.", flush=True)
+            return False
         # Swept contact requires a non-intersecting starting surface. Older
         # checkpoints can already contain an arm through a triangle interior.
         # Validate ALL shirts before mutating any cloth or robot state.
@@ -2836,6 +2844,8 @@ class TeleopTShirtStretch4_Env(BaseEnv):
                 _contact = _ContactSchema.PhysxCollisionAPI.Apply(_shape)
                 _contact.CreateContactOffsetAttr().Set(_feel("HUMAN_CONTACT_OFFSET", 0.006))
                 _contact.CreateRestOffsetAttr().Set(_feel("HUMAN_REST_OFFSET", 0.001))
+
+        self.human_spawn = randomize_human_and_chair(self.stage, self.human.prim_path)
 
         SimulationManager.set_physics_sim_device("cuda:0")
         SimulationManager.set_backend("torch")
