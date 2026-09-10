@@ -1,3 +1,20 @@
+# Latest: environment-aware setup and safe re-cloning
+
+2026-09-10. The user chose to keep this handoff in Git. It is maintenance
+documentation, not an installation/runtime dependency.
+
+- README now starts with an existing-environment decision table. Keep supported working OS/driver/Docker installations; resolve only missing or failing components. Non-reference driver versions are not automatically rejected.
+- `scripts/doctor.py` replaces the former information-only shell block. Results are PASS/MISSING/FAIL/CHECK with README anchors; exit codes0/1/2 mean prechecks passed, missing/problem, additional checks needed.
+- `./run.sh doctor` never installs packages, pulls images, modifies host configuration or restarts Docker. `--json` prints structured results without creating a report file.
+- `--gpu` requires explicit NVIDIA license acceptance and an existing local project image. It runs a time-limited NVML probe in a uniquely named temporary container and cleans up only that container. This is not a Vulkan/PhysX compatibility certificate; use smoke for that.
+- The current release still targets x86_64 Linux with documented Ubuntu22.04/24.04 support. Other Linux releases are CHECK, native Windows/macOS and other architectures FAIL for this launcher. RTX/VRAM matching is only a preliminary screen, not a GPU model/performance certificate.
+- The user wants to verify restoration from GitHub. The existing working folder and ignored user data will be preserved; a separate GitHub clone at `~/Documents/PhyRC_2027_clone_check` is used rather than deleting the current repository first. Final clone verification results will be recorded after execution.
+- A folder deletion does not delete GitHub or Docker's external image store. It DOES delete ignored slots/videos and uncommitted files in that folder. Review those separately and confirm pushed commits before removing a working copy.
+
+The migration baseline and physical runtime below remain unchanged.
+
+---
+
 # PhyRC_2027 maintenance handoff
 
 2026-09-10: minimal standalone migration and installation/teleop verification
