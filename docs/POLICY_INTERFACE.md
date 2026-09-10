@@ -171,6 +171,15 @@ physics Hz를 바꾸려면 60의 정수배여야 한다. wall-clock 실행 속�
 `reset(seed=42)`는 seed 42의 배치를 직접 재현한다. `seed=None`은 Gym RNG에서
 다음 seed를 뽑고 info에 기록한다. human 중심 반지름 10cm 원판과 yaw −30~+30도에서
 human과 chair를 하나의 강체 변환으로 함께 배치한다. 누적 회전·이동을 하지 않는다.
+같은 episode seed의 별도 RNG stream에서 네 박스 중 하나를 균등하게 고르고
+티셔츠를 그 상판 중심 위에 둔다. 옷의 방향·모양·기존 0.2m 스폰 여유 높이는
+유지하며, 박스 안의 추가 XY jitter는 넣지 않는다. `info['garment_spawn']`에
+선택한 0-based table index, prim path, seed, 박스 크기와 스폰 위치를 기록한다.
+매 reset은 고정 초기 옷 템플릿에서 새 박스까지의 평행이동을 다시 계산한다.
+GUI 실행의 옷 seed는 `STRETCH4_GARMENT_SPAWN_SEED`, 없으면
+`HUMAN_SPAWN_SEED`, 둘 다 없으면 새 난수 seed를 쓴다. 사람의 기존 seed 결과는
+변하지 않는다. GUI의 P는 해당 실행의 초기 박스를 유지하고 학습 reset은 다시 선택한다.
+기존 checkpoint는 옷의 실제 world-space 위치를 저장·복원하므로 계속 사용할 수 있다.
 
 reset은 physics callback을 해제하고 native attachment를 제거한 뒤 물리 뷰를
 재생성한다. 초기 로봇/천 상태, 속도, 제어 의도와 이력을 초기화하고 새 배치의

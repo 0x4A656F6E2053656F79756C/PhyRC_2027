@@ -1,4 +1,44 @@
-# Latest: RGB-D sensors and Gymnasium learning adapter
+# Latest: Random garment box and stability report
+
+2026-09-10. User requested uniform shirt spawn over the four existing boxes,
+actual randomization/support verification, an HTML report and a commit.
+Branch remains `feat/policy-learning-env`, based on `d4bd2c4` for this change.
+
+- `Env_Config/Garment/RandomSpawn.py` is a pure sampler, shared by teleop startup
+  and `Policy/environment.py` reset. Only the blue shirt's translation changes;
+  shape, orientation, spawn clearance (0.2m above the tabletop) and physics stay
+  unchanged. GUI `P` retains the startup box; learning reset resamples.
+- Seed priority at startup: `STRETCH4_GARMENT_SPAWN_SEED`, `HUMAN_SPAWN_SEED`,
+  fresh entropy. Learning reset uses its episode seed. Domain separation keeps
+  the original human random stream unchanged. `info.garment_spawn` records the
+  selected zero-based box index, seed and placement. Observation/action shapes
+  remain schema 0.2.0. Reset translates immutable initial world-space cloth
+  nodes, never the previous episode's cloth, and clears velocities.
+- All four GPU episodes passed 20 seconds at 60Hz, with fixed camera snapshots
+  at 1.5/10/20 seconds. Maximum post-2s horizontal centroid drift 0.619mm;
+  minimum edge margin 46.14mm; no fall. There is small drift with the existing
+  zero-friction setting, so do not claim indefinite or exact zero sliding.
+- 10,000 CPU seeds: counts 2521/2452/2549/2478. GPU representative seeds
+  2/0/11/1 visit boxes 1/2/3/4; replay seed 2 differed by 1.181mm after settling.
+  Local mesh/topology stayed identical. Tests use the actual shared sampler.
+- Prepared runtime teleop smoke passed measured startup on box 4, original
+  scene fingerprints except human pose, checkpoint restore and mismatch rejection.
+  Full policy RGB-D/action/reset smoke also passed (repeat cloth error 0.987mm).
+- Isaac VisualCuboid authors already-scaled extent; BBoxCache applies the scale
+  again. The smoke validator derives actual cube corners from size plus world
+  transform instead. This is a measurement fix, not a geometry/physics patch.
+- `docs/verification-results/garment-spawn.html` embeds real rendered images,
+  time switching, zoom and plots; browser interaction checks passed. Compact
+  JSON includes CPU counts and teleop/policy regression results. Raw GPU PNGs,
+  traces and report remain under ignored `output/verification/garment-spawn/`.
+  Reproduction commands are in `docs/VERIFICATION.md`.
+- Runtime prepared; no image rebuild needed. The separate participant checkout
+  still contains the earlier learning-environment version; it was not changed.
+  Current task requests a local commit, not a push or main merge.
+
+---
+
+# Previous: RGB-D sensors and Gymnasium learning adapter
 
 2026-09-10. The user authorized the next stage: implement sensors and learning
 reset/step, validate and commit; also try quick training from a new GitHub clone.

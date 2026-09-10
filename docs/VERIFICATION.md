@@ -1,3 +1,48 @@
+# Random garment support: 2026-09-10
+
+- The blue shirt now selects uniformly among the four existing boxes at startup
+  and learning reset. The original shape, orientation, height above the selected
+  table, human random stream and physical parameters are unchanged.
+- CPU sampling over 10,000 seeds selected boxes 1–4 respectively 2521, 2452,
+  2549 and 2478 times. Seed replay and whole-mesh translation checks passed.
+- Actual GPU resets with seeds 2, 0, 11 and 1 exercised all four boxes for 20
+  simulated seconds each, with 1,200 measurements per box. Fixed-camera renders
+  at 1.5, 10 and 20 seconds are embedded in the standalone HTML report.
+- Every cloth vertex stayed within its selected tabletop XY footprint. Minimum
+  edge margin was 46.14mm; minimum height above the tabletop was about 5mm.
+  After the initial two seconds, maximum horizontal centroid movement was
+  0.619mm and vertical movement was under 0.04mm. No fall occurred in this
+  interval. Small drift exists; this is not an infinite-time no-slip guarantee.
+- Returning to seed 2 after visiting all boxes restored the same selected box;
+  settled cloth differed by at most 1.181mm. Local mesh/topology stayed identical.
+- Prepared-runtime teleop regression independently measured startup on box 4
+  (seed 1) from live USD cube geometry and PhysX cloth positions. Checkpoint
+  restoration error was zero; mismatched human placement was rejected. Scene
+  fingerprints matched the original baseline except the randomized human pose.
+- Full 256×256 RGB-D policy regression passed all action channels, reset and
+  termination. Calibration depths were 0.8999999/1.1999998m; repeated seed
+  joint error was zero and cloth error 0.987mm. HTML time switching and image
+  enlargement were tested in headless Chrome.
+
+Evidence: [interactive HTML](verification-results/garment-spawn.html),
+[compact measurements and regression results](verification-results/garment-spawn.json).
+Original PNG frames and 60Hz NPZ traces are in `output/verification/garment-spawn/`.
+Reproduce with:
+
+```bash
+python3 scripts/check_garment_spawn.py
+PHYRC_ACCEPT_EULA=1 ./run.sh python /scripts/verify_garment_spawn.py
+PHYRC_ACCEPT_EULA=1 HUMAN_SPAWN_SEED=42 STRETCH4_GARMENT_SPAWN_SEED=1 ./run.sh smoke
+PHYRC_ACCEPT_EULA=1 ./run.sh policy-smoke
+python3 scripts/build_garment_spawn_report.py --teleop-report output/verification/smoke.json --policy-report output/policy-smoke/report.json
+```
+
+The original zero-friction settings were retained. External disturbances, robot
+grasping and longer episodes are outside this support test. Runtime verification
+used the working changes on base commit `d4bd2c4`; source hashes are recorded.
+
+---
+
 # Learning environment and RGB-D: 2026-09-10
 
 - GPU integration passed three 256×256 RGB-D cameras and typed Gymnasium observations.

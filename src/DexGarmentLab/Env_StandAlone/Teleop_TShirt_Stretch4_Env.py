@@ -2245,9 +2245,14 @@ class TeleopTShirtStretch4_Env(BaseEnv):
         # per-instance color param, so each needs apply_visual_material +
         # set_color called on it individually anyway.
         self.garments = []
-        for (color_name, color), x_off in zip(GARMENT_COLORS.items(), GARMENT_X_OFFSETS):
-            # [scene: blue shirt only]
-            # Filter after pairing colours with their original positions.
+        from Env_Config.Garment.RandomSpawn import sample_garment_spawn
+        self.garment_table_centers = np.array([
+            [BOX_POS[0] + x, BOX_POS[1], BOX_POS[2]] for x in GARMENT_X_OFFSETS])
+        self.garment_spawn = sample_garment_spawn(self.garment_table_centers, BOX_SIZE)
+        print(f"[Teleop] garment spawn: table={self.garment_spawn['table_index'] + 1}/"
+              f"{len(self.tables)}, seed={self.garment_spawn['seed']}", flush=True)
+        for color_name, color in GARMENT_COLORS.items():
+            # Keep the single blue asset; only its support table changes.
             if color_name != "blue":
                 continue
             _usd = GARMENT_USD_BY_COLOR.get(color_name, TSHIRT_USD)
@@ -2265,7 +2270,7 @@ class TeleopTShirtStretch4_Env(BaseEnv):
                       f"+{GARMENT_YAW_BY_COLOR.get(color_name, 0.0)} "
                       f"offsets x{_gs} (particle {_pco:.4f} solid {_sro:.4f})",
                       flush=True)
-            pos = np.array([BOX_POS[0] + x_off, BOX_POS[1], BOX_TOP_Z + 0.2])
+            pos = np.array(self.garment_spawn['spawn_position_world_m'])
             g = Particle_Garment(
                 self.world,
                 pos=pos,

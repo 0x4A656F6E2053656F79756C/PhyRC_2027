@@ -394,7 +394,9 @@
       "camera_intrinsics",
       "camera_poses",
       "camera_timestamps",
-      "termination_reason"
+      "termination_reason",
+      "human_spawn",
+      "garment_spawn"
     ],
     "reward_and_success": "default reward zero and no success termination; replaceable evaluator(previous, action, next, info) returns reward, terminated, task_info"
   }

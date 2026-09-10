@@ -9,6 +9,8 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+from policy_cli import install_failure_handler
+install_failure_handler()
 
 output = Path('/output/verification')
 output.mkdir(parents=True, exist_ok=True)
@@ -16,7 +18,8 @@ os.environ['STRETCH4_STATE_DIR'] = tempfile.mkdtemp(prefix='smoke_states_', dir=
 sys.path.insert(0, '/workspace/DexGarmentLab')
 import numpy as np
 import Env_StandAlone.Teleop_TShirt_Stretch4_Env as M
-from pxr import Usd, UsdGeom
+from pxr import Gf, Usd, UsdGeom
+from itertools import product
 import omni.usd
 
 report = {'passed': False, 'scope': 'real main-loop startup, unloaded robot motion, gripper toggle, save/load'}
@@ -100,6 +103,38 @@ def observed_save(key, cloths, rigs):
             'human_transform': np.asarray(UsdGeom.Xformable(stage.GetPrimAtPath('/World/Human'))
                                          .ComputeLocalToWorldTransform(Usd.TimeCode.Default())).tolist(),
         }
+        # Check the chosen support using live USD box bounds and PhysX cloth
+        # positions. This also exercises the GUI/main-loop launch spawn path.
+        # Isaac VisualCuboid authors an extent already multiplied by scale;
+        # BBoxCache applies that scale again. Derive the real cube corners from
+        # its size and world transform instead of that display/culling extent.
+        bounds = []
+        for i in range(len(M.GARMENT_X_OFFSETS)):
+            cube = UsdGeom.Cube(stage.GetPrimAtPath(f'/World/garment_table_{i}'))
+            half = float(cube.GetSizeAttr().Get()) / 2
+            xf = cube.ComputeLocalToWorldTransform(Usd.TimeCode.Default())
+            corners = np.array([xf.Transform(Gf.Vec3d(*p)) for p in product((-half, half), repeat=3)])
+            bounds.append((corners.min(0), corners.max(0)))
+        centers = np.array([(lo+hi)/2 for lo,hi in bounds])
+        assert np.allclose([hi-lo for lo,hi in bounds], M.BOX_SIZE, atol=1e-6)
+        expected_centers = [[M.BOX_POS[0]+x, M.BOX_POS[1], M.BOX_POS[2]] for x in M.GARMENT_X_OFFSETS]
+        assert np.allclose(centers, expected_centers, atol=1e-6)
+        points = array(cloths[0].get_world_positions())[0]
+        chosen = int(np.argmin(np.linalg.norm(centers[:,:2]-points.mean(0)[:2], axis=1)))
+        lo, hi = bounds[chosen]
+        assert np.all(points.min(0)[:2] >= lo[:2]) and np.all(points.max(0)[:2] <= hi[:2]), (points.min(0), points.max(0), chosen, lo, hi, centers)
+        assert points[:,2].min() >= hi[2] - .01
+        seed = os.environ.get('STRETCH4_GARMENT_SPAWN_SEED', os.environ.get('HUMAN_SPAWN_SEED'))
+        if seed is not None:
+            from Env_Config.Garment.RandomSpawn import sample_garment_spawn
+            expected = sample_garment_spawn(centers, M.BOX_SIZE, seed=int(seed))
+            assert chosen == expected['table_index']
+        report['garment_spawn'] = {'observed_table_index': chosen, 'seed': seed,
+                                  'table_bounds_min_world_m': lo.tolist(),
+                                  'table_bounds_max_world_m': hi.tolist(),
+                                  'cloth_centroid_world_m': points.mean(0).tolist(),
+                                  'whole_cloth_inside_selected_table_xy': True,
+                                  'all_table_bounds_from_cube_geometry': [[lo.tolist(),hi.tolist()] for lo,hi in bounds]}
         context['initial_joints'] = [array(r['robot'].get_joint_positions()) for r in rigs]
         context['faces'] = [M.garment_face_labels(c.prim, array(c.get_world_positions())[0]) for c in cloths]
         assert report['scene']['vertices'] == 15946

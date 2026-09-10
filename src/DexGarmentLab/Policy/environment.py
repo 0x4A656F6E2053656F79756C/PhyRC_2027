@@ -60,6 +60,7 @@ class DressingEnv(gym.Env):
         self._initial_robots = [(array(r['robot'].get_world_pose()[0]), array(r['robot'].get_world_pose()[1]),
                                  array(r['robot'].get_joint_positions())) for r in self.rigs]
         self._initial_cloths = [array(c.get_world_positions()) for c in self.cloths]
+        self._initial_garment_spawn = deepcopy(self.backend.garment_spawn)
         self._toggles = [M.make_gripper_toggle(r, f'policy_robot_{i}', self.cloths, self.faces)
                          for i, r in enumerate(self.rigs)]
         self._runtime = {key: float(getattr(M, key)) for key in
@@ -87,6 +88,8 @@ class DressingEnv(gym.Env):
             self._source_commit = os.environ.get('PHYRC_SOURCE_COMMIT')
         self._source_dirty = os.environ.get('PHYRC_SOURCE_DIRTY')
         self._source_dirty = None if self._source_dirty is None else self._source_dirty == '1'
+        garment_sampler = Path(M.__file__).resolve().parents[1] / 'Env_Config/Garment/RandomSpawn.py'
+        self._hashes['garment_random_spawn.py'] = hashlib.sha256(garment_sampler.read_bytes()).hexdigest()
         self._hashes['contract'] = hashlib.sha256(contract_path.read_bytes()).hexdigest()
         self._hashes['teleop'] = hashlib.sha256(Path(M.__file__).read_bytes()).hexdigest()
         if profile == 'actor_rgbd':
@@ -165,12 +168,18 @@ class DressingEnv(gym.Env):
             robot.set_joint_positions(self.M._to_t(q))
             robot.set_joint_velocities(self.M._to_t(np.zeros_like(q)))
             robot._articulation_view.set_velocities(self.M._to_t(np.zeros((1, 6))))
-        for cloth, positions in zip(self.cloths, self._initial_cloths):
+        from Env_Config.Garment.RandomSpawn import sample_garment_spawn
+        self.garment_spawn = sample_garment_spawn(self.backend.garment_table_centers, self.M.BOX_SIZE, seed=self.episode_seed)
+        offset = (np.array(self.garment_spawn['spawn_position_world_m'])
+                  - np.array(self._initial_garment_spawn['spawn_position_world_m']))
+        reset_positions = [(p + offset).astype(np.float32) for p in self._initial_cloths]
+        self.backend.garment_spawn = deepcopy(self.garment_spawn)
+        for cloth, positions in zip(self.cloths, reset_positions):
             cloth.initialize()
             cloth.set_world_positions(positions.copy())
             cloth.set_velocities(np.zeros_like(positions))
         restore_error = max(float(np.max(np.abs(array(c.get_world_positions()) - p)))
-                            for c, p in zip(self.cloths, self._initial_cloths))
+                            for c, p in zip(self.cloths, reset_positions))
         if restore_error > 1e-7:
             raise RuntimeError(f'Cloth reset restore error: {restore_error} m')
         self.M.rebuild_contact_guards(self.backend, self.cloths)
@@ -208,6 +217,7 @@ class DressingEnv(gym.Env):
         validate_observation(observation, self.contract, robots=len(self.rigs), joints=len(meta['robots'][0]['joints']), profile=self.profile)
         info = {'schema_version': self.contract['schema_version'], 'episode_seed': self.episode_seed,
                 'episode_id': self._episode, 'step_id': self._step_id, 'human_spawn': deepcopy(self.spawn),
+                'garment_spawn': deepcopy(self.garment_spawn),
                 'episode_time_s': float(self.world.current_time) - self._start_time,
                 'resolved_config': deepcopy(self.contract), 'source_sha256': dict(self._hashes), 'source_commit': self._source_commit, 'source_is_dirty': self._source_dirty,
                 'environment_config': {'profile': self.profile, 'max_episode_steps': self.max_episode_steps,

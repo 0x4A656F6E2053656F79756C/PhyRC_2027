@@ -1,0 +1,370 @@
+{
+  "passed": true,
+  "status": "complete",
+  "episodes": [
+    {
+      "seed": 2,
+      "spawn": {
+        "seed": 2,
+        "table_index": 0,
+        "table_count": 4,
+        "table_prim_path": "/World/garment_table_0",
+        "table_center_world_m": [
+          -3.19968,
+          -1.47092,
+          0.285
+        ],
+        "table_size_m": [
+          0.9331200000000002,
+          0.69984,
+          0.57
+        ],
+        "spawn_position_world_m": [
+          -3.19968,
+          -1.47092,
+          0.77
+        ],
+        "clearance_m": 0.2
+      },
+      "pictures": {
+        "1.5": "box_1_01_5s.png",
+        "10": "box_1_10s.png",
+        "20": "box_1_end.png"
+      },
+      "samples": 1200,
+      "duration_s": 20.0,
+      "minimum_xy_edge_clearance_m": 0.04718606853485108,
+      "minimum_height_above_table_m": 0.004998736381530811,
+      "post_2s_centroid_drift_m": 0.0006189350446308795,
+      "post_2s_vertical_centroid_drift_m": 2.6941299438476562e-05,
+      "final_centroid_world_m": [
+        -3.215719699859619,
+        -1.503930926322937,
+        0.5793166756629944
+      ],
+      "passed": true
+    },
+    {
+      "seed": 0,
+      "spawn": {
+        "seed": 0,
+        "table_index": 1,
+        "table_count": 4,
+        "table_prim_path": "/World/garment_table_1",
+        "table_center_world_m": [
+          -1.06656,
+          -1.47092,
+          0.285
+        ],
+        "table_size_m": [
+          0.9331200000000002,
+          0.69984,
+          0.57
+        ],
+        "spawn_position_world_m": [
+          -1.06656,
+          -1.47092,
+          0.77
+        ],
+        "clearance_m": 0.2
+      },
+      "pictures": {
+        "1.5": "box_2_01_5s.png",
+        "10": "box_2_10s.png",
+        "20": "box_2_end.png"
+      },
+      "samples": 1200,
+      "duration_s": 20.0,
+      "minimum_xy_edge_clearance_m": 0.04693138488769533,
+      "minimum_height_above_table_m": 0.004998676776886035,
+      "post_2s_centroid_drift_m": 0.0004792742439033985,
+      "post_2s_vertical_centroid_drift_m": 2.1398067474365234e-05,
+      "final_centroid_world_m": [
+        -1.0819567441940308,
+        -1.5041192770004272,
+        0.5793218612670898
+      ],
+      "passed": true
+    },
+    {
+      "seed": 11,
+      "spawn": {
+        "seed": 11,
+        "table_index": 2,
+        "table_count": 4,
+        "table_prim_path": "/World/garment_table_2",
+        "table_center_world_m": [
+          1.06656,
+          -1.47092,
+          0.285
+        ],
+        "table_size_m": [
+          0.9331200000000002,
+          0.69984,
+          0.57
+        ],
+        "spawn_position_world_m": [
+          1.06656,
+          -1.47092,
+          0.77
+        ],
+        "clearance_m": 0.2
+      },
+      "pictures": {
+        "1.5": "box_3_01_5s.png",
+        "10": "box_3_10s.png",
+        "20": "box_3_end.png"
+      },
+      "samples": 1200,
+      "duration_s": 20.0,
+      "minimum_xy_edge_clearance_m": 0.04613828548431398,
+      "minimum_height_above_table_m": 0.004998378753662158,
+      "post_2s_centroid_drift_m": 0.0005675530739078222,
+      "post_2s_vertical_centroid_drift_m": 3.713369369506836e-05,
+      "final_centroid_world_m": [
+        1.0512053966522217,
+        -1.504250168800354,
+        0.5793190598487854
+      ],
+      "passed": true
+    },
+    {
+      "seed": 1,
+      "spawn": {
+        "seed": 1,
+        "table_index": 3,
+        "table_count": 4,
+        "table_prim_path": "/World/garment_table_3",
+        "table_center_world_m": [
+          3.19968,
+          -1.47092,
+          0.285
+        ],
+        "table_size_m": [
+          0.9331200000000002,
+          0.69984,
+          0.57
+        ],
+        "spawn_position_world_m": [
+          3.19968,
+          -1.47092,
+          0.77
+        ],
+        "clearance_m": 0.2
+      },
+      "pictures": {
+        "1.5": "box_4_01_5s.png",
+        "10": "box_4_10s.png",
+        "20": "box_4_end.png"
+      },
+      "samples": 1200,
+      "duration_s": 20.0,
+      "minimum_xy_edge_clearance_m": 0.04691915893554688,
+      "minimum_height_above_table_m": 0.004998676776886035,
+      "post_2s_centroid_drift_m": 0.0005257181028949944,
+      "post_2s_vertical_centroid_drift_m": 2.3424625396728516e-05,
+      "final_centroid_world_m": [
+        3.1838996410369873,
+        -1.5034940242767334,
+        0.579319417476654
+      ],
+      "passed": true
+    }
+  ],
+  "initial_launch": {
+    "seed": 2,
+    "table_index": 0,
+    "table_count": 4,
+    "table_prim_path": "/World/garment_table_0",
+    "table_center_world_m": [
+      -3.19968,
+      -1.47092,
+      0.285
+    ],
+    "table_size_m": [
+      0.9331200000000002,
+      0.69984,
+      0.57
+    ],
+    "spawn_position_world_m": [
+      -3.19968,
+      -1.47092,
+      0.77
+    ],
+    "clearance_m": 0.2
+  },
+  "seconds_per_episode": 20,
+  "capture_times_since_restore_s": [
+    1.5,
+    10,
+    20
+  ],
+  "thresholds": {
+    "post_2s_centroid_drift_m": 0.01,
+    "minimum_xy_edge_clearance_m": 0,
+    "minimum_height_above_table_m": -0.01,
+    "post_2s_vertical_centroid_drift_m": 0.01
+  },
+  "camera": {
+    "id": "box_verification",
+    "status": "implemented",
+    "resolution_from": "default_dimensions.width,height",
+    "mount": "world",
+    "eye_world_m": [
+      0,
+      -6,
+      5.5
+    ],
+    "target_world_m": [
+      0,
+      -0.9,
+      0.4
+    ],
+    "clip_m": [
+      0.05,
+      10.0
+    ],
+    "horizontal_fov_deg": 70
+  },
+  "source_commit": "d4bd2c4c42ca31d9a5d202a6c7bfe259301b29ba",
+  "source_sha256": {
+    "__init__.py": "71d223fb5d8acf29318a57b7363b233dd78a126632dbd26a9fa193eb2845cc4a",
+    "contract.py": "f8c3ddb105417c337dab04ad0a32f7235902fad28989cb7476c026c1d8d100ee",
+    "environment.py": "c678766ab5d063d574cfd77c5b450da15855f14a0b4104edb2bbef22ba2ea9ae",
+    "sensors.py": "f4612ebac14fff2cb081ac1892e7dd0384d57420fd895716d924425e4af661d4",
+    "state.py": "7f51612c66650070b0bea00b07495cc16059c8e29973a1764eaf3eb6e8a064f3",
+    "garment_random_spawn.py": "b86ed6aa3c9ff0bb2232c7e335c6fe6dc25cb7dc77b45ae2fc5a6cb5fb46dd3b",
+    "contract": "a6c3e205f9b0606b2bb10aa0ffa67abc28c00b2e5a5710c5fae9190d5a4406c9",
+    "teleop": "6e55a8991875311f2048e8afbae15d64fbecd7b60bb99ef5115ef5acddd24cd6"
+  },
+  "garment_local_points_sha256": "a107e58749fb128bf2a60f91cf6f69f196a48369c49a51509172e63162985462",
+  "topology_sha256": "1c99ecda894e5361a5eead6e210bbdae2da9d4ebc9fa9e79d21e8081d51673fa",
+  "repeat_seed_cloth_max_abs_m": 0.0011812448501586914,
+  "local_mesh_and_topology_unchanged": true,
+  "elapsed_wall_s": 524.7353530489781,
+  "teleop_regression": {
+    "passed": true,
+    "garment_spawn": {
+      "observed_table_index": 3,
+      "seed": "1",
+      "table_bounds_min_world_m": [
+        2.733120083808899,
+        -1.8208399713039398,
+        0.0
+      ],
+      "table_bounds_max_world_m": [
+        3.666240096092224,
+        -1.120999962091446,
+        0.5699999928474426
+      ],
+      "cloth_centroid_world_m": [
+        3.1839921474456787,
+        -1.5034806728363037,
+        0.7699397802352905
+      ],
+      "whole_cloth_inside_selected_table_xy": true,
+      "all_table_bounds_from_cube_geometry": [
+        [
+          [
+            -3.666240096092224,
+            -1.8208399713039398,
+            0.0
+          ],
+          [
+            -2.733120083808899,
+            -1.120999962091446,
+            0.5699999928474426
+          ]
+        ],
+        [
+          [
+            -1.533120036125183,
+            -1.8208399713039398,
+            0.0
+          ],
+          [
+            -0.6000000238418579,
+            -1.120999962091446,
+            0.5699999928474426
+          ]
+        ],
+        [
+          [
+            0.6000000238418579,
+            -1.8208399713039398,
+            0.0
+          ],
+          [
+            1.533120036125183,
+            -1.120999962091446,
+            0.5699999928474426
+          ]
+        ],
+        [
+          [
+            2.733120083808899,
+            -1.8208399713039398,
+            0.0
+          ],
+          [
+            3.666240096092224,
+            -1.120999962091446,
+            0.5699999928474426
+          ]
+        ]
+      ]
+    },
+    "save_load_max_position_error_m": 0.0,
+    "mismatched_placement_rejected": true
+  },
+  "policy_regression": {
+    "passed": true,
+    "depth_probe_m": [
+      0.8999998569488525,
+      1.1999998092651367
+    ],
+    "lift_delta_m": 0.07965782284736633,
+    "repeat_seed_q_max_abs": 0.0,
+    "repeat_seed_cloth_max_abs": 0.0009866952896118164,
+    "elapsed_wall_s": 87.74327919600182,
+    "garment_spawn": {
+      "seed": 42,
+      "table_index": 0,
+      "table_count": 4,
+      "table_prim_path": "/World/garment_table_0",
+      "table_center_world_m": [
+        -3.19968,
+        -1.47092,
+        0.285
+      ],
+      "table_size_m": [
+        0.9331200000000002,
+        0.69984,
+        0.57
+      ],
+      "spawn_position_world_m": [
+        -3.19968,
+        -1.47092,
+        0.77
+      ],
+      "clearance_m": 0.2
+    },
+    "source_sha256": {
+      "__init__.py": "71d223fb5d8acf29318a57b7363b233dd78a126632dbd26a9fa193eb2845cc4a",
+      "contract.py": "f8c3ddb105417c337dab04ad0a32f7235902fad28989cb7476c026c1d8d100ee",
+      "environment.py": "c678766ab5d063d574cfd77c5b450da15855f14a0b4104edb2bbef22ba2ea9ae",
+      "sensors.py": "f4612ebac14fff2cb081ac1892e7dd0384d57420fd895716d924425e4af661d4",
+      "state.py": "7f51612c66650070b0bea00b07495cc16059c8e29973a1764eaf3eb6e8a064f3",
+      "garment_random_spawn.py": "b86ed6aa3c9ff0bb2232c7e335c6fe6dc25cb7dc77b45ae2fc5a6cb5fb46dd3b",
+      "contract": "85991b966eb20a29e1ac36d86d188e11f89b021a06673f7f9924cda18f35ca6c",
+      "teleop": "6e55a8991875311f2048e8afbae15d64fbecd7b60bb99ef5115ef5acddd24cd6"
+    }
+  },
+  "cpu_random_samples": 10000,
+  "cpu_box_counts": [
+    2521,
+    2452,
+    2549,
+    2478
+  ]
+}
