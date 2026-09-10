@@ -9,8 +9,6 @@ import os
 from pathlib import Path
 import sys
 import tempfile
-from policy_cli import install_failure_handler
-install_failure_handler()
 
 output = Path('/output/verification')
 output.mkdir(parents=True, exist_ok=True)
@@ -18,8 +16,7 @@ os.environ['STRETCH4_STATE_DIR'] = tempfile.mkdtemp(prefix='smoke_states_', dir=
 sys.path.insert(0, '/workspace/DexGarmentLab')
 import numpy as np
 import Env_StandAlone.Teleop_TShirt_Stretch4_Env as M
-from pxr import Gf, Usd, UsdGeom
-from itertools import product
+from pxr import Usd, UsdGeom
 import omni.usd
 
 report = {'passed': False, 'scope': 'real main-loop startup, unloaded robot motion, gripper toggle, save/load'}
@@ -27,41 +24,6 @@ context = {'stop': False}
 original_save = M.save_state_slot
 original_drive = M.drive_robot
 original_running = M.simulation_app.is_running
-original_spawn = M.randomize_human_and_chair
-
-
-def observed_spawn(stage, human_path):
-    # Inspect the real posed meshes and all chair/hand-collider descendants.
-    roots = [stage.GetPrimAtPath(p) for p in (human_path, '/World/Chair')]
-    prims = [p for root in roots if root
-             for p in Usd.PrimRange(root, Usd.TraverseInstanceProxies())
-             if UsdGeom.Xformable(p)]
-    before = {str(p.GetPath()): np.asarray(UsdGeom.Xformable(p)
-              .ComputeLocalToWorldTransform(Usd.TimeCode.Default())) for p in prims}
-    points = {str(p.GetPath()): np.asarray(UsdGeom.Mesh(p).GetPointsAttr().Get()).copy()
-              for p in prims if p.IsA(UsdGeom.Mesh)}
-    spawn = original_spawn(stage, human_path)
-    if not spawn['randomized']:
-        assert spawn['offset_m'] == [0, 0, 0] and spawn['yaw_deg'] == 0
-        for path, matrix in before.items():
-            assert np.array_equal(matrix, np.asarray(UsdGeom.Xformable(stage.GetPrimAtPath(path))
-                                  .ComputeLocalToWorldTransform(Usd.TimeCode.Default())))
-    assert np.linalg.norm(spawn['offset_m'][:2]) <= 0.10
-    assert spawn['offset_m'][2] == 0 and -30 <= spawn['yaw_deg'] <= 30
-    after = {str(p.GetPath()): np.asarray(UsdGeom.Xformable(p)
-             .ComputeLocalToWorldTransform(Usd.TimeCode.Default())) for p in prims}
-    delta = np.linalg.inv(before[human_path]) @ after[human_path]
-    error = max(float(np.max(np.abs(before[path] @ delta - after[path])))
-                for path in before)
-    assert error < 1e-8, f'Human/chair descendants did not move together: {error}'
-    assert np.allclose(delta[:3, :3] @ delta[:3, :3].T, np.eye(3), atol=1e-10)
-    assert np.isclose(np.linalg.det(delta[:3, :3]), 1.0)
-    for path, original in points.items():
-        assert np.array_equal(original, UsdGeom.Mesh(stage.GetPrimAtPath(path)).GetPointsAttr().Get())
-    assert np.allclose(after[human_path][3, :3] - before[human_path][3, :3], spawn['offset_m'])
-    report['human_spawn'] = dict(spawn, checked_descendants=len(prims),
-                                rigid_transform_max_error=error, local_mesh_points_unchanged=True)
-    return spawn
 
 
 def array(value):
@@ -108,41 +70,6 @@ def observed_save(key, cloths, rigs):
             'human_transform': np.asarray(UsdGeom.Xformable(stage.GetPrimAtPath('/World/Human'))
                                          .ComputeLocalToWorldTransform(Usd.TimeCode.Default())).tolist(),
         }
-        # Check the chosen support using live USD box bounds and PhysX cloth
-        # positions. This also exercises the GUI/main-loop launch spawn path.
-        # Isaac VisualCuboid authors an extent already multiplied by scale;
-        # BBoxCache applies that scale again. Derive the real cube corners from
-        # its size and world transform instead of that display/culling extent.
-        bounds = []
-        for i in range(len(M.GARMENT_X_OFFSETS)):
-            cube = UsdGeom.Cube(stage.GetPrimAtPath(f'/World/garment_table_{i}'))
-            half = float(cube.GetSizeAttr().Get()) / 2
-            xf = cube.ComputeLocalToWorldTransform(Usd.TimeCode.Default())
-            corners = np.array([xf.Transform(Gf.Vec3d(*p)) for p in product((-half, half), repeat=3)])
-            bounds.append((corners.min(0), corners.max(0)))
-        centers = np.array([(lo+hi)/2 for lo,hi in bounds])
-        assert np.allclose([hi-lo for lo,hi in bounds], M.BOX_SIZE, atol=1e-6)
-        expected_centers = [[M.BOX_POS[0]+x, M.BOX_POS[1], M.BOX_POS[2]] for x in M.GARMENT_X_OFFSETS]
-        assert np.allclose(centers, expected_centers, atol=1e-6)
-        points = array(cloths[0].get_world_positions())[0]
-        chosen = int(np.argmin(np.linalg.norm(centers[:,:2]-points.mean(0)[:2], axis=1)))
-        from Env_Config.Randomization import spawn_randomization_enabled
-        if not spawn_randomization_enabled():
-            assert chosen == 2, 'Fixed mode must restore the original third box'
-        lo, hi = bounds[chosen]
-        assert np.all(points.min(0)[:2] >= lo[:2]) and np.all(points.max(0)[:2] <= hi[:2]), (points.min(0), points.max(0), chosen, lo, hi, centers)
-        assert points[:,2].min() >= hi[2] - .01
-        seed = os.environ.get('STRETCH4_GARMENT_SPAWN_SEED', os.environ.get('HUMAN_SPAWN_SEED'))
-        if seed is not None:
-            from Env_Config.Garment.RandomSpawn import sample_garment_spawn
-            expected = sample_garment_spawn(centers, M.BOX_SIZE, seed=int(seed))
-            assert chosen == expected['table_index']
-        report['garment_spawn'] = {'observed_table_index': chosen, 'seed': seed,
-                                  'table_bounds_min_world_m': lo.tolist(),
-                                  'table_bounds_max_world_m': hi.tolist(),
-                                  'cloth_centroid_world_m': points.mean(0).tolist(),
-                                  'whole_cloth_inside_selected_table_xy': True,
-                                  'all_table_bounds_from_cube_geometry': [[lo.tolist(),hi.tolist()] for lo,hi in bounds]}
         context['initial_joints'] = [array(r['robot'].get_joint_positions()) for r in rigs]
         context['faces'] = [M.garment_face_labels(c.prim, array(c.get_world_positions())[0]) for c in cloths]
         assert report['scene']['vertices'] == 15946
@@ -170,14 +97,6 @@ def observed_drive(rig, keymap, held, cloths, dt, frame):
         rigs = context['rigs']
         assert original_save('F2', cloths, rigs), 'Save failed'
         before = [array(c.get_world_positions()) for c in cloths]
-        # A checkpoint from another random placement must not modify the scene.
-        with np.load(M._state_slot_path('F2')) as saved:
-            mismatched = {key: saved[key].copy() for key in saved.files}
-        mismatched['placement_human'][3, 0] += 0.01
-        np.savez_compressed(M._state_slot_path('F3'), **mismatched)
-        assert not M.load_state_slot('F3', cloths, rigs), 'Mismatched placement was accepted'
-        assert all(np.array_equal(array(c.get_world_positions()), p) for c, p in zip(cloths, before))
-        report['mismatched_placement_rejected'] = True
         for cloth in cloths:
             positions = cloth.get_world_positions().clone()
             positions[..., 0] += 0.001
@@ -200,7 +119,6 @@ def observed_drive(rig, keymap, held, cloths, dt, frame):
 
 
 M.save_state_slot = observed_save
-M.randomize_human_and_chair = observed_spawn
 M.drive_robot = observed_drive
 M.simulation_app.is_running = lambda: not context['stop'] and original_running()
 try:

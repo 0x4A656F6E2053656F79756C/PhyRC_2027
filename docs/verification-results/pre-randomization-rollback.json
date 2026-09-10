@@ -1,0 +1,216 @@
+{
+  "passed": true,
+  "date": "2026-09-10",
+  "restored_baseline": "104d6b0",
+  "previous_head": "0ba8c25",
+  "backup_branch": "backup/pre-randomization-rollback-0ba8c25",
+  "baseline_source_and_runtime_byte_identical": true,
+  "source_sha256": {
+    "src/DexGarmentLab/Env_Config/Garment/ContinuousClothControl.py": "7c3f7e3ed6e8522b0991074f7b2b82d582c9bf31ffc26b03553cc6503a38aa80",
+    "src/DexGarmentLab/Env_Config/Garment/HumanClothFriction.py": "cbbdb0db381ed0b02277947c999a296d99852268ee1c9cd9422fc8d5d984a3fd",
+    "src/DexGarmentLab/Env_Config/Garment/NativeGrasp.py": "8309b0ffa9d33a239f0e95294184ad44647667775232868fa9fac981bad20e22",
+    "src/DexGarmentLab/Env_Config/Garment/Particle_Garment.py": "f09563009693c707e1689c27c052703d0310b96cdea5e4cddfa36cd59560b85a",
+    "src/DexGarmentLab/Env_Config/Garment/RefineSurfaceMesh.py": "0e87d029c9cca1c45bcf618cfea0b3f9c6661eb30c8bce0d706a7d66179a232f",
+    "src/DexGarmentLab/Env_Config/Garment/SurfaceContactGuard.py": "3059adfb7947c20bb7ec389dbbfb4e6a1043e3cbec97d9397d1ffc9a9fc69984",
+    "src/DexGarmentLab/Env_Config/Garment/ZeroSceneFriction.py": "f01d70e8fdf85eadb915d8a743266148935a4cc0404df1cbda48e82b049e397c",
+    "src/DexGarmentLab/Env_Config/Human/HandSphereColliders.py": "9ea325439749779979feca9b3f0c0f8f42b1cb4cc17c510143bb6aa4be72f690",
+    "src/DexGarmentLab/Env_Config/Human/Human.py": "f0de57050521702c3330d2c83427681e325ee1b97ab3430c094c078f04ca45fd",
+    "src/DexGarmentLab/Env_Config/Human/HumanContactMaterial.py": "04c190a9cf50c88714149f7d7991f6cbc5ce1dc7eb4e59112b8da6eee25eb686",
+    "src/DexGarmentLab/Env_Config/Human/RoundHead.py": "cfc208f335a36a1c2e5e7c314fc29e7cda09f1e1f3ffaadcab6fd45172fc48cd",
+    "src/DexGarmentLab/Env_Config/Utils_Project/Code_Tools.py": "156d457baedc299b378a72fcfd0d26b5afad53e75f095e756ecf2228bee8928c",
+    "src/DexGarmentLab/Env_Config/Utils_Project/ContactTuning.py": "66332428d9af8ab6de521ab6fdda075f2228454c19ed536cc1606f901bb14a12",
+    "src/DexGarmentLab/Env_Config/Utils_Project/RobotCollisionVisibility.py": "f4a949a04577f25b67e81377d77fbf10572f954a3a1c5eb5ff410727bde353f8",
+    "src/DexGarmentLab/Env_StandAlone/BaseEnv.py": "d292e4255399a0e6ca24f387b890dcfa5aef231d90006f574b081f2d0df00264",
+    "src/DexGarmentLab/Env_StandAlone/Teleop_TShirt_Stretch4_Env.py": "a193e00aedda0b9c4d9886ba28fea57a0b83a0e13bbf635fa3b779ea54d584f9"
+  },
+  "post_randomization_runtime_modules_absent": true,
+  "saved_slots_unchanged": 2,
+  "original_scene_exact_match": true,
+  "smoke": {
+    "passed": true,
+    "scope": "real main-loop startup, unloaded robot motion, gripper toggle, save/load",
+    "scene": {
+      "garments": 1,
+      "robots": 2,
+      "vertices": 15946,
+      "triangles": 31464,
+      "rest_points_sha256": "f253911c49923d6ac48951d941d49f01d275b491910b7228fe53e2fa929e71cb",
+      "topology_sha256": "6eb5d0ff5557262553bc41173c258bdea943656c8b63e75ee90d6d4c1f971e6e",
+      "collision_points_sha256": "1d3903c33dc052371ec5687abf00190117e1f5711314356e5dbcd38346304dca",
+      "solver_iterations": 32,
+      "materials": {
+        "/World/Garment/deformableMaterial": {
+          "omniphysics:density": 18.321617126464844,
+          "omniphysics:dynamicFriction": 0.0,
+          "omniphysics:poissonsRatio": 0.30000001192092896,
+          "omniphysics:staticFriction": 0.0,
+          "omniphysics:surfaceBendStiffness": 450.0,
+          "omniphysics:surfaceShearStiffness": 0.0,
+          "omniphysics:surfaceStretchStiffness": 0.0,
+          "omniphysics:surfaceThickness": 0.009999999776482582,
+          "omniphysics:youngsModulus": 25000.0,
+          "physxDeformableMaterial:bendDamping": 0.5,
+          "physxDeformableMaterial:elasticityDamping": 0.5
+        }
+      },
+      "rounded_heads": [
+        {
+          "info": {
+            "centre_raw": [
+              -0.0021703042089939242,
+              1.5001012928783894,
+              -0.020149524323642254
+            ],
+            "radius_raw": 0.07291535064578056,
+            "head_vertices": 3665,
+            "trimmed_vertices": 625,
+            "max_trim_raw": 0.046380999371961315,
+            "full_spherical_cap_vertices": 85
+          },
+          "points_sha256": "6144b7c6b6c1e8591859bcb6f9d0de6c7e7ff3c07be4b9a8efa507ec04b04f74"
+        }
+      ],
+      "robot_initial_positions": [
+        [
+          -1.0665600299835205,
+          -0.13899995386600494,
+          0.029489098116755486
+        ],
+        [
+          1.0665600299835205,
+          -0.13899995386600494,
+          0.029489098116755486
+        ]
+      ],
+      "human_transform": [
+        [
+          0.9485139846801758,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.9485139846801758,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.9485139846801758,
+          0.0
+        ],
+        [
+          0.0,
+          0.44999998807907104,
+          -0.36278319358825684,
+          1.0
+        ]
+      ]
+    },
+    "grasp_attached_in_initial_pose": false,
+    "gripper_toggle": true,
+    "save_load_max_position_error_m": 0.0,
+    "simulated_control_frames": 37,
+    "max_joint_displacement": [
+      0.5142386555671692,
+      0.514237105846405
+    ],
+    "finite_cloth": true
+  },
+  "limits": [
+    "Smoke covers startup, unloaded robot movement, gripper toggle and checkpoint restore; not a full dressing or loaded-cloth freeze reproduction."
+  ],
+  "doctor": {
+    "checks": [
+      {
+        "check": "OS",
+        "status": "PASS",
+        "detail": "Ubuntu 22.04.5 LTS: supported OS range; no OS reinstall needed",
+        "next": ""
+      },
+      {
+        "check": "git",
+        "status": "PASS",
+        "detail": "/usr/bin/git",
+        "next": ""
+      },
+      {
+        "check": "curl",
+        "status": "PASS",
+        "detail": "/usr/bin/curl",
+        "next": ""
+      },
+      {
+        "check": "xauth",
+        "status": "PASS",
+        "detail": "/usr/bin/xauth",
+        "next": ""
+      },
+      {
+        "check": "flock",
+        "status": "PASS",
+        "detail": "/usr/bin/flock",
+        "next": ""
+      },
+      {
+        "check": "Host NVIDIA driver",
+        "status": "PASS",
+        "detail": "NVIDIA GeForce RTX 5080, driver 580.178.04, 16303 MiB",
+        "next": "README.md#driver"
+      },
+      {
+        "check": "RTX / VRAM precheck",
+        "status": "PASS",
+        "detail": "RTX-class GPU and approximately 16GB+ VRAM reported; actual compatibility still needs smoke",
+        "next": "README.md#simulation-check"
+      },
+      {
+        "check": "Docker",
+        "status": "PASS",
+        "detail": "Server 29.1.3; daemon reachable as current user",
+        "next": ""
+      },
+      {
+        "check": "Project image",
+        "status": "PASS",
+        "detail": "phyrc-2027:isaac-6.0.1: sha256:6908220b276d",
+        "next": ""
+      },
+      {
+        "check": "Container GPU",
+        "status": "PASS",
+        "detail": "NVML access works: NVIDIA GeForce RTX 5080, 580.178.04; not a Vulkan/PhysX test",
+        "next": "README.md#simulation-check"
+      },
+      {
+        "check": "Local GUI session",
+        "status": "PASS",
+        "detail": "Local DISPLAY and Xauthority cookie found; monitor/rendering not tested",
+        "next": "README.md#gui-session"
+      },
+      {
+        "check": "Project disk space",
+        "status": "PASS",
+        "detail": "262.4 GiB free on project filesystem; Docker may use another disk",
+        "next": ""
+      },
+      {
+        "check": "Input assets",
+        "status": "PASS",
+        "detail": "All inputs present; prepare checks SHA256",
+        "next": ""
+      },
+      {
+        "check": "Prepared runtime",
+        "status": "PASS",
+        "detail": "Generated shirt exists; rerun prepare after source/config changes",
+        "next": ""
+      }
+    ],
+    "exit_code": 0,
+    "requirements": "https://docs.isaacsim.omniverse.nvidia.com/latest/installation/requirements.html",
+    "scope": "prerequisites only; run smoke for actual simulation compatibility"
+  }
+}

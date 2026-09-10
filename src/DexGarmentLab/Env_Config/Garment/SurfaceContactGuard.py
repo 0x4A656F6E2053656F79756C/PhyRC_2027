@@ -9,163 +9,6 @@ import torch
 import warp as wp
 
 
-@wp.func
-def _unit_interval_roots(c0: float, c1: float, c2: float, c3: float):
-    """Roots of a cubic on [0,1], bracketed at derivative extrema."""
-    scale = wp.max(wp.max(wp.abs(c0), wp.abs(c1)), wp.max(wp.abs(c2), wp.abs(c3)))
-    roots = wp.vec3(-1.0)
-    if scale > 1.e-20:
-        a, b, c, d = c3 / scale, c2 / scale, c1 / scale, c0 / scale
-        # Bernstein coefficients bound the polynomial over the whole interval.
-        # Same-sign bounds exclude a root without solving or bisecting it.
-        b1, b2, b3 = d + c / 3.0, d + 2.0 * c / 3.0 + b / 3.0, a + b + c + d
-        if wp.min(wp.min(d, b1), wp.min(b2, b3)) > 0.0 or wp.max(wp.max(d, b1), wp.max(b2, b3)) < 0.0:
-            return roots
-        t1, t2 = float(1.0), float(1.0)
-        if wp.abs(a) > 1.e-7:
-            disc = b * b - 3.0 * a * c
-            if disc >= 0.0:
-                r1 = (-b - wp.sqrt(disc)) / (3.0 * a)
-                r2 = (-b + wp.sqrt(disc)) / (3.0 * a)
-                lo, hi = wp.min(r1, r2), wp.max(r1, r2)
-                if lo > 0.0 and lo < 1.0:
-                    t1 = lo
-                if hi > 0.0 and hi < 1.0:
-                    if t1 < 1.0:
-                        t2 = hi
-                    else:
-                        t1 = hi
-        elif wp.abs(b) > 1.e-7:
-            critical = -c / (2.0 * b)
-            if critical > 0.0 and critical < 1.0:
-                t1 = critical
-        split = wp.vec4(0.0, t1, t2, 1.0)
-        for i in range(3):
-            lo, hi = split[i], split[i + 1]
-            fl = ((a * lo + b) * lo + c) * lo + d
-            fh = ((a * hi + b) * hi + c) * hi + d
-            if hi > lo and fl * fh <= 0.0:
-                for iteration in range(28):
-                    mid = (lo + hi) * 0.5
-                    fm = ((a * mid + b) * mid + c) * mid + d
-                    if fl * fm <= 0.0:
-                        hi = mid
-                    else:
-                        lo, fl = mid, fm
-                roots[i] = (lo + hi) * 0.5
-    return roots
-
-
-@wp.func
-def _swept_vertex_face(p: wp.vec3, a: wp.vec3, b: wp.vec3, c: wp.vec3,
-                       da: wp.vec3, db: wp.vec3, dc: wp.vec3):
-    e, f, de, df = b - a, c - a, db - da, dc - da
-    n0 = wp.cross(e, f)
-    n1 = wp.cross(de, f) + wp.cross(e, df)
-    n2 = wp.cross(de, df)
-    w = p - a
-    roots = _unit_interval_roots(wp.dot(w, n0), wp.dot(w, n1) - wp.dot(da, n0),
-                                 wp.dot(w, n2) - wp.dot(da, n1), -wp.dot(da, n2))
-    hit = int(0)
-    for i in range(3):
-        t = roots[i]
-        if t > 1.e-5 and t < 1.0 - 1.e-5:
-            et, ft, wt = e + t * de, f + t * df, w - t * da
-            normal = wp.cross(et, ft)
-            denominator = wp.dot(normal, normal)
-            if denominator > 1.e-20:
-                u = wp.dot(wp.cross(wt, ft), normal) / denominator
-                v = wp.dot(wp.cross(et, wt), normal) / denominator
-                if u >= -1.e-5 and v >= -1.e-5 and u + v <= 1.0 + 1.e-5:
-                    hit = 1
-    return hit
-
-
-@wp.func
-def _swept_edge_edge(a: wp.vec3, b: wp.vec3, da: wp.vec3, db: wp.vec3,
-                     p: wp.vec3, q: wp.vec3):
-    lower = wp.min(wp.min(a, b), wp.min(a + da, b + db)) - wp.vec3(1.e-6)
-    upper = wp.max(wp.max(a, b), wp.max(a + da, b + db)) + wp.vec3(1.e-6)
-    edge_lower, edge_upper = wp.min(p, q), wp.max(p, q)
-    for axis in range(3):
-        if upper[axis] < edge_lower[axis] or lower[axis] > edge_upper[axis]:
-            return int(0)
-    e, de, f, w = b - a, db - da, q - p, p - a
-    n0, n1 = wp.cross(e, f), wp.cross(de, f)
-    roots = _unit_interval_roots(wp.dot(w, n0), wp.dot(w, n1) - wp.dot(da, n0),
-                                 -wp.dot(da, n1), 0.0)
-    hit = int(0)
-    for i in range(3):
-        t = roots[i]
-        if t > 1.e-5 and t < 1.0 - 1.e-5:
-            et, wt = e + t * de, w - t * da
-            normal = wp.cross(et, f)
-            denominator = wp.dot(normal, normal)
-            if denominator > 1.e-20:
-                u = wp.dot(wp.cross(wt, f), normal) / denominator
-                v = wp.dot(wp.cross(wt, et), normal) / denominator
-                if u >= -1.e-5 and u <= 1.0 + 1.e-5 and v >= -1.e-5 and v <= 1.0 + 1.e-5:
-                    hit = 1
-    return hit
-
-
-@wp.func
-def _inside_bounds(p: wp.vec3, lower: wp.vec3, upper: wp.vec3):
-    return (p[0] >= lower[0] and p[0] <= upper[0] and
-            p[1] >= lower[1] and p[1] <= upper[1] and
-            p[2] >= lower[2] and p[2] <= upper[2])
-
-
-@wp.kernel
-def _mark_swept_faces(mesh: wp.uint64, start: wp.array(dtype=wp.vec3),
-                      end: wp.array(dtype=wp.vec3), triangles: wp.array(dtype=wp.vec3i),
-                      blocked: wp.array(dtype=int), count: wp.array(dtype=int)):
-    """Test the interval, not just final cloth/body edge intersections.
-
-    Body vertices against moving cloth faces and moving cloth edges against
-    body edges complete the node rays for linear per-step trajectories.
-    Entirely coplanar motion is left to the endpoint/contact tests.
-    """
-    tri = triangles[wp.tid()]
-    a, b, c = start[tri[0]], start[tri[1]], start[tri[2]]
-    ae, be, ce = end[tri[0]], end[tri[1]], end[tri[2]]
-    da, db, dc = ae - a, be - b, ce - c
-    if wp.max(wp.length(da), wp.max(wp.length(db), wp.length(dc))) > 1.e-7:
-        lower = wp.min(wp.min(wp.min(a, b), wp.min(c, ae)), wp.min(be, ce)) - wp.vec3(1.e-6)
-        upper = wp.max(wp.max(wp.max(a, b), wp.max(c, ae)), wp.max(be, ce)) + wp.vec3(1.e-6)
-        query = wp.mesh_query_aabb(mesh, lower, upper)
-        face = int(0)
-        hit = int(0)
-        while wp.mesh_query_aabb_next(query, face):
-            p = wp.mesh_eval_position(mesh, face, 1.0, 0.0)
-            q = wp.mesh_eval_position(mesh, face, 0.0, 1.0)
-            r = wp.mesh_eval_position(mesh, face, 0.0, 0.0)
-            if _inside_bounds(p, lower, upper):
-                hit = _swept_vertex_face(p, a, b, c, da, db, dc)
-            if hit == 0 and _inside_bounds(q, lower, upper):
-                hit = _swept_vertex_face(q, a, b, c, da, db, dc)
-            if hit == 0 and _inside_bounds(r, lower, upper):
-                hit = _swept_vertex_face(r, a, b, c, da, db, dc)
-            for i in range(3):
-                if hit != 0:
-                    break
-                edge_a = wp.vec3(start[tri[i]])
-                edge_b = wp.vec3(start[tri[(i + 1) % 3]])
-                edge_da = end[tri[i]] - edge_a
-                edge_db = end[tri[(i + 1) % 3]] - edge_b
-                hit = _swept_edge_edge(edge_a, edge_b, edge_da, edge_db, p, q)
-                if hit == 0:
-                    hit = _swept_edge_edge(edge_a, edge_b, edge_da, edge_db, q, r)
-                if hit == 0:
-                    hit = _swept_edge_edge(edge_a, edge_b, edge_da, edge_db, r, p)
-            if hit != 0:
-                break
-        if hit != 0:
-            for i in range(3):
-                wp.atomic_max(blocked, tri[i], 1)
-            wp.atomic_add(count, 0, 1)
-
-
 @wp.kernel
 def _project_contact(mesh: wp.uint64, start: wp.array(dtype=wp.vec3),
                      target: wp.array(dtype=wp.vec3), result: wp.array(dtype=wp.vec3),
@@ -326,11 +169,6 @@ def _repair_mode(attempt: wp.array(dtype=int), resolve: wp.array(dtype=int), rej
 
 
 @wp.kernel
-def _needs_interval_test(count: wp.array(dtype=int), check: wp.array(dtype=int)):
-    check[0] = int(count[0] == 0)
-
-
-@wp.kernel
 def _advance_iteration(count: wp.array(dtype=int), attempt: wp.array(dtype=int),
                         active: wp.array(dtype=int), fallback: wp.array(dtype=int)):
     if count[0] == 0:
@@ -364,7 +202,6 @@ class _GpuSweep:
         self.weight = wp.zeros(len(start), dtype=float, device=self.device)
         self.blocked = wp.zeros(len(start), dtype=int, device=self.device)
         self.count = wp.zeros(1, dtype=int, device=self.device)
-        self.interval_check = wp.zeros(1, dtype=int, device=self.device)
         self.attempt = wp.zeros(1, dtype=int, device=self.device)
         self.active = wp.zeros(1, dtype=int, device=self.device)
         self.fallback = wp.zeros(1, dtype=int, device=self.device)
@@ -409,16 +246,8 @@ class _GpuSweep:
         wp.launch(_mark_cut_faces, len(self.owner.body_edges), inputs=[self.mesh.id,
                   self.owner.mesh.points, self.owner.body_edges, self.triangles,
                   self.blocked, self.count], device=self.device)
-        # Repair existing endpoint cuts first. The more expensive interval
-        # test is required only before accepting an otherwise safe candidate.
-        wp.launch(_needs_interval_test, 1, inputs=[self.count, self.interval_check], device=self.device)
-        wp.capture_if(self.interval_check, self._check_interval)
         wp.capture_if(self.count, self._repair)
         wp.launch(_advance_iteration, 1, inputs=[self.count, self.attempt, self.active, self.fallback], device=self.device)
-
-    def _check_interval(self):
-        wp.launch(_mark_swept_faces, len(self.triangles), inputs=[self.owner.mesh.id,
-                  self.start, self.result, self.triangles, self.blocked, self.count], device=self.device)
 
     def _repair(self):
         wp.launch(_repair_mode, 1, inputs=[self.attempt, self.resolve, self.reject], device=self.device)
@@ -588,10 +417,6 @@ class SurfaceContactGuard:
                               cloth_mesh.id, self.mesh.points, self.body_edges,
                               wp.from_torch(triangles, dtype=wp.vec3i), blocked, count],
                               device=self.device)
-                if int(count.numpy()[0]) == 0 and triangles is not None:
-                    wp.launch(_mark_swept_faces, len(triangles), inputs=[self.mesh.id,
-                              wp.from_torch(start, dtype=wp.vec3), wp.from_torch(result, dtype=wp.vec3),
-                              wp.from_torch(triangles, dtype=wp.vec3i), blocked, count], device=self.device)
                 if int(count.numpy()[0]) == 0:
                     break
                 if cloth_mesh is not None and attempt < 8:

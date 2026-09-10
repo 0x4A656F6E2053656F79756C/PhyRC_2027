@@ -98,8 +98,6 @@ sys.path.append(os.getcwd())
 from Env_StandAlone.BaseEnv import BaseEnv
 from Env_Config.Garment.Particle_Garment import Particle_Garment, SurfaceClothPrim
 from Env_Config.Human.Human import Human
-from Env_Config.Human.RandomSpawn import (
-    randomize_human_and_chair, placement_snapshot, placement_matches)
 
 from isaacsim.core.prims import SingleArticulation
 from isaacsim.core.utils.types import ArticulationAction
@@ -1176,7 +1174,7 @@ RESET_KEY = "P"
 # scripts/probe_camstate.py rather than assumed.
 STATE_SLOT_KEYS = ("F1", "F2", "F3", "F4", "F5")
 STATE_CLEAR_KEY = "F12"
-STATE_DIR = os.environ.get("STRETCH4_STATE_DIR", "/output/states_randomspawn_mesh4" if int(os.environ.get("STRETCH4_MESH_REFINEMENT", "1")) else "/output/states_randomspawn")
+STATE_DIR = os.environ.get("STRETCH4_STATE_DIR", "/output/states_shortheight_roundhead_mesh4" if int(os.environ.get("STRETCH4_MESH_REFINEMENT", "1")) else "/output/states_shortheight_roundhead")
 # One key that throws away every checkpoint in the session is worth a
 # confirmation. ~3s at 60fps, and the arming lapses if it isn't answered.
 STATE_CLEAR_CONFIRM_FRAMES = 180
@@ -1378,7 +1376,6 @@ def save_state_slot(key, garment_cloths, rigs):
         "n_garments": np.array(len(garment_cloths)),
         "n_rigs": np.array(len(rigs)),
     }
-    payload.update(placement_snapshot(garment_cloths[0].prim.GetStage()))
     for i, cloth in enumerate(garment_cloths):
         payload[f"g{i}_pos"] = _to_np(cloth.get_world_positions())[0].astype(np.float32)
         payload[f"g{i}_vel"] = _to_np(cloth.get_velocities())[0].astype(np.float32)
@@ -1444,11 +1441,6 @@ def load_state_slot(key, garment_cloths, rigs):
         return False
 
     with data:
-        if not placement_matches(garment_cloths[0].prim.GetStage(), data):
-            print(f"[Teleop] {key} NOT loaded: human/chair placement differs from this run. "
-                  "Use a slot from this run or restart with the same HUMAN_SPAWN_SEED. "
-                  "The saved file has been preserved.", flush=True)
-            return False
         # Swept contact requires a non-intersecting starting surface. Older
         # checkpoints can already contain an arm through a triangle interior.
         # Validate ALL shirts before mutating any cloth or robot state.
@@ -2245,14 +2237,9 @@ class TeleopTShirtStretch4_Env(BaseEnv):
         # per-instance color param, so each needs apply_visual_material +
         # set_color called on it individually anyway.
         self.garments = []
-        from Env_Config.Garment.RandomSpawn import sample_garment_spawn
-        self.garment_table_centers = np.array([
-            [BOX_POS[0] + x, BOX_POS[1], BOX_POS[2]] for x in GARMENT_X_OFFSETS])
-        self.garment_spawn = sample_garment_spawn(self.garment_table_centers, BOX_SIZE)
-        print(f"[Teleop] garment spawn: table={self.garment_spawn['table_index'] + 1}/"
-              f"{len(self.tables)}, seed={self.garment_spawn['seed']}", flush=True)
-        for color_name, color in GARMENT_COLORS.items():
-            # Keep the single blue asset; only its support table changes.
+        for (color_name, color), x_off in zip(GARMENT_COLORS.items(), GARMENT_X_OFFSETS):
+            # [scene: blue shirt only]
+            # Filter after pairing colours with their original positions.
             if color_name != "blue":
                 continue
             _usd = GARMENT_USD_BY_COLOR.get(color_name, TSHIRT_USD)
@@ -2270,7 +2257,7 @@ class TeleopTShirtStretch4_Env(BaseEnv):
                       f"+{GARMENT_YAW_BY_COLOR.get(color_name, 0.0)} "
                       f"offsets x{_gs} (particle {_pco:.4f} solid {_sro:.4f})",
                       flush=True)
-            pos = np.array(self.garment_spawn['spawn_position_world_m'])
+            pos = np.array([BOX_POS[0] + x_off, BOX_POS[1], BOX_TOP_Z + 0.2])
             g = Particle_Garment(
                 self.world,
                 pos=pos,
@@ -2849,8 +2836,6 @@ class TeleopTShirtStretch4_Env(BaseEnv):
                 _contact = _ContactSchema.PhysxCollisionAPI.Apply(_shape)
                 _contact.CreateContactOffsetAttr().Set(_feel("HUMAN_CONTACT_OFFSET", 0.006))
                 _contact.CreateRestOffsetAttr().Set(_feel("HUMAN_REST_OFFSET", 0.001))
-
-        self.human_spawn = randomize_human_and_chair(self.stage, self.human.prim_path)
 
         SimulationManager.set_physics_sim_device("cuda:0")
         SimulationManager.set_backend("torch")
@@ -4562,7 +4547,7 @@ def snap_grab_anchors(rig, garment_cloths, dt):
         state["_body_safe_pos"] = safe_all
 
 
-def drive_robot(rig, keymap, held, garment_cloths, dt, _frame, commands=None):
+def drive_robot(rig, keymap, held, garment_cloths, dt, _frame):
     state = rig["state"]
     robot = rig["robot"]
     ctrl = rig["ctrl"]
@@ -4583,8 +4568,6 @@ def drive_robot(rig, keymap, held, garment_cloths, dt, _frame, commands=None):
     # mismatch was a NameError on the first frame -- which Kit
     # swallows under fastShutdown, so the app just vanished four
     # seconds in with no traceback and looked like a memory problem.
-    if commands is not None:
-        target_base_strafe = commands["base_strafe"]
     strafe_delta = np.clip(target_base_strafe - state["base_strafe"],
                            -BASE_LINEAR_ACCEL * dt, BASE_LINEAR_ACCEL * dt)
     state["base_strafe"] += strafe_delta
@@ -4592,9 +4575,6 @@ def drive_robot(rig, keymap, held, garment_cloths, dt, _frame, commands=None):
         target_base_turn += BASE_ANGULAR_RATE
     if keymap["base_turn_neg"] in held:
         target_base_turn -= BASE_ANGULAR_RATE
-    if commands is not None:
-        target_base_fwd = commands["base_fwd"]
-        target_base_turn = commands["base_turn"]
     base_fwd_delta = np.clip(target_base_fwd - state["base_fwd"],
                               -BASE_LINEAR_ACCEL * dt, BASE_LINEAR_ACCEL * dt)
     state["base_fwd"] += base_fwd_delta
@@ -4622,11 +4602,6 @@ def drive_robot(rig, keymap, held, garment_cloths, dt, _frame, commands=None):
         state["roll"] = min(rig["roll_hi"], state["roll"] + WRIST_RATE * dt)
     if keymap["roll_neg"] in held:
         state["roll"] = max(rig["roll_lo"], state["roll"] - WRIST_RATE * dt)
-
-    if commands is not None:
-        for axis in ("lift", "arm", "yaw", "pitch", "roll"):
-            state[axis] = float(np.clip(state[axis] + commands[axis + "_rate"] * dt,
-                                        rig[axis + "_lo"], rig[axis + "_hi"]))
 
     _grip_target = GRIPPER_CLOSED if state["gripper_closed"] else GRIPPER_OPEN
     _grip_delta = np.clip(_grip_target - state["grip_pos"],
@@ -4910,49 +4885,8 @@ def stop_recording():
 
 
 
-def rebuild_contact_guards(env, garment_cloths):
-    """Rebuild world-space contact data after static placement changes."""
-    stage = env.stage
-    _BODY_GEOM.clear()
-    _SHIELD.clear()
-    _body_surf = _body_vis = None
-    for _p in Usd.PrimRange(stage.GetPrimAtPath(env.human.prim_path),
-                            Usd.TraverseInstanceProxies()):
-        if _p.IsA(UsdGeom.Mesh):
-            if _p.GetName() == "CollisionBody":
-                _body_surf = _p
-            elif _body_vis is None:
-                _body_vis = _p
-    register_body_collider(_body_surf if _body_surf is not None else _body_vis)
-
-    # # [isaac-5.1.0 compat: cloth shield] -- bake the figure and hand the shield the cloth's edges.
-    build_cloth_shield(_body_surf if _body_surf is not None else _body_vis,
-                       garment_cloths)
-    for _ci, _g in enumerate(env.garments):
-        _gm = UsdGeom.Mesh(stage.GetPrimAtPath(_g.garment_mesh_prim_path))
-        _cnt = np.asarray(_gm.GetFaceVertexCountsAttr().Get())
-        _idx = np.asarray(_gm.GetFaceVertexIndicesAttr().Get())
-        _es, _o = set(), 0
-        for _c in _cnt:
-            _f = _idx[_o:_o + _c]
-            _o += _c
-            for _i in range(_c):
-                _u, _v = int(_f[_i]), int(_f[(_i + 1) % _c])
-                _es.add((_u, _v) if _u < _v else (_v, _u))
-        _tris, _o = [], 0
-        for _c in _cnt:
-            _f = [int(v) for v in _idx[_o:_o + _c]]
-            _o += _c
-            for _k in range(1, _c - 1):
-                _tris.append((_f[0], _f[_k], _f[_k + 1]))
-        set_shield_edges(_ci, np.array(sorted(_es)), np.asarray(_tris))
-    print(f"[Teleop] cloth shield watching {len(env.garments)} garment(s)",
-          flush=True)
-
-
-
-def initialize_manipulation(env):
-    """Shared cloth callbacks/contact setup for teleoperation and policy control."""
+def main():
+    env = TeleopTShirtStretch4_Env()
     stage = env.stage
     rig = env.rig
     rig2 = env.rig2
@@ -5012,15 +4946,39 @@ def initialize_manipulation(env):
           f"{1.0 / max(float(env.world.get_physics_dt()), 1e-9):.0f} Hz "
           f"against a {1.0 / (1.0 / 60.0):.0f} Hz control loop")
 
-    rebuild_contact_guards(env, garment_cloths)
+    _body_surf = _body_vis = None
+    for _p in Usd.PrimRange(stage.GetPrimAtPath(env.human.prim_path),
+                            Usd.TraverseInstanceProxies()):
+        if _p.IsA(UsdGeom.Mesh):
+            if _p.GetName() == "CollisionBody":
+                _body_surf = _p
+            elif _body_vis is None:
+                _body_vis = _p
+    register_body_collider(_body_surf if _body_surf is not None else _body_vis)
 
-    return garment_cloths, garment_faces, _grab_post_subscription
-
-
-def main():
-    env = TeleopTShirtStretch4_Env()
-    stage, rig, rig2 = env.stage, env.rig, env.rig2
-    garment_cloths, garment_faces, _grab_post_subscription = initialize_manipulation(env)
+    # # [isaac-5.1.0 compat: cloth shield] -- bake the figure and hand the shield the cloth's edges.
+    build_cloth_shield(_body_surf if _body_surf is not None else _body_vis,
+                       garment_cloths)
+    for _ci, _g in enumerate(env.garments):
+        _gm = UsdGeom.Mesh(stage.GetPrimAtPath(_g.garment_mesh_prim_path))
+        _cnt = np.asarray(_gm.GetFaceVertexCountsAttr().Get())
+        _idx = np.asarray(_gm.GetFaceVertexIndicesAttr().Get())
+        _es, _o = set(), 0
+        for _c in _cnt:
+            _f = _idx[_o:_o + _c]
+            _o += _c
+            for _i in range(_c):
+                _u, _v = int(_f[_i]), int(_f[(_i + 1) % _c])
+                _es.add((_u, _v) if _u < _v else (_v, _u))
+        _tris, _o = [], 0
+        for _c in _cnt:
+            _f = [int(v) for v in _idx[_o:_o + _c]]
+            _o += _c
+            for _k in range(1, _c - 1):
+                _tris.append((_f[0], _f[_k], _f[_k + 1]))
+        set_shield_edges(_ci, np.array(sorted(_es)), np.asarray(_tris))
+    print(f"[Teleop] cloth shield watching {len(env.garments)} garment(s)",
+          flush=True)
 
     held = rig["held"]
     quit_flag = {"quit": False}

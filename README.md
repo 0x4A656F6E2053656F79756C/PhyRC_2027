@@ -2,12 +2,7 @@
 
 Isaac Sim **6.0.1**에서 두 대의 Stretch4로 티셔츠를 조작하는 로컬 GUI teleop 환경입니다.
 이 저장소는 현재 작동 중인 FEM 천 시뮬레이션과 사용자 수정 사항을 분리한 유지보수용 스냅샷입니다.
-학습 데이터와 개인 F1-F5 저장 파일은 포함하지 않습니다.
-
-연구자용 **Gymnasium reset/step, RGB-D 3대, 로봇 상태와 연속 action**을 제공합니다.
-[참가자 빠른 시작](docs/PARTICIPANT_QUICKSTART.md)에서 새 clone 후 짧은 실제 학습 예제를
-실행할 수 있습니다. [정책 인터페이스](docs/POLICY_INTERFACE.md)에 관측·행동·센서·보상
-확장 방법을 정리했습니다. 예제는 lift 제어 모방학습이며 완전한 착의 성공 정책은 아닙니다.
+학습 데이터, 정책 학습 환경, 과거 백업, 개인 F1-F5 저장 파일은 포함하지 않습니다.
 
 **설치 경로는 Docker 방식 하나로 통일합니다.** Isaac Sim을 호스트에 별도로 설치하거나
 Conda/ROS/시스템 CUDA Toolkit을 추가로 설치할 필요는 없습니다. NVIDIA 드라이버는 호스트에 필요합니다.
@@ -263,37 +258,6 @@ GUI 첫 실행에서도 `Physics Tasks` 준비 화면에 몇 분 머무를 수 �
 `STRETCH4_SHOW_COLLIDER=0 ./run.sh gui`로 충돌 메시 표시 없이 볼 수 있습니다.
 기본값 `1`은 기존 작업의 collision 시각화 모드입니다. 렌더용 메시와 충돌 메시 모두 뒤통수 수정이 적용됩니다.
 
-실행할 때마다 사람과 의자는 기존 사람 위치(기본 X=0, Y=0.45m)를 중심으로
-반경 **10cm 원 내부에서 균일하게** 위치를 뽑고, 기존 방향 기준 수직축 회전각을 **-30°~+30°**에서
-무작위로 정합니다. 몸 전체·충돌체·의자에 같은 이동과 회전을 적용하므로 자세,
-형상, 크기, 바닥 높이와 사람·의자의 상대 배치는 유지됩니다. `P`는 해당 실행의
-초기 배치로 돌아갑니다. 특정 배치를 재현하려면 `HUMAN_SPAWN_SEED=42 ./run.sh gui`처럼
-시드를 지정하세요. 자동 생성한 시드도 시작 로그의 `human/chair spawn`에 표시됩니다.
-
-티셔츠도 실행마다 **네 박스 중 하나를 동일한 확률로 선택**해 그 위에 스폰합니다.
-옷의 모양·방향·높이는 유지됩니다. `HUMAN_SPAWN_SEED`를 지정하면 옷 선택도 재현되며,
-옷에 별도 시드를 쓰려면 `STRETCH4_GARMENT_SPAWN_SEED=1 ./run.sh gui`처럼 지정합니다.
-학습용 `env.reset(seed=...)`는 에피소드 시드로 사람과 옷을 다시 샘플링하고,
-GUI의 `P`는 해당 실행의 초기 배치를 유지합니다.
-[네 박스의 동일 시각 스크린샷과 안정성 검증 보고서](docs/verification-results/garment-spawn.html)를
-브라우저에서 열어 비교할 수 있습니다.
-
-랜덤화 도입 전 배치로 고정하려면 다음처럼 실행하세요.
-
-```bash
-./run.sh gui --no-randomization
-# 렌더용 visual mesh로 표시하면서 고정 배치 사용
-STRETCH4_SHOW_COLLIDER=0 ./run.sh gui --no-randomization
-```
-
-사람·의자의 랜덤 이동·회전을 모두 끄고 티셔츠는 원래의 세 번째 박스 위에 둡니다.
-옵션을 생략하면 기존처럼 랜덤화합니다. `STRETCH4_RANDOMIZE=0 ./run.sh gui`도 동일하며,
-고정 모드에서는 스폰 시드를 무시합니다. `--no-randomization`은 명령 바로 뒤에 넣습니다.
-학습 실행에도 적용됩니다: `./run.sh train-demo --no-randomization` 또는
-`./run.sh python --no-randomization /project/your_script.py`.
-고정 모드의 `env.reset(seed=...)`도 시드와 관계없이 원래 배치를 유지합니다.
-이는 초기 배치 고정이며, 옷의 물리 시뮬레이션을 정지시키는 옵션은 아닙니다.
-
 ## 9. 저장, 복원, 녹화
 
 - `F1`은 **실행할 때마다 초기 상태로 덮어씁니다.** 장기 저장에 쓰지 마세요.
@@ -302,12 +266,11 @@ STRETCH4_SHOW_COLLIDER=0 ./run.sh gui --no-randomization
 - `F12` 두 번: 슬롯 전체 삭제입니다. 복구 기능이 없으므로 주의하세요.
 - `P`: 현재 실행의 시작 상태로 초기화합니다.
 - `F9` / `F10`: 녹화 시작 / 종료. 영상은 `output/recordings/`에 남습니다.
-- 기본 슬롯은 `output/states_randomspawn_mesh4/`입니다. 기존 슬롯 폴더는 보존됩니다. `output/`은 Git에 들어가지 않으므로 따로 백업하세요.
-- 슬롯은 사람·의자 배치가 같은 경우에만 불러옵니다. 다른 실행의 슬롯을 재사용하려면 저장 당시의 `HUMAN_SPAWN_SEED`와 같은 설정으로 실행하세요. 배치 정보가 없는 이전 버전 슬롯은 불러오지 않습니다.
+- 기본 슬롯은 `output/states_shortheight_roundhead_mesh4/`입니다. `output/`은 Git에 들어가지 않으므로 따로 백업하세요.
 
 ```bash
-# 시드 42로 실행하며 저장해 둔 F2에서 시작
-HUMAN_SPAWN_SEED=42 STRETCH4_LOAD_SLOT=F2 ./run.sh gui
+# 저장해 둔 F2에서 시작
+STRETCH4_LOAD_SLOT=F2 ./run.sh gui
 # 다른 실험의 저장 슬롯과 분리
 STRETCH4_STATE_DIR=/output/my_experiment ./run.sh gui
 ```

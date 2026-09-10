@@ -4,18 +4,8 @@ ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 cd "$ROOT"
 IMAGE=${PHYRC_IMAGE:-phyrc-2027:isaac-6.0.1}
 COMMAND=${1:-help}
-# Launcher option precedes any script-specific arguments.
-if [[ "${2:-}" == --no-randomization ]]; then
-    case "$COMMAND" in
-        gui|smoke|policy-smoke|train-demo|python)
-            export STRETCH4_RANDOMIZE=0
-            set -- "$1" "${@:3}";;
-        *) printf -- '--no-randomization requires a simulation command.\n' >&2; exit 2;;
-    esac
-fi
 if [[ "$COMMAND" == help ]]; then
-    printf 'Usage: ./run.sh {doctor [--gpu] [--json]|build|prepare|gui|smoke|policy-smoke|train-demo [ARGS...]|python SCRIPT [ARGS...]|cpu SCRIPT [ARGS...]}\n'
-    printf 'Simulation commands accept --no-randomization immediately after the command (e.g. ./run.sh gui --no-randomization).\n'
+    printf 'Usage: ./run.sh {doctor [--gpu] [--json]|build|prepare|gui|smoke|python SCRIPT [ARGS...]|cpu SCRIPT [ARGS...]}\n'
     exit 0
 fi
 if [[ "$COMMAND" == doctor ]]; then
@@ -42,12 +32,8 @@ for folder in kit ov pip warp glcache computecache logs data documents mpl; do
     chmod g+rwx "cache/$folder"
 done
 chmod g+rwx output .runtime .runtime/DexGarmentLab .runtime/RCareWorld-2.0
-PROJECT_COMMIT=$(git rev-parse HEAD)
-PROJECT_DIRTY=0
-if [[ -n "$(git status --porcelain)" ]]; then PROJECT_DIRTY=1; fi
 ARGS=(run --rm --network=host --user "1234:$(id -g)" --label phyrc.project=PhyRC_2027
       -e ACCEPT_EULA=Y -e PRIVACY_CONSENT=Y -e OMNI_KIT_ACCEPT_EULA=YES
-      -e "PHYRC_SOURCE_COMMIT=$PROJECT_COMMIT" -e "PHYRC_SOURCE_DIRTY=$PROJECT_DIRTY"
       -e MPLCONFIGDIR=/isaac-sim/.cache/matplotlib -e OPENBLAS_NUM_THREADS=1
       -v "$ROOT/.runtime/DexGarmentLab:/workspace/DexGarmentLab:rw"
       -v "$ROOT/.runtime/RCareWorld-2.0:/workspace/RCareWorld-2.0:rw"
@@ -111,14 +97,6 @@ if [[ "$COMMAND" == gui ]]; then
     exec docker "${ARGS[@]}" "$IMAGE" Env_StandAlone/Teleop_TShirt_Stretch4_Env.py
 elif [[ "$COMMAND" == smoke ]]; then
     exec docker "${ARGS[@]}" -e STRETCH4_HEADLESS=1 "$IMAGE" /scripts/smoke.py
-elif [[ "$COMMAND" == policy-smoke || "$COMMAND" == train-demo ]]; then
-    shift
-    if [[ "$COMMAND" == policy-smoke ]]; then
-        script=/scripts/policy_smoke.py
-    else
-        script=/scripts/train_policy_demo.py
-    fi
-    exec docker "${ARGS[@]}" -e STRETCH4_HEADLESS=1 "$IMAGE" "$script" "$@"
 elif [[ "$COMMAND" == python ]]; then
     shift
     exec docker "${ARGS[@]}" -e STRETCH4_HEADLESS=1 "$IMAGE" "$@"
