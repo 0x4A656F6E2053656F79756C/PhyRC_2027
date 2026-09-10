@@ -1,4 +1,92 @@
-# Latest: Random human/chair placement
+# Latest: RGB-D sensors and Gymnasium learning adapter
+
+2026-09-10. The user authorized the next stage: implement sensors and learning
+reset/step, validate and commit; also try quick training from a new GitHub clone.
+This supersedes the earlier restriction to specification/read-only inspection.
+Branch: `feat/policy-learning-env`, including random-spawn commit `a5c3824`.
+
+- Read `docs/POLICY_INTERFACE.md` (schema 0.2.0) and participant quickstart.
+  `Policy/environment.py` provides one Isaac/Gymnasium scene per process,
+  seedable reset, 20Hz step over existing 60Hz control/240Hz physics, Dict
+  observations, float32[2,9] action, episode truncation and evaluator injection.
+- Existing teleop setup/contact guards were extracted into shared helpers;
+  drive_robot accepts optional continuous rates. Physics/material parameters
+  and keyboard behavior remain unchanged. User F1-F5 slots are never used by
+  the learning adapter. Change maintained `src/`, then prepare runtime for GUI.
+- RGB-D overview and two wrist views default to 256x256; configurable resolution
+  and fixed mount extrinsics. The asset camera link has +X up and -Y toward
+  fingertips. Replicator explicit delta_time=0 capture awaits fresh annotations;
+  three ordinary render updates had returned stale depth and were replaced.
+  RGB/depth timestamps must not advance physics. Info includes K, optical poses,
+  actual state manifest, source hashes/commit/dirty flag and episode seed.
+- Reset detaches callbacks/native grasps, recreates physics views, restores
+  initial robot/cloth values, clears controller histories and rebuilds static
+  contact guards for the sampled placement. 90 neutral control ticks precede
+  reset return; check base speed and open-finger error. Initial cloth restoration
+  is exact, but GPU FEM settling is not bitwise reproducible (~2.3mm difference).
+- Default reward=0 and no dressing-success termination. Replaceable evaluator
+  returns reward, terminated, task_info. Errors invalidate the episode instead
+  of silently loading checkpoints. No force/tactile sensor or validated dressing
+  evaluator has been introduced.
+- `./run.sh policy-smoke` checks actual sensors, metric depth/freshness, all action
+  channels, idempotent gripper commands, repeat reset, truncation and evaluator.
+  `./run.sh train-demo` collects 64 real lift demonstrations, behavior-clones a
+  tiny Torch policy, and evaluates an unseen 22cm goal. Initial trial: error
+  14.7cm→2.1mm, ~106s. This is not full dressing or RGB-D learning performance.
+- Torch must be imported after SimulationApp startup (Isaac bundles it in an
+  extension). Gymnasium 1.2.3 is added to the project image. Build then prepare.
+- SimulationApp.close() can immediately terminate Python. Write artifacts first;
+  CLI exception handling forwards exit_code=1 to prevent false-success exits.
+- CPU/schema checks and real teleop regression passed. See docs/VERIFICATION.md
+  and policy-environment.json; final fresh-clone evidence is recorded separately
+  after cloning the pushed feature branch. No main merge is part of this task.
+
+---
+
+# Previous: Draft policy contract and read-only state inspection
+
+2026-09-10. Random human/chair spawn was committed as `a5c3824` on
+`feat/random-human-chair-spawn`. No push was requested/performed.
+Current branch `feat/policy-interface-spec` starts from that commit. The new
+policy specification/inspection files are left uncommitted for review.
+
+The user explicitly limited this stage to specification, data schema and real
+state measurement. Keep it separate from runtime bug fixes. Do not introduce a
+learning `reset/step` environment or freeze a flat observation format yet.
+
+- Read `docs/POLICY_INTERFACE.md` and `config/policy_interface.json` (0.1.0-draft).
+  Proposed default: three RGB-D views at 256x256 plus named robot state, two
+  robots x nine actions, 20Hz policy over 60Hz control/240Hz physics.
+  Cameras, success/reward and learning reset/step are explicitly not implemented.
+- `Policy/state.py` reads actual PhysX base/link/joint/cloth state; `contract.py`
+  validates configurable arrays and decodes action units/signs without dispatch.
+  Neither is imported by the normal teleop environment; its source is unchanged
+  from `a5c3824`. No dependency/image rebuild or runtime prepare is needed just
+  to run the inspector, which reads maintained source via `/project/src`.
+- `scripts/inspect_policy_scene.py` runs the normal headless main loop with
+  isolated state slots and read-only hooks at startup and after 60 neutral ticks.
+  Command: `PHYRC_ACCEPT_EULA=1 HUMAN_SPAWN_SEED=42 ./run.sh python
+  /scripts/inspect_policy_scene.py`. Writes under `output/policy-inspection/`.
+  It records the sampled seed, schema/source hashes, named joints/limits, actual
+  and target states, local/world poses and typed observation NPZ files. It writes
+  before SimulationApp.close(), which can fast-exit without executing finally.
+- GPU inspection passed: 13 DOFs per robot; exact source-normalized units are
+  metres for lift/arm and radians for wrists/finger/wheels. Base movement is a
+  bounded root-wrench velocity servo, not direct per-wheel actuation.
+  Public base-left action must invert the old base_strafe/right sign.
+- Startup F1 is not a settled learning reset: finger q starts near zero while
+  its open target is 0.5rad; after 60 ticks (~1 simulated second) q is ~0.4967rad.
+  Fingertip origin distance ~0.18758m is not an inner-surface aperture estimate.
+  A calibrated grasp/force sensor and dressing success evaluator are absent.
+- Offline schema/coordinate/action checks passed, including reconstruction of
+  real base-relative poses, wrong-input rejection, resolution/count changes,
+  idempotent close intent, and refusing an RGB-D profile without real images.
+  Evidence: `docs/verification-results/policy-inspection.json`; host log:
+  `/tmp/phyrc-policy-inspection.log`. GUI/GPU inspector sessions are closed.
+
+---
+
+# Previous: Random human/chair placement
 
 2026-09-10. Working branch: `feat/random-human-chair-spawn`, based on `104d6b0`.
 GitHub SSH read access was verified with `git ls-remote`; local and remote

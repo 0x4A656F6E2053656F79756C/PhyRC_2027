@@ -1,3 +1,54 @@
+# Learning environment and RGB-D: 2026-09-10
+
+- GPU integration passed three 256×256 RGB-D cameras and typed Gymnasium observations.
+  Moving a camera-aligned calibration cube at frozen physics time produced optical
+  depths 0.8999996m and 1.1999998m for expected 0.9m and 1.2m. RGB also refreshed.
+  Wrist cameras were visually checked to face the fingertips, with fixed mount extrinsics.
+- Every action advances 0.05 simulated seconds. All eight continuous channels,
+  gripper close/hold/open, deferred grasp attempt, invalid action rejection,
+  time-limit truncation and injected evaluator termination were exercised.
+- Reset seeds 42→43→42 reproduced human/chair placement and robot q (max error 0).
+  Cloth positions were restored exactly before settling. FEM settling differed by
+  2.264mm at most; the test permits 5mm, not bitwise cloth reproducibility.
+  Base speed after reset was <=0.002481m/s; finger-open error <=0.000301rad.
+- The real teleop main-loop regression passed after runtime preparation, including
+  robot motion, gripper toggle, exact checkpoint position restoration and rejection
+  of a checkpoint with mismatched human placement. Mesh/material/solver settings
+  were not changed by the policy adapter.
+- A small real-scene behavior-cloning trial collected 64 transitions and trained
+  500 updates. Held-out 22cm lift goal error fell from 0.14688m to 0.00209m in about
+  106s including startup. This is a lift calibration demonstration, not a learned
+  dressing baseline. The final committed checkout is also tested in a fresh clone.
+- CPU schema/frame/action checks, Python compilation and shell syntax checks passed.
+
+Evidence: [policy environment](verification-results/policy-environment.json).
+Raw RGB/NPZ/JSON are in `output/policy-smoke/`; training artifacts in
+`output/train-demo/`. Full dressing success, force sensing and grasp under load
+remain unverified. Gymnasium was pinned to 1.2.3; the Isaac base image is unchanged.
+
+---
+
+# Historical stage: policy specification and read-only inspection (0.1): 2026-09-10
+
+- Actual GPU main loop inspected at startup and after 60 neutral control ticks.
+  Both robots expose 13 named joints; base/grasp/fingertip poses, actual joint
+  states, control targets, cloth positions/velocities and live limits were read.
+  All measured state was finite. Physics dt=1/240s, render dt=1/60s; 60 control
+  ticks advanced simulation time by approximately 1s.
+- Typed observation arrays were exported and validated against the draft schema.
+  CPU checks passed configurable resolution/counts, world/base pose round trips,
+  action rate/sign conversion, repeated close intent and invalid-input rejection.
+- The inspector reuses the existing main loop, writes isolated F1 slots and does
+  not issue policy actions or change physics. The normal teleop source is unchanged.
+- RGB-D sensing, a learning reset/step implementation, rewards and full dressing
+  success are outside this verification. Current camera manifests contain Kit
+  viewport cameras and existing wrist mounting links, not implemented RGB-D streams.
+
+See [policy contract](POLICY_INTERFACE.md) and
+[live inspection evidence](verification-results/policy-inspection.json).
+
+---
+
 # Random human/chair spawn verification: 2026-09-10
 
 - `./run.sh cpu /scripts/check_random_spawn.py`: 1,000 placements passed

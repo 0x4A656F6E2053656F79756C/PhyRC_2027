@@ -2,7 +2,12 @@
 
 Isaac Sim **6.0.1**에서 두 대의 Stretch4로 티셔츠를 조작하는 로컬 GUI teleop 환경입니다.
 이 저장소는 현재 작동 중인 FEM 천 시뮬레이션과 사용자 수정 사항을 분리한 유지보수용 스냅샷입니다.
-학습 데이터, 정책 학습 환경, 과거 백업, 개인 F1-F5 저장 파일은 포함하지 않습니다.
+학습 데이터와 개인 F1-F5 저장 파일은 포함하지 않습니다.
+
+연구자용 **Gymnasium reset/step, RGB-D 3대, 로봇 상태와 연속 action**을 제공합니다.
+[참가자 빠른 시작](docs/PARTICIPANT_QUICKSTART.md)에서 새 clone 후 짧은 실제 학습 예제를
+실행할 수 있습니다. [정책 인터페이스](docs/POLICY_INTERFACE.md)에 관측·행동·센서·보상
+확장 방법을 정리했습니다. 예제는 lift 제어 모방학습이며 완전한 착의 성공 정책은 아닙니다.
 
 **설치 경로는 Docker 방식 하나로 통일합니다.** Isaac Sim을 호스트에 별도로 설치하거나
 Conda/ROS/시스템 CUDA Toolkit을 추가로 설치할 필요는 없습니다. NVIDIA 드라이버는 호스트에 필요합니다.

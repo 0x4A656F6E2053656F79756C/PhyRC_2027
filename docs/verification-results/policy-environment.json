@@ -1,0 +1,296 @@
+{
+  "passed": true,
+  "depth_probe_m": [
+    0.8999996185302734,
+    1.1999998092651367
+  ],
+  "lift_delta_m": 0.07965782284736633,
+  "repeat_seed_q_max_abs": 0.0,
+  "repeat_seed_cloth_max_abs": 0.002263784408569336,
+  "elapsed_wall_s": 85.30366724799387,
+  "date": "2026-09-10",
+  "host": "Ubuntu 22.04.5 / RTX 5080 16GB / driver 580.178.04",
+  "scope": "GPU RGB-D, depth calibration/freshness, 20 Hz step, all action channels, gripper intent, repeated reset, termination/truncation; no dressing success certification",
+  "source_sha256": {
+    "__init__.py": "71d223fb5d8acf29318a57b7363b233dd78a126632dbd26a9fa193eb2845cc4a",
+    "contract.py": "f8c3ddb105417c337dab04ad0a32f7235902fad28989cb7476c026c1d8d100ee",
+    "environment.py": "6a3625262997f029505f22e529e575a92452b0d8028f86c51eb5cbdefbde449c",
+    "sensors.py": "f4612ebac14fff2cb081ac1892e7dd0384d57420fd895716d924425e4af661d4",
+    "state.py": "7f51612c66650070b0bea00b07495cc16059c8e29973a1764eaf3eb6e8a064f3",
+    "contract": "a6c3e205f9b0606b2bb10aa0ffa67abc28c00b2e5a5710c5fae9190d5a4406c9",
+    "teleop": "d115cb0bd563bbfe42ab793b4c813d2eccf8e1004a0e59fd7f2a4e328b2dbfd3"
+  },
+  "cameras": [
+    {
+      "id": "overview",
+      "timestamp_simulation_s": 1.5250000795349479,
+      "resolution_wh": [
+        256,
+        256
+      ],
+      "clip_m": [
+        0.05,
+        10.0
+      ],
+      "intrinsics": [
+        [
+          182.80294486299067,
+          0,
+          128.0
+        ],
+        [
+          0,
+          182.80294486299067,
+          128.0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "world_from_optical_column_vectors": [
+        [
+          0.8087360843031886,
+          0.21471402983526963,
+          -0.5475799771155304,
+          2.4
+        ],
+        [
+          0.5881716976750462,
+          -0.2952317910234957,
+          0.7529224685338544,
+          -3.2
+        ],
+        [
+          0.0,
+          -0.9309866137388645,
+          -0.36505331807702024,
+          2.4
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "mount_from_usd_camera_column_vectors": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "id": "robot_0_wrist",
+      "timestamp_simulation_s": 1.5250000795349479,
+      "resolution_wh": [
+        256,
+        256
+      ],
+      "clip_m": [
+        0.03,
+        3.0
+      ],
+      "intrinsics": [
+        [
+          182.80294486299067,
+          0,
+          128.0
+        ],
+        [
+          0,
+          182.80294486299067,
+          128.0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "world_from_optical_column_vectors": [
+        [
+          -0.9999930855426754,
+          -0.003692699093590116,
+          0.0004391357918132761,
+          -1.1545345783233643
+        ],
+        [
+          -0.0011965081689701454,
+          0.2076909000932766,
+          -0.9781937734348171,
+          -0.3693189322948456
+        ],
+        [
+          0.0035209707526533407,
+          -0.9781875351852777,
+          -0.20769388236804223,
+          0.23302823305130005
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "mount_from_usd_camera_column_vectors": [
+        [
+          0.0,
+          0.9778024140774094,
+          0.20952908873087348,
+          0.0
+        ],
+        [
+          0.0,
+          -0.20952908873087348,
+          0.9778024140774094,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "id": "robot_1_wrist",
+      "timestamp_simulation_s": 1.5250000795349479,
+      "resolution_wh": [
+        256,
+        256
+      ],
+      "clip_m": [
+        0.03,
+        3.0
+      ],
+      "intrinsics": [
+        [
+          182.80294486299067,
+          0,
+          128.0
+        ],
+        [
+          0,
+          182.80294486299067,
+          128.0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "world_from_optical_column_vectors": [
+        [
+          -0.9999929926464853,
+          -0.003706791089211944,
+          0.0005237917021969434,
+          0.9779588580131531
+        ],
+        [
+          -0.001282241881376833,
+          0.20768989711432728,
+          -0.9781938777626844,
+          -0.36951181292533875
+        ],
+        [
+          0.0035171741048738436,
+          -0.9781876948400349,
+          -0.2076931947605769,
+          0.23302824795246124
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "mount_from_usd_camera_column_vectors": [
+        [
+          0.0,
+          0.9778024140774094,
+          0.20952908873087348,
+          0.0
+        ],
+        [
+          0.0,
+          -0.20952908873087348,
+          0.9778024140774094,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    }
+  ],
+  "reset_settling": {
+    "control_ticks": 90,
+    "cloth_restore_max_abs_m": 0.0,
+    "max_base_linear_speed_m_s": 0.0024806796573102474,
+    "max_finger_open_error_rad": 0.0003002285957336426
+  },
+  "human_spawn": {
+    "offset_m": [
+      -0.08156662422707579,
+      0.032961284831733266,
+      0.0
+    ],
+    "yaw_deg": 21.51587519468295,
+    "seed": 42,
+    "pivot_m": [
+      0.0,
+      0.44999998807907104,
+      -0.36278319358825684
+    ]
+  },
+  "raw_report": "output/policy-smoke/report.json",
+  "note": "Working-tree integration evidence; final committed checkout is checked separately in participant-clone.json",
+  "teleop_regression": {
+    "passed": true,
+    "save_load_max_position_error_m": 0.0,
+    "mismatched_placement_rejected": true,
+    "scene_equal_to_original_except_random_human_transform": true
+  }
+}

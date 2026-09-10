@@ -1,0 +1,1346 @@
+{
+  "passed": true,
+  "scope": "read-only live state inspection; startup and 60 neutral control ticks",
+  "source_sha256": "80b023ba132a7534114f61a1ff59de3afebd847168140f2918df090f0456e41e",
+  "contract_sha256": "d0f5746762b7082f096762fba61926040a248ebc6eda169f7b744bf04eea33d6",
+  "snapshots": {
+    "startup": {
+      "schema_version": "0.1.0-draft",
+      "units": "m, rad, s; quaternions wxyz",
+      "source": "live PhysX state; static poses from USD; no camera images synthesized",
+      "robots": [
+        {
+          "id": "robot_0",
+          "articulation_path": "/World/Stretch4/base_footprint",
+          "joint_count": 13,
+          "joints": [
+            {
+              "name": "wheel_0_joint",
+              "index": 0,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -3.4028234663852886e+38,
+              "upper": 3.4028234663852886e+38
+            },
+            {
+              "name": "wheel_1_joint",
+              "index": 1,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -3.4028234663852886e+38,
+              "upper": 3.4028234663852886e+38
+            },
+            {
+              "name": "wheel_2_joint",
+              "index": 2,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -3.4028234663852886e+38,
+              "upper": 3.4028234663852886e+38
+            },
+            {
+              "name": "lift_joint",
+              "index": 3,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 1.2000000476837158
+            },
+            {
+              "name": "arm_l1_joint",
+              "index": 4,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 0.12999999523162842
+            },
+            {
+              "name": "arm_l2_joint",
+              "index": 5,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 0.12999999523162842
+            },
+            {
+              "name": "arm_l3_joint",
+              "index": 6,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 0.12999999523162842
+            },
+            {
+              "name": "arm_l4_joint",
+              "index": 7,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 0.12999999523162842
+            },
+            {
+              "name": "wrist_yaw_joint",
+              "index": 8,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -1.1349999904632568,
+              "upper": 4.275999546051025
+            },
+            {
+              "name": "wrist_pitch_joint",
+              "index": 9,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -4.275999546051025,
+              "upper": 1.1349999904632568
+            },
+            {
+              "name": "wrist_roll_joint",
+              "index": 10,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -1.1349999904632568,
+              "upper": 4.275999546051025
+            },
+            {
+              "name": "gripper_finger_left_joint",
+              "index": 11,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": 0.0,
+              "upper": 0.4999999701976776
+            },
+            {
+              "name": "gripper_finger_right_joint",
+              "index": 12,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": 0.0,
+              "upper": 0.4999999701976776
+            }
+          ],
+          "joint_position": [
+            3.311819351745071e-12,
+            -4.962591101942415e-12,
+            2.000766306103907e-12,
+            -4.8287998599683135e-11,
+            1.3221213403594168e-12,
+            1.819579426368123e-12,
+            4.888191414142984e-12,
+            6.533770242509937e-14,
+            -3.804992432243637e-11,
+            5.424640944773351e-11,
+            2.034717533350161e-11,
+            -1.3443557426195724e-15,
+            1.5667668551433422e-10
+          ],
+          "joint_velocity": [
+            -4.3496001939091755e-11,
+            -6.376464911639346e-10,
+            7.273011637387583e-10,
+            -1.2766703250122191e-08,
+            2.076307459297766e-10,
+            3.2981967157397207e-10,
+            1.5874735970200504e-09,
+            9.699741010393836e-12,
+            1.299446950042693e-08,
+            -3.510037061005278e-08,
+            2.2508299224455186e-08,
+            -1.1619549766805903e-09,
+            3.8296732896014873e-08
+          ],
+          "base_pose_world": [
+            -1.0665600299835205,
+            -0.13899995386600494,
+            0.029489098116755486,
+            -0.7071067690849304,
+            0.0,
+            0.0,
+            0.7071067690849304
+          ],
+          "base_twist_world": [
+            5.071970066161668e-10,
+            -1.9752355306934533e-10,
+            -0.08174999803304672,
+            -5.12862474710829e-10,
+            -9.329580441530538e-10,
+            -4.6044223989127886e-11
+          ],
+          "links": {
+            "grasp_center": {
+              "pose_world": [
+                -1.1539793014526367,
+                -0.6052579283714294,
+                0.20770962536334991,
+                -0.7071066498756409,
+                -6.221844728315773e-08,
+                -8.336809287357028e-08,
+                0.7071068286895752
+              ],
+              "pose_base": [
+                0.4662579745054246,
+                -0.08741927146911613,
+                0.17822052724659443,
+                0.9999999999999865,
+                -1.4955058702926202e-08,
+                1.0294523589495853e-07,
+                -1.264405530831958e-07
+              ],
+              "physics_link_index": 46
+            },
+            "fingertip_left": {
+              "pose_world": [
+                -1.1538872718811035,
+                -0.599118709564209,
+                0.20771028101444244,
+                1.7583721501068794e-06,
+                -5.499441257938997e-08,
+                2.0746688278450165e-07,
+                -1.0
+              ],
+              "pose_base": [
+                0.46011875569820415,
+                -0.08732724189758292,
+                0.17822118289768696,
+                -0.7071080245423093,
+                1.8558816175052194e-07,
+                -1.0781431762612911e-07,
+                0.7071055378285668
+              ],
+              "physics_link_index": 49
+            },
+            "fingertip_right": {
+              "pose_world": [
+                -1.1540725231170654,
+                -0.5991188287734985,
+                0.20771034061908722,
+                0.9999999403953552,
+                9.23558616250375e-08,
+                -1.2286678838790976e-06,
+                1.733066596898425e-06
+              ],
+              "pose_base": [
+                0.4601188749074937,
+                -0.08751249313354484,
+                0.17822124250233173,
+                -0.7071055557217328,
+                -9.34104904229305e-07,
+                8.034939843698019e-07,
+                -0.7071080066481646
+              ],
+              "physics_link_index": 50
+            }
+          },
+          "fingertip_origin_distance_m": 0.00018525128390644194,
+          "fingertip_midpoint_world": [
+            -1.1539798974990845,
+            -0.5991187691688538,
+            0.20771031081676483
+          ],
+          "command_targets": {
+            "lift": 0.0,
+            "arm": 0.0,
+            "yaw": 0.0,
+            "pitch": 0.0,
+            "roll": 0.0,
+            "grip_pos": 0.5,
+            "base_fwd": 0.0,
+            "base_strafe": 0.0,
+            "base_turn": 0.0
+          },
+          "gripper_close_command": false,
+          "grasp_attached": false,
+          "native_attachment_present": false,
+          "wheel_joint_names": [
+            "wheel_0_joint",
+            "wheel_1_joint",
+            "wheel_2_joint"
+          ],
+          "gripper_camera_mount_path": "/World/Stretch4/gripper_camera_link",
+          "gripper_camera_mount_exists": true
+        },
+        {
+          "id": "robot_1",
+          "articulation_path": "/World/Stretch4_2/base_footprint",
+          "joint_count": 13,
+          "joints": [
+            {
+              "name": "wheel_0_joint",
+              "index": 0,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -3.4028234663852886e+38,
+              "upper": 3.4028234663852886e+38
+            },
+            {
+              "name": "wheel_1_joint",
+              "index": 1,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -3.4028234663852886e+38,
+              "upper": 3.4028234663852886e+38
+            },
+            {
+              "name": "wheel_2_joint",
+              "index": 2,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -3.4028234663852886e+38,
+              "upper": 3.4028234663852886e+38
+            },
+            {
+              "name": "lift_joint",
+              "index": 3,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 1.2000000476837158
+            },
+            {
+              "name": "arm_l1_joint",
+              "index": 4,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 0.12999999523162842
+            },
+            {
+              "name": "arm_l2_joint",
+              "index": 5,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 0.12999999523162842
+            },
+            {
+              "name": "arm_l3_joint",
+              "index": 6,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 0.12999999523162842
+            },
+            {
+              "name": "arm_l4_joint",
+              "index": 7,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 0.12999999523162842
+            },
+            {
+              "name": "wrist_yaw_joint",
+              "index": 8,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -1.1349999904632568,
+              "upper": 4.275999546051025
+            },
+            {
+              "name": "wrist_pitch_joint",
+              "index": 9,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -4.275999546051025,
+              "upper": 1.1349999904632568
+            },
+            {
+              "name": "wrist_roll_joint",
+              "index": 10,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -1.1349999904632568,
+              "upper": 4.275999546051025
+            },
+            {
+              "name": "gripper_finger_left_joint",
+              "index": 11,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": 0.0,
+              "upper": 0.4999999701976776
+            },
+            {
+              "name": "gripper_finger_right_joint",
+              "index": 12,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": 0.0,
+              "upper": 0.4999999701976776
+            }
+          ],
+          "joint_position": [
+            3.1636065295215232e-12,
+            -3.694545971238972e-12,
+            9.206372643399963e-13,
+            -2.8758622219737795e-11,
+            1.984701031992886e-12,
+            1.8772448873161096e-12,
+            1.657712704085379e-12,
+            -2.6632528512182327e-15,
+            -1.247375813751006e-10,
+            3.2532498916992836e-10,
+            -8.219255137609238e-11,
+            1.0103676229000769e-10,
+            9.323738309197083e-11
+          ],
+          "joint_velocity": [
+            6.677972758106776e-11,
+            -2.9600061290935287e-10,
+            2.760653095013055e-10,
+            -9.741929041240383e-09,
+            9.370947351428072e-10,
+            8.827483188866836e-10,
+            7.812885893798693e-10,
+            1.895011578212369e-11,
+            1.456255205312118e-08,
+            -6.079910797041066e-09,
+            2.475715099592435e-08,
+            -5.234132416376269e-08,
+            4.184961355235828e-08
+          ],
+          "base_pose_world": [
+            1.0665600299835205,
+            -0.13899995386600494,
+            0.029489098116755486,
+            -0.7071067690849304,
+            0.0,
+            0.0,
+            0.7071067690849304
+          ],
+          "base_twist_world": [
+            4.943387366118657e-10,
+            -6.738759550373175e-11,
+            -0.08174999803304672,
+            -1.5089453297978395e-10,
+            -8.575661292198333e-10,
+            -6.082611636593072e-10
+          ],
+          "links": {
+            "grasp_center": {
+              "pose_world": [
+                0.9791407585144043,
+                -0.6052579283714294,
+                0.20770962536334991,
+                -0.7071066498756409,
+                -6.221844728315773e-08,
+                -8.336809287357028e-08,
+                0.7071068286895752
+              ],
+              "pose_base": [
+                0.4662579745054246,
+                -0.08741927146911613,
+                0.17822052724659443,
+                0.9999999999999865,
+                -1.4955058702926202e-08,
+                1.0294523589495853e-07,
+                -1.264405530831958e-07
+              ],
+              "physics_link_index": 46
+            },
+            "fingertip_left": {
+              "pose_world": [
+                0.979232907295227,
+                -0.599118709564209,
+                0.20771028101444244,
+                1.7583721501068794e-06,
+                -5.499441257938997e-08,
+                2.0746688278450165e-07,
+                -1.0
+              ],
+              "pose_base": [
+                0.46011875569820415,
+                -0.08732712268829337,
+                0.17822118289768696,
+                -0.7071080245423093,
+                1.8558816175052194e-07,
+                -1.0781431762612911e-07,
+                0.7071055378285668
+              ],
+              "physics_link_index": 49
+            },
+            "fingertip_right": {
+              "pose_world": [
+                0.9790475964546204,
+                -0.5991188287734985,
+                0.20771034061908722,
+                0.9999999403953552,
+                9.23558616250375e-08,
+                -1.2286678838790976e-06,
+                1.733066596898425e-06
+              ],
+              "pose_base": [
+                0.4601188749074937,
+                -0.08751243352890006,
+                0.17822124250233173,
+                -0.7071055557217328,
+                -9.34104904229305e-07,
+                8.034939843698019e-07,
+                -0.7071080066481646
+              ],
+              "physics_link_index": 50
+            }
+          },
+          "fingertip_origin_distance_m": 0.00018531088853579613,
+          "fingertip_midpoint_world": [
+            0.9791402518749237,
+            -0.5991187691688538,
+            0.20771031081676483
+          ],
+          "command_targets": {
+            "lift": 0.0,
+            "arm": 0.0,
+            "yaw": 0.0,
+            "pitch": 0.0,
+            "roll": 0.0,
+            "grip_pos": 0.5,
+            "base_fwd": 0.0,
+            "base_strafe": 0.0,
+            "base_turn": 0.0
+          },
+          "gripper_close_command": false,
+          "grasp_attached": false,
+          "native_attachment_present": false,
+          "wheel_joint_names": [
+            "wheel_0_joint",
+            "wheel_1_joint",
+            "wheel_2_joint"
+          ],
+          "gripper_camera_mount_path": "/World/Stretch4_2/gripper_camera_link",
+          "gripper_camera_mount_exists": true
+        }
+      ],
+      "garments": [
+        {
+          "id": "garment_0",
+          "path": "/World/Garment/garment/mesh",
+          "vertices": 15946,
+          "triangles": 31464,
+          "centroid_world": [
+            1.0508716106414795,
+            -1.5034795999526978,
+            0.7699382305145264
+          ],
+          "aabb_min_world": [
+            0.6985403895378113,
+            -1.7699053287506104,
+            0.7563361525535583
+          ],
+          "aabb_max_world": [
+            1.4321324825286865,
+            -1.1703720092773438,
+            0.7883443832397461
+          ],
+          "finite": true
+        }
+      ],
+      "static": {
+        "human": {
+          "world_matrix_usd_row_vectors": [
+            [
+              0.882417721143045,
+              0.34787604767586416,
+              0.0,
+              0.0
+            ],
+            [
+              -0.34787604767586416,
+              0.882417721143045,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.9485139846801758,
+              0.0
+            ],
+            [
+              -0.08156662422707579,
+              0.4829612729108043,
+              -0.36278319358825684,
+              1.0
+            ]
+          ],
+          "position_world": [
+            -0.08156662422707579,
+            0.4829612729108043,
+            -0.36278319358825684
+          ]
+        },
+        "chair": {
+          "world_matrix_usd_row_vectors": [
+            [
+              0.9303159841555552,
+              0.36675900755766144,
+              0.0,
+              0.0
+            ],
+            [
+              -0.36675900755766144,
+              0.9303159841555552,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.08347492480176379,
+              0.06431909113103523,
+              0.0,
+              1.0
+            ]
+          ],
+          "position_world": [
+            0.08347492480176379,
+            0.06431909113103523,
+            0.0
+          ]
+        }
+      },
+      "runtime_control_parameters": {
+        "LIFT_RATE": 1.4,
+        "ARM_RATE": 1.1,
+        "WRIST_RATE": 5.0,
+        "GRIPPER_OPEN": 0.5,
+        "GRIPPER_CLOSED": 0.103,
+        "GRIPPER_RATE": 0.9925,
+        "BASE_LINEAR_RATE": 0.56,
+        "BASE_ANGULAR_RATE": 2.6,
+        "BASE_LINEAR_ACCEL": 1.2,
+        "BASE_ANGULAR_ACCEL": 4.0
+      },
+      "usd_camera_paths": [
+        "/OmniverseKit_Persp",
+        "/OmniverseKit_Front",
+        "/OmniverseKit_Top",
+        "/OmniverseKit_Right"
+      ],
+      "all_arrays_finite": true,
+      "simulation_time_s": 0.008333333767950535,
+      "physics_dt_s": 0.004166666666666667,
+      "render_dt_s": 0.016666666666666666,
+      "observation_shapes": {
+        "joint_position": [
+          2,
+          13
+        ],
+        "joint_velocity": [
+          2,
+          13
+        ],
+        "base_pose_world": [
+          2,
+          7
+        ],
+        "base_twist_world": [
+          2,
+          6
+        ],
+        "grasp_pose_base": [
+          2,
+          7
+        ],
+        "fingertip_position_base": [
+          2,
+          2,
+          3
+        ],
+        "fingertip_origin_distance": [
+          2,
+          1
+        ],
+        "controller_target": [
+          2,
+          9
+        ],
+        "gripper_close_command": [
+          2,
+          1
+        ],
+        "simulation_time_s": []
+      },
+      "control_ticks_since_startup": 0
+    },
+    "after_60_ticks": {
+      "schema_version": "0.1.0-draft",
+      "units": "m, rad, s; quaternions wxyz",
+      "source": "live PhysX state; static poses from USD; no camera images synthesized",
+      "robots": [
+        {
+          "id": "robot_0",
+          "articulation_path": "/World/Stretch4/base_footprint",
+          "joint_count": 13,
+          "joints": [
+            {
+              "name": "wheel_0_joint",
+              "index": 0,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -3.4028234663852886e+38,
+              "upper": 3.4028234663852886e+38
+            },
+            {
+              "name": "wheel_1_joint",
+              "index": 1,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -3.4028234663852886e+38,
+              "upper": 3.4028234663852886e+38
+            },
+            {
+              "name": "wheel_2_joint",
+              "index": 2,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -3.4028234663852886e+38,
+              "upper": 3.4028234663852886e+38
+            },
+            {
+              "name": "lift_joint",
+              "index": 3,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 1.2000000476837158
+            },
+            {
+              "name": "arm_l1_joint",
+              "index": 4,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 0.12999999523162842
+            },
+            {
+              "name": "arm_l2_joint",
+              "index": 5,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 0.12999999523162842
+            },
+            {
+              "name": "arm_l3_joint",
+              "index": 6,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 0.12999999523162842
+            },
+            {
+              "name": "arm_l4_joint",
+              "index": 7,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 0.12999999523162842
+            },
+            {
+              "name": "wrist_yaw_joint",
+              "index": 8,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -1.1349999904632568,
+              "upper": 4.275999546051025
+            },
+            {
+              "name": "wrist_pitch_joint",
+              "index": 9,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -4.275999546051025,
+              "upper": 1.1349999904632568
+            },
+            {
+              "name": "wrist_roll_joint",
+              "index": 10,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -1.1349999904632568,
+              "upper": 4.275999546051025
+            },
+            {
+              "name": "gripper_finger_left_joint",
+              "index": 11,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": 0.0,
+              "upper": 0.4999999701976776
+            },
+            {
+              "name": "gripper_finger_right_joint",
+              "index": 12,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": 0.0,
+              "upper": 0.4999999701976776
+            }
+          ],
+          "joint_position": [
+            -0.24275343120098114,
+            -0.5142372846603394,
+            0.2427566796541214,
+            6.790848772197933e-08,
+            8.604576464676938e-07,
+            6.654227036051452e-07,
+            3.021735324182373e-07,
+            1.7853317046956363e-07,
+            0.0011993610532954335,
+            0.004088249057531357,
+            -5.142947338754311e-05,
+            0.4967193007469177,
+            0.4966574013233185
+          ],
+          "joint_velocity": [
+            0.01140245795249939,
+            0.0007927266415208578,
+            -0.013099342584609985,
+            2.093476359732449e-05,
+            0.0008002904942259192,
+            0.0005552709917537868,
+            2.4011940695345402e-05,
+            0.0016051146667450666,
+            -0.004433768801391125,
+            -0.042075254023075104,
+            0.01008602324873209,
+            0.018720773980021477,
+            0.015496304258704185
+          ],
+          "base_pose_world": [
+            -1.066768765449524,
+            -0.13861210644245148,
+            -0.0036288369446992874,
+            -0.7070900797843933,
+            0.0033414179924875498,
+            0.0008939366671256721,
+            0.7071149945259094
+          ],
+          "base_twist_world": [
+            0.003249037778005004,
+            0.003506758250296116,
+            0.0003424162568990141,
+            0.007278143893927336,
+            -0.008791351690888405,
+            -0.004123561084270477
+          ],
+          "links": {
+            "grasp_center": {
+              "pose_world": [
+                -1.1532319784164429,
+                -0.603901743888855,
+                0.17647479474544525,
+                -0.707514226436615,
+                0.001915446831844747,
+                -0.0005725017981603742,
+                0.7066961526870728
+              ],
+              "pose_base": [
+                0.46636221145720724,
+                -0.08706484054636274,
+                0.17701314449759728,
+                0.9999977304175681,
+                -2.685889908984906e-05,
+                0.0020442095299597523,
+                0.0005997046857977022
+              ],
+              "physics_link_index": 46
+            },
+            "fingertip_left": {
+              "pose_world": [
+                -1.0594593286514282,
+                -0.5851350426673889,
+                0.1761098951101303,
+                0.24637629091739655,
+                -0.0019396886928007007,
+                -0.0004880145424976945,
+                -0.9691721796989441
+              ],
+              "pose_base": [
+                0.4475913292468454,
+                0.006707654642643318,
+                0.17708523821640199,
+                -0.8595333500285732,
+                0.0010695846345827114,
+                -0.0017420010002354488,
+                0.5110755732862634
+              ],
+              "physics_link_index": 49
+            },
+            "fingertip_right": {
+              "pose_world": [
+                -1.2470377683639526,
+                -0.5853562355041504,
+                0.1767701804637909,
+                0.9694650173187256,
+                -0.001353330910205841,
+                0.0014697507722303271,
+                -0.2452213019132614
+              ],
+              "pose_base": [
+                0.4478211378547133,
+                -0.180871936577948,
+                0.17709490900039906,
+                -0.8589020247374666,
+                -0.0010239659402735892,
+                -0.0017683129331359322,
+                -0.512135857429456
+              ],
+              "physics_link_index": 50
+            }
+          },
+          "fingertip_origin_distance_m": 0.18757973224206406,
+          "fingertip_midpoint_world": [
+            -1.1532485485076904,
+            -0.5852456390857697,
+            0.1764400377869606
+          ],
+          "command_targets": {
+            "lift": 0.0,
+            "arm": 0.0,
+            "yaw": 0.0,
+            "pitch": 0.0,
+            "roll": 0.0,
+            "grip_pos": 0.5,
+            "base_fwd": 0.0,
+            "base_strafe": 0.0,
+            "base_turn": 0.0
+          },
+          "gripper_close_command": false,
+          "grasp_attached": false,
+          "native_attachment_present": false,
+          "wheel_joint_names": [
+            "wheel_0_joint",
+            "wheel_1_joint",
+            "wheel_2_joint"
+          ],
+          "gripper_camera_mount_path": "/World/Stretch4/gripper_camera_link",
+          "gripper_camera_mount_exists": true
+        },
+        {
+          "id": "robot_1",
+          "articulation_path": "/World/Stretch4_2/base_footprint",
+          "joint_count": 13,
+          "joints": [
+            {
+              "name": "wheel_0_joint",
+              "index": 0,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -3.4028234663852886e+38,
+              "upper": 3.4028234663852886e+38
+            },
+            {
+              "name": "wheel_1_joint",
+              "index": 1,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -3.4028234663852886e+38,
+              "upper": 3.4028234663852886e+38
+            },
+            {
+              "name": "wheel_2_joint",
+              "index": 2,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -3.4028234663852886e+38,
+              "upper": 3.4028234663852886e+38
+            },
+            {
+              "name": "lift_joint",
+              "index": 3,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 1.2000000476837158
+            },
+            {
+              "name": "arm_l1_joint",
+              "index": 4,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 0.12999999523162842
+            },
+            {
+              "name": "arm_l2_joint",
+              "index": 5,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 0.12999999523162842
+            },
+            {
+              "name": "arm_l3_joint",
+              "index": 6,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 0.12999999523162842
+            },
+            {
+              "name": "arm_l4_joint",
+              "index": 7,
+              "type": "PhysicsPrismaticJoint",
+              "unit": "m",
+              "lower": 0.0,
+              "upper": 0.12999999523162842
+            },
+            {
+              "name": "wrist_yaw_joint",
+              "index": 8,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -1.1349999904632568,
+              "upper": 4.275999546051025
+            },
+            {
+              "name": "wrist_pitch_joint",
+              "index": 9,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -4.275999546051025,
+              "upper": 1.1349999904632568
+            },
+            {
+              "name": "wrist_roll_joint",
+              "index": 10,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": -1.1349999904632568,
+              "upper": 4.275999546051025
+            },
+            {
+              "name": "gripper_finger_left_joint",
+              "index": 11,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": 0.0,
+              "upper": 0.4999999701976776
+            },
+            {
+              "name": "gripper_finger_right_joint",
+              "index": 12,
+              "type": "PhysicsRevoluteJoint",
+              "unit": "rad",
+              "lower": 0.0,
+              "upper": 0.4999999701976776
+            }
+          ],
+          "joint_position": [
+            -0.2427506446838379,
+            -0.5142382383346558,
+            0.24275563657283783,
+            2.487076145030187e-08,
+            5.596449454969843e-07,
+            4.7153059767879313e-07,
+            4.528000658865494e-07,
+            1.403512754905023e-07,
+            0.0011945569422096014,
+            0.004087298177182674,
+            -5.124676681589335e-05,
+            0.49672141671180725,
+            0.4966568052768707
+          ],
+          "joint_velocity": [
+            0.0005631593521684408,
+            -0.0012791045010089874,
+            0.0004205857985652983,
+            2.5312033358204644e-06,
+            0.00027538329595699906,
+            0.00020963379938621074,
+            0.0001631300983717665,
+            5.8884288591798395e-06,
+            -0.005109716672450304,
+            -0.019671231508255005,
+            0.0013096668990328908,
+            0.016608331352472305,
+            0.01600324548780918
+          ],
+          "base_pose_world": [
+            1.0662434101104736,
+            -0.13882479071617126,
+            -0.0036290460266172886,
+            -0.7071202397346497,
+            0.003339858725667,
+            0.0008945767767727375,
+            0.7070848345756531
+          ],
+          "base_twist_world": [
+            -0.0004980528610758483,
+            -0.0003772736235987395,
+            -0.00017111105262301862,
+            -0.0004942927043884993,
+            -0.0010202458361163735,
+            0.0009169174591079354
+          ],
+          "links": {
+            "grasp_center": {
+              "pose_world": [
+                0.979817807674408,
+                -0.604121208190918,
+                0.17647385597229004,
+                -0.7075425982475281,
+                0.0019142383243888617,
+                -0.0005715070874430239,
+                0.7066677808761597
+              ],
+              "pose_base": [
+                0.4663613571970753,
+                -0.08706641146407887,
+                0.1770133347738763,
+                0.9999977329418372,
+                -2.6776924725598235e-05,
+                0.002043717251234598,
+                0.0005971716499779401
+              ],
+              "physics_link_index": 46
+            },
+            "fingertip_left": {
+              "pose_world": [
+                1.0735890865325928,
+                -0.5853469371795654,
+                0.17610925436019897,
+                0.24641606211662292,
+                -0.0019380778539925814,
+                -0.0004881962086074054,
+                -0.9691620469093323
+              ],
+              "pose_base": [
+                0.4475909055930338,
+                0.006706313109344033,
+                0.17708542985012635,
+                -0.8595325253065276,
+                0.0010692530223761329,
+                -0.0017417036181585637,
+                0.5110769620190919
+              ],
+              "physics_link_index": 49
+            },
+            "fingertip_right": {
+              "pose_world": [
+                0.8860106468200684,
+                -0.5855832099914551,
+                0.17676900327205658,
+                0.9694749116897583,
+                -0.0013528187992051244,
+                0.0014683068729937077,
+                -0.24518203735351562
+              ],
+              "pose_base": [
+                0.44781979058306165,
+                -0.1808732957411287,
+                0.1770951055147977,
+                -0.8589031342605958,
+                -0.0010237521263381918,
+                -0.0017678551598618248,
+                -0.5121339986537143
+              ],
+              "physics_link_index": 50
+            }
+          },
+          "fingertip_origin_distance_m": 0.18757974874291067,
+          "fingertip_midpoint_world": [
+            0.9797998666763306,
+            -0.5854650735855103,
+            0.17643912881612778
+          ],
+          "command_targets": {
+            "lift": 0.0,
+            "arm": 0.0,
+            "yaw": 0.0,
+            "pitch": 0.0,
+            "roll": 0.0,
+            "grip_pos": 0.5,
+            "base_fwd": 0.0,
+            "base_strafe": 0.0,
+            "base_turn": 0.0
+          },
+          "gripper_close_command": false,
+          "grasp_attached": false,
+          "native_attachment_present": false,
+          "wheel_joint_names": [
+            "wheel_0_joint",
+            "wheel_1_joint",
+            "wheel_2_joint"
+          ],
+          "gripper_camera_mount_path": "/World/Stretch4_2/gripper_camera_link",
+          "gripper_camera_mount_exists": true
+        }
+      ],
+      "garments": [
+        {
+          "id": "garment_0",
+          "path": "/World/Garment/garment/mesh",
+          "vertices": 15946,
+          "triangles": 31464,
+          "centroid_world": [
+            1.051503300666809,
+            -1.5038820505142212,
+            0.5793206691741943
+          ],
+          "aabb_min_world": [
+            0.6991549730300903,
+            -1.770052433013916,
+            0.5749992728233337
+          ],
+          "aabb_max_world": [
+            1.4329943656921387,
+            -1.1693438291549683,
+            0.6055101752281189
+          ],
+          "finite": true
+        }
+      ],
+      "static": {
+        "human": {
+          "world_matrix_usd_row_vectors": [
+            [
+              0.882417721143045,
+              0.34787604767586416,
+              0.0,
+              0.0
+            ],
+            [
+              -0.34787604767586416,
+              0.882417721143045,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.9485139846801758,
+              0.0
+            ],
+            [
+              -0.08156662422707579,
+              0.4829612729108043,
+              -0.36278319358825684,
+              1.0
+            ]
+          ],
+          "position_world": [
+            -0.08156662422707579,
+            0.4829612729108043,
+            -0.36278319358825684
+          ]
+        },
+        "chair": {
+          "world_matrix_usd_row_vectors": [
+            [
+              0.9303159841555552,
+              0.36675900755766144,
+              0.0,
+              0.0
+            ],
+            [
+              -0.36675900755766144,
+              0.9303159841555552,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.08347492480176379,
+              0.06431909113103523,
+              0.0,
+              1.0
+            ]
+          ],
+          "position_world": [
+            0.08347492480176379,
+            0.06431909113103523,
+            0.0
+          ]
+        }
+      },
+      "runtime_control_parameters": {
+        "LIFT_RATE": 1.4,
+        "ARM_RATE": 1.1,
+        "WRIST_RATE": 5.0,
+        "GRIPPER_OPEN": 0.5,
+        "GRIPPER_CLOSED": 0.103,
+        "GRIPPER_RATE": 0.9925,
+        "BASE_LINEAR_RATE": 0.56,
+        "BASE_ANGULAR_RATE": 2.6,
+        "BASE_LINEAR_ACCEL": 1.2,
+        "BASE_ANGULAR_ACCEL": 4.0
+      },
+      "usd_camera_paths": [
+        "/OmniverseKit_Persp",
+        "/OmniverseKit_Front",
+        "/OmniverseKit_Top",
+        "/OmniverseKit_Right"
+      ],
+      "all_arrays_finite": true,
+      "simulation_time_s": 1.0083333859220147,
+      "physics_dt_s": 0.004166666666666667,
+      "render_dt_s": 0.016666666666666666,
+      "observation_shapes": {
+        "joint_position": [
+          2,
+          13
+        ],
+        "joint_velocity": [
+          2,
+          13
+        ],
+        "base_pose_world": [
+          2,
+          7
+        ],
+        "base_twist_world": [
+          2,
+          6
+        ],
+        "grasp_pose_base": [
+          2,
+          7
+        ],
+        "fingertip_position_base": [
+          2,
+          2,
+          3
+        ],
+        "fingertip_origin_distance": [
+          2,
+          1
+        ],
+        "controller_target": [
+          2,
+          9
+        ],
+        "gripper_close_command": [
+          2,
+          1
+        ],
+        "simulation_time_s": []
+      },
+      "control_ticks_since_startup": 60
+    }
+  },
+  "human_spawn": {
+    "offset_m": [
+      -0.08156662422707579,
+      0.032961284831733266,
+      0.0
+    ],
+    "yaw_deg": 21.51587519468295,
+    "seed": 42,
+    "pivot_m": [
+      0.0,
+      0.44999998807907104,
+      -0.36278319358825684
+    ]
+  }
+}
