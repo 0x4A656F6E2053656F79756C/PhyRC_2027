@@ -1,0 +1,21 @@
+{
+  "coefficient": 0.2,
+  "combine": "max",
+  "colliders": [
+    "/World/Stretch4/gripper_finger_left_link/collisions/gripper_finger_left_collision_link/mesh",
+    "/World/Stretch4/gripper_fingertip_left_link/collisions/gripper_fingertip_left_collision_link/mesh",
+    "/World/Stretch4/gripper_finger_right_link/collisions/gripper_finger_right_collision_link/mesh",
+    "/World/Stretch4/gripper_fingertip_right_link/collisions/gripper_fingertip_right_collision_link/mesh",
+    "/World/Stretch4_2/gripper_finger_left_link/collisions/gripper_finger_left_collision_link/mesh",
+    "/World/Stretch4_2/gripper_fingertip_left_link/collisions/gripper_fingertip_left_collision_link/mesh",
+    "/World/Stretch4_2/gripper_finger_right_link/collisions/gripper_finger_right_collision_link/mesh",
+    "/World/Stretch4_2/gripper_fingertip_right_link/collisions/gripper_fingertip_right_collision_link/mesh"
+  ],
+  "epoch": 1789109751.8355052,
+  "changed_only_eight_fingers": true,
+  "human_unchanged": true,
+  "cloth_coefficients": {
+    "/World/Garment/deformableMaterial": 0.0
+  },
+  "physical_pull_tested": false
+}

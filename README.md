@@ -301,3 +301,13 @@ git push -u origin HEAD
 이미지/패키지 버전 변경은 별도 작업으로 검증하세요.
 
 이관 검증 결과와 한계는 [docs/VERIFICATION.md](docs/VERIFICATION.md)에 기록합니다.
+
+### Gripper friction trial
+
+Finger and fingertip contacts default to coefficient **0.2**, the cloth coefficient
+used immediately before the historical frictionless patch. Cloth and mannequin
+materials remain zero; native grasp attachments remain enabled. Set
+`STRETCH4_GRIPPER_CONTACT_FRICTION=0 ./run.sh gui` to restore the previous zero
+contact friction on the next launch. This override is forwarded by the launcher.
+The current diagnostic GUI also has a session-only **Restore 0** button.
+See [trial evidence and preserved F1–F5 stages](docs/GRIPPER_FRICTION_20260911.md).

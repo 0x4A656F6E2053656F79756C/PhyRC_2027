@@ -2286,8 +2286,8 @@ class TeleopTShirtStretch4_Env(BaseEnv):
                 scale=_gscale,
                 usd_path=_usd,
                 visual_material_usd="Assets/Material/Garment/linen_Pumpkin.usd",
-                # Frictionless FEM cloth; native vertex attachments hold the grip.
-                # Human material combine=min also removes rigid/cloth sliding friction.
+                # Zero cloth self-friction; native vertex attachments hold the grip.
+                # Human min/0 stays slippery; finger max/0.2 adds contact friction.
                 # STRETCH4_SURFACE_FRICTION remains the surface-material override.
                 friction=_feel("GARMENT_FRICTION", 0.0),
                 # Particle_Garment defaults damping/drag/lift to 0.0 and the
@@ -2905,7 +2905,7 @@ class TeleopTShirtStretch4_Env(BaseEnv):
                   "(STRETCH4_ROBOT_SELF_COLLIDE=1 to restore them)", flush=True)
         simulation_app.update()
 
-        # [quad mesh: all scene contact friction zero]
+        # Zero baseline, then selected human/gripper contact overrides.
         from Env_Config.Garment.ZeroSceneFriction import zero_scene_friction
         zero_scene_friction(self.stage)
 

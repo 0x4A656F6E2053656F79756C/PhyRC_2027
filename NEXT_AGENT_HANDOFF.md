@@ -1,3 +1,30 @@
+# CURRENT UPDATE: 2026-09-11, user stages preserved and gripper friction trial
+
+This update supersedes earlier GUI-stopped and uncommitted-geometry statements.
+
+- User launched `happy_cori`; its current scene was visually inspected with the
+  mannequin wearing the shirt and both grippers released. Keep this GUI running.
+- F1–F5 stages are preserved read-only with verified hashes outside the project:
+  `/home/seoyul/PhyRC_backups/dressing_stages_20260911_155147/`.
+  Future F-key writes cannot overwrite them. Do not point a GUI at this archive.
+- Geometry/randomization follow-up was committed as `007e7cd`.
+- Gripper friction now defaults to 0.2 using only eight finger/fingertip materials
+  with combine=max. Cloth remains 0; mannequin remains 0/min. Native attachments
+  and guards are unchanged. The historical pre-zero cloth coefficient was 0.2.
+- Source and runtime were updated, and the current live GUI received the same
+  material change through Script Editor without restart. CPU actual-asset USD
+  isolation/rollback checks and live effective bindings passed. No post-change
+  physical pull/slip measurement or dressing replay has been performed.
+- Current GUI has a session-only `Gripper friction trial` panel: `Restore 0`
+  rolls back immediately; `Apply 0.2` re-enables. Both buttons were tested and
+  final setting is 0.2. For future launches use
+  `STRETCH4_GRIPPER_CONTACT_FRICTION=0 ./run.sh gui` to restore zero friction.
+- Pre-change live snapshot: `output/friction_trial_20260911/before_live/slot_LIVE.npz`.
+  See `docs/GRIPPER_FRICTION_20260911.md` for evidence, backup and restore details.
+- The unrelated `docs/PhyRC_proposals.pdf` remains untracked and preserved.
+
+---
+
 # Latest handoff: contact guard correction installed, 2026-09-11
 
 This section supersedes the historical notes below, especially statements that
