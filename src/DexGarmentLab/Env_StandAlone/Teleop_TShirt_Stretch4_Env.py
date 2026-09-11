@@ -337,19 +337,19 @@ else:
               f"{_SHIRT_PATH}, falling back to the shipped mesh")
     TSHIRT_USD = build_reshaped_tshirt_usd(TSHIRT_USD)
 
-# Restored original command rates (+10% speedup relative to the 90% tuning).
-LIFT_RATE = _feel("LIFT_RATE", 1.4)
-ARM_RATE = _feel("ARM_RATE", 1.1)
-WRIST_RATE = _feel("WRIST_RATE", 5.0)
+# Command rates increased by 10% per user request.
+LIFT_RATE = _feel("LIFT_RATE", 1.54)
+ARM_RATE = _feel("ARM_RATE", 1.21)
+WRIST_RATE = _feel("WRIST_RATE", 5.5)
 GRIPPER_OPEN = 0.5
 # 0.0 was the joint limit, not the point of contact -- see patch_meet.
 GRIPPER_CLOSED = _feel("GRIPPER_CLOSED", 0.103)
 GRIPPER_CLOSE_TIME = 0.4
 GRIPPER_RATE = (GRIPPER_OPEN - GRIPPER_CLOSED) / GRIPPER_CLOSE_TIME
-BASE_LINEAR_RATE = _feel("BASE_LINEAR_RATE", 0.56)
-BASE_ANGULAR_RATE = _feel("BASE_ANGULAR_RATE", 2.6)
-BASE_LINEAR_ACCEL = _feel("BASE_LINEAR_ACCEL", 1.2)
-BASE_ANGULAR_ACCEL = _feel("BASE_ANGULAR_ACCEL", 4.0)
+BASE_LINEAR_RATE = _feel("BASE_LINEAR_RATE", 0.616)
+BASE_ANGULAR_RATE = _feel("BASE_ANGULAR_RATE", 2.86)
+BASE_LINEAR_ACCEL = _feel("BASE_LINEAR_ACCEL", 1.32)
+BASE_ANGULAR_ACCEL = _feel("BASE_ANGULAR_ACCEL", 4.4)
 
 # Ported over from Teleop_TShirt_Stretch4_Hand_Env.py's grab-follow fix
 # (same underlying bug, confirmed there first): the old formula here

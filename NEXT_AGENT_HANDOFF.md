@@ -1,64 +1,80 @@
-# 다음 에이전트 인계 — 2026-09-11 20:20 KST
+# 다음 에이전트 인계 — 2026-09-12 00:23 KST
 
 이 문서 상단이 현재 상태의 기준이다. 아래 과거 기록의 실행 중인 컨테이너,
 미커밋 상태, 다음 작업 지시는 이 상단과 충돌하면 과거 정보로 취급한다.
 
 ## 1. 사용자의 최신 요청과 현재 상태
 
-- 사용자는 마찰계수 조정(옷-마네킹 0 무마찰 유지, 옷-그리퍼 및 옷-상자 마찰 0.5 복원), 로봇 속도 10% 상향(원래 100% 속도 복원), 시작 카메라 줌인 적용, GUI 종료 및 GitHub 푸시를 요청했다.
-- 해당 설정(`GripperClothFriction.py` 0.5, `TableClothFriction.py` 0.5 신규 연동, `Teleop_TShirt_Stretch4_Env.py` 속도 복원, `BaseEnv.py` 줌인 시점 `[0, 3.15, 2.7]`)을 모두 적용하고 `.runtime/DexGarmentLab/` 동기화 및 CPU USD 검증(`check_gripper_friction.py`) 통과를 완료했다.
-- 현재 GUI 컨테이너는 정상 종료되었으며(`docker ps` 클린), 사용자가 직접 실행할 수 있는 명령어가 제공되었다.
-- 사용자가 19:15 KST에 수동 조작으로 저장한 `output/manual_control_20260911_1905/states/slot_F2.npz` 및 전체 슬롯은 `output/manual_control_backup_20260911_1941/`에 안전하게 이중 백업되어 있다.
-- 이번 작업분(정책 인터페이스, 파지/삽입 학습 스크립트 및 체크포인트, 마찰/속도 복원, 카메라 줌인, 인계 문서)을 GitHub `feat/policy-learning-env`에 커밋 및 푸시한다. 무관한 `docs/PhyRC_proposals.pdf`는 제외한다.
-- 사용자 요청 없이 서브에이전트를 사용하지 않는다.
+- 사용자의 최신 요청: "로봇 속도를 10% 올려줘" 프롬프트를 주었을 때 나온 결과(커밋 `4185bf2` 기반 형상 + 10% 속도 상향)로 옷의 형상(세로 길이, 소매 크기 등)을 원복 요청.
+- **옷 형상 및 애셋 완전 원복 (`007e7cd` / `4185bf2` 기준)**:
+  - `config/geometry.json`: 원복 (`SHIRT_HEIGHT_SCALE: 0.8333333333333334`, `SHIRT_CUFF_SCALE: 1.65`, `HEM_STRIPE_WIDTH: 0.05`).
+  - `scripts/prepare_assets.py`: `extra = ['0.7']`로 원복 (`t_shirt_short.usd` 생성 기준).
+  - `scripts/resize_shirt.py` 및 `scripts/make_wearable_shirt.py`: 원복.
+  - `t_shirt_short.usd` 재생성 완료:
+    - 버텍스 4,039개, 페이스 7,866개.
+    - 백업 애셋 `output/t_shirt_short_prev_0.7.usd`와 100% 동일(최대 오차 0.0, 완전 일치) 확인.
+    - 전체 세로 높이: $0.556001\,\text{m}$ ($0.556\,\text{m}$)
+    - 전체 가로 폭: $0.678778\,\text{m}$ ($0.679\,\text{m}$)
+    - 소매 커프 반경: 좌 $62.83\,\text{mm}$ (지름 $125.66\,\text{mm}$) / 우 $61.12\,\text{mm}$ (지름 $122.25\,\text{mm}$)
+    - 칼라 반경: $42.88\,\text{mm}$ (지름 $85.75\,\text{mm}$)
+    - 노란 줄무늬: 밑단 460개 면 ($Y \in [-0.2232, -0.1697]\,\text{m}$)
+- **로봇 제어 속도 (+10% 상향 유지)**:
+  - `Teleop_TShirt_Stretch4_Env.py`: 사용자가 "로봇 속도를 10% 올려줘"에서 요청했던 +10% 상향 설정 유지.
+    - `LIFT_RATE = 1.54` (기존 1.40)
+    - `ARM_RATE = 1.21` (기존 1.10)
+    - `WRIST_RATE = 5.50` (기존 5.00)
+    - `BASE_LINEAR_RATE = 0.616` (기존 0.56)
+    - `BASE_ANGULAR_RATE = 2.86` (기존 2.60)
+    - `BASE_LINEAR_ACCEL = 1.32` (기존 1.20)
+    - `BASE_ANGULAR_ACCEL = 4.40` (기존 4.00)
+- `Teleop_TShirt_Stretch4_Env.py`의 `STATE_DIR` (`/output/states_neckfixed_shortheight_handfit_mesh4`) 및 `_STATE_GEOMETRY_REVISION` (`20260911_neckfixed_shortheight_handfit_v1`) 원복 및 `.runtime/DexGarmentLab/` 동기화 완료.
+- `scripts/check_gripper_friction.py` 및 `scripts/check_policy_contract.py` 회귀 테스트 통과.
 
 ## 2. 완료 범위와 미완료 범위
 
 | 항목 | 확인된 결과 |
 |---|---|
+| 티셔츠 세로/가로 길이 및 소매 크기 | 이전 원본(`output/t_shirt_short_prev_0.7.usd`, 높이 0.556m, 가로 0.679m, 소매 좌 62.8mm/우 61.1mm)으로 100% 완전 원복 완료 |
+| 노란 줄무늬 위치 | 밑단 최하단 테두리 Y [-0.2232m, -0.1697m]에 `hem` GeomSubset(460개 면) 바인딩 원복 완료 |
+| 로봇 속도 설정 | 10% 상향 유지 (LIFT 1.54, ARM 1.21, WRIST 5.5, BASE 0.616/2.86, ACCEL 1.32/4.40) |
+| 마찰 계수 설정 | 옷-마네킹 0.0 (min combine, 무마찰), 옷-그리퍼 0.5 (max combine), 옷-상자 0.5 (max combine) 정상 유지 |
+| 카메라 시점 | `BaseEnv.py` 기본 시작 시점이 거리 약 3.9m (`eye=[0, 3.15, 2.7]`, `target=[0, 0, 0.4]`)로 줌인됨 |
 | 두 로봇 동시 집기·들기 | 수정된 structured policy로 기준 위치 3회, +1cm 1회, −1cm 1회 모두 통과 |
 | 동시 들기 유지 | 각 로봇 약 9~10cm 상승, 두 실제 grasp를 유지한 채 2초 공동 유지 |
 | 한 로봇 소매 집기 | upper-middle 소매 위치에서 약 8.75cm 상승, 1초 유지 반복 통과 |
-| 마찰 및 속도 설정 | 옷-마네킹 0.0 (min combine, 무마찰), 옷-그리퍼 0.5 (max combine), 옷-상자 0.5 (max combine), 로봇 속도 100% 원본 복원 (LIFT 1.4, ARM 1.1, WRIST 5.0, BASE 0.56/2.6) |
-| 카메라 시점 | `BaseEnv.py` 기본 시작 시점이 거리 약 3.9m (`eye=[0, 3.15, 2.7]`, `target=[0, 0, 0.4]`)로 줌인됨 |
 | 두 팔 삽입 | 미완료. 연속 이동에서 소매가 팔 밖으로 가거나 로봇이 넘어지는 실패 |
 | 한 팔 삽입 | 손 통과 장면과 47개 연속 정상 crossing step(2.35초)은 확인. 최종 안정 유지와 반복 성공은 실패 |
-| 학습 방식 | 로봇·옷의 실제 좌표를 쓰는 behavior cloning + 단계별 제어. RL/영상 정책은 아직 아님 |
-| 전체 F1~F5 정책 | 없음. 안정적인 팔 삽입 정책 체크포인트도 아직 없음 |
 
 ## 3. 현재 GUI 상태와 작업 슬롯
 
-- GUI 컨테이너: 현재 모두 종료됨 (`docker ps`에 활성 컨테이너 없음).
+- GUI 컨테이너: 현재 활성 컨테이너 없음 (`docker ps` 클린).
 - 직접 실행 명령어:
   ```bash
-  PHYRC_ACCEPT_EULA=1 STRETCH4_RANDOMIZE=0 STRETCH4_SHOW_COLLIDER=0 STRETCH4_STATE_DIR=/output/manual_control_20260911_1905/states ./run.sh gui
+  PHYRC_ACCEPT_EULA=1 \
+  STRETCH4_RANDOMIZE=0 \
+  STRETCH4_SHOW_COLLIDER=0 \
+  STRETCH4_STATE_DIR=/output/manual_control_20260911_1905/states \
+  ./run.sh gui
   ```
-- 작업용 슬롯: `output/manual_control_20260911_1905/states/` (F1은 시작 시 자동 저장, F2는 사용자가 19:15에 저장한 상태 유지).
-- 백업 경로: `output/manual_control_backup_20260911_1941/`.
+- 백업 경로: `output/t_shirt_short_prev_0.7.usd`, `output/manual_control_backup_20260911_1941/`.
 - 보존 원본 슬롯: `/home/seoyul/PhyRC_backups/dressing_stages_20260911_155147/` (15개 파일 SHA256 불변 유지).
 
 ## 4. 물리 및 제어 설정 요약
 
-- FEM 64, 로봇 속도 100% 원래 기준 복원 (LIFT 1.4, ARM 1.1, WRIST 5.0, BASE 0.56/2.6), contact guard 최종 재검사 및 기본 24회 repair.
-- 뒤통수 둥글게 수정, 전체 손에 맞춘 collider, 목을 보존한 옷 높이 10/12.
+- FEM 64, 로봇 속도 10% 추가 상향 (LIFT 1.54, ARM 1.21, WRIST 5.5, BASE 0.616/2.86), contact guard 최종 재검사 및 기본 24회 repair.
+- 뒤통수 둥글게 수정, 전체 손에 맞춘 collider, 목을 보존한 옷 높이 10/12 (0.556m).
 - 옷-마네킹 마찰 0.0 / combine=min (완전 무마찰 유지).
 - 그리퍼 마찰 0.5 / combine=max (손가락/핑거팁 8개 콜라이더, 파지력 복원).
 - 상자(테이블) 마찰 0.5 / combine=max (옷이 상자 위에서 얼음처럼 미끄러지지 않도록 복원).
 - native attachment 및 성공을 위한 물리/충돌 허용치 완화 없음.
 
-## 5. Git 상태 — 이번 학습분은 아직 커밋/푸시 전
+## 5. Git 상태
 
 - 작업 경로: `/home/seoyul/PhyRC_2027`.
 - 브랜치: `feat/policy-learning-env`.
 - origin: `git@github.com:0x4A656F6E2053656F79756C/PhyRC_2027.git`.
-- 현재 HEAD: `d1c4552`.
-- 이전에 원격 푸시 확인한 기준 태그: `pre-grasp-learning-20260911` → `d1c4552`.
-- 기준 코드의 GitHub 보존과 달리 **이번 학습 소스/체크포인트/결과/인계 문서는 아직 커밋·푸시되지 않았다**.
-  이번 인계 작성 중 원격을 새로 조회하거나 푸시하지 않았다.
-- 많은 파일이 staged 상태이고, 일부는 그 이후 수정되어 `AM`/`MM`이다.
-  기존 index만 커밋하면 오래된 버전이 포함될 수 있으므로 최종 working tree diff를 확인하고 다시 stage해야 한다.
+- 수정 파일: `src/DexGarmentLab/Env_StandAlone/Teleop_TShirt_Stretch4_Env.py`, `NEXT_AGENT_HANDOFF.md`.
 - `docs/PhyRC_proposals.pdf`는 무관한 untracked 파일이다. 보존하고 커밋에 넣지 않는다.
-- 사용자가 이전에 push를 요청한 이력은 있다. 추후 푸시 시 미완성/미검증 범위를 명확히 적고 원격 반영까지 확인한다.
 
 ## 6. 다음 에이전트가 읽을 소스와 결과
 
