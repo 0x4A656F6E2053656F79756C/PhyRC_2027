@@ -71,9 +71,9 @@
 ## 5. Git 상태
 
 - 작업 경로: `/home/seoyul/PhyRC_2027`.
-- 브랜치: `feat/policy-learning-env`.
+- 브랜치: `main`.
 - origin: `git@github.com:0x4A656F6E2053656F79756C/PhyRC_2027.git`.
-- 수정 파일: `src/DexGarmentLab/Env_StandAlone/Teleop_TShirt_Stretch4_Env.py`, `NEXT_AGENT_HANDOFF.md`.
+- 수정 파일: 없음 (작업 트리 클린).
 - `docs/PhyRC_proposals.pdf`는 무관한 untracked 파일이다. 보존하고 커밋에 넣지 않는다.
 
 ## 6. 다음 에이전트가 읽을 소스와 결과
