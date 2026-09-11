@@ -43,9 +43,9 @@ Gymnasium 정책 환경과 작은 모방학습 예제를 포함합니다. 학습
 
 ### 동작 예시 (Demonstration)
 
-<video src="docs/videos/Front_Back_8x.mp4" controls="controls" width="100%"></video>
+![두 대의 Stretch4로 티셔츠를 조작하는 전면·후면 동시 보기 — 8배속](docs/videos/Front_Back_8x.gif)
 
-> 🎬 **8배속 전면/후면 조작 예시 영상**: [docs/videos/Front_Back_8x.mp4](docs/videos/Front_Back_8x.mp4)
+전체 동작을 README에서 자동 반복 재생합니다. 고화질 영상은 [원본 MP4](docs/videos/Front_Back_8x.mp4)를 참고하세요.
 
 **설치 경로는 Docker 방식 하나로 통일합니다.** Isaac Sim을 호스트에 별도로 설치하거나
 Conda/ROS/시스템 CUDA Toolkit을 추가로 설치할 필요는 없습니다. NVIDIA 드라이버는 호스트에 필요합니다.
