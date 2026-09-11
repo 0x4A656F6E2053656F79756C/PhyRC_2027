@@ -1,4 +1,4 @@
-"""Wrist sphere fitting for Isaac Sim 6 surface cloth.
+"""Posed hand hulls and legacy wrist spheres for Isaac Sim 6 surface cloth.
 
 Adapted from vendor/hand_sphere_collider_handoff. Input hand points are already
 in the human root's frame; applying the source mesh transform again is wrong.
@@ -177,6 +177,73 @@ def build_hand_spheres(stage, root_path, hand_data, _feel, radius_m=0.0):
     return out
 
 
+def build_fitted_hand_colliders(stage, root_path, hand_data, _feel):
+    """Close finger gaps while matching the complete visible hand and wrist cut.
+
+    Both native convex contact and the triangle guard consume the same closed
+    hull. Neither arm length nor the visual mesh is changed. A small uniform
+    expansion keeps every original point inside, with <= margin displacement.
+    """
+    from scipy.spatial import ConvexHull
+    from pxr import PhysxSchema
+    mesh, points, _, _, hands, groups = hand_data
+    if mesh is None or set(hands) != {"left", "right"}:
+        raise ValueError("fitted hand colliders require both posed hand vertex sets")
+    root_xf = UsdGeom.Xformable(stage.GetPrimAtPath(root_path)).ComputeLocalToWorldTransform(
+        Usd.TimeCode.Default())
+    scale = _uniform_scale(root_xf)
+    margin = float(_feel("HUMAN_HAND_HULL_MARGIN", 0.001))
+    overlap = float(_feel("HUMAN_HAND_HULL_SEAM_OVERLAP", 0.002))
+    if not np.isfinite([margin, overlap]).all() or margin < 0 or overlap <= 0:
+        raise ValueError("hand hull margin must be nonnegative and seam overlap positive")
+    result = []
+    for side, indices in hands.items():
+        hp = points[indices]
+        finger_sets = [v for (s, _), v in groups.items() if s == side]
+        fingers = np.concatenate(finger_sets) if finger_sets else np.array([], dtype=int)
+        wrist_ids = np.setdiff1d(indices, fingers)
+        if len(wrist_ids) < 3:
+            raise ValueError(f"insufficient wrist vertices for {side} hand hull")
+        wrist = points[wrist_ids].mean(0)
+        seam = _cut_seam_fit(stage, root_path, wrist, root_xf, scale)
+        if seam is None:
+            raise ValueError(f"missing forearm cut boundary for {side} hand hull")
+        _, ring = seam
+        toward_arm = _unit(ring.mean(0) - hp.mean(0))
+        cloud = np.concatenate((hp, ring, ring + toward_arm * (overlap / scale)))
+        initial = ConvexHull(cloud)
+        vertices = cloud[initial.vertices]
+        centre = vertices.mean(0)
+        extent = float(np.linalg.norm(vertices - centre, axis=1).max())
+        vertices = centre + (vertices - centre) * (1.0 + margin / (scale * extent))
+        hull = ConvexHull(vertices)
+        if len(vertices) > 256:
+            raise ValueError(f"{side} hand hull exceeds the native 256-vertex limit")
+        triangles = hull.simplices.copy()
+        normals = np.cross(vertices[triangles[:, 1]] - vertices[triangles[:, 0]],
+                           vertices[triangles[:, 2]] - vertices[triangles[:, 0]])
+        reverse = np.einsum('ij,ij->i', normals, vertices[triangles[:, 0]] - centre) < 0
+        triangles[reverse] = triangles[reverse, ::-1]
+        path = f"{root_path}/HandHull_{side}"
+        shape = UsdGeom.Mesh.Define(stage, path)
+        shape.CreatePointsAttr(Vt.Vec3fArray.FromNumpy(vertices.astype(np.float32)))
+        shape.CreateFaceVertexCountsAttr(Vt.IntArray.FromNumpy(np.full(len(triangles), 3, dtype=np.int32)))
+        shape.CreateFaceVertexIndicesAttr(Vt.IntArray.FromNumpy(triangles.astype(np.int32).ravel()))
+        shape.CreateExtentAttr().Set(UsdGeom.PointBased.ComputeExtent(shape.GetPointsAttr().Get()))
+        shape.CreateSubdivisionSchemeAttr(UsdGeom.Tokens.none)
+        UsdGeom.Imageable(shape).MakeInvisible()
+        UsdPhysics.CollisionAPI.Apply(shape.GetPrim()).CreateCollisionEnabledAttr(True)
+        UsdPhysics.MeshCollisionAPI.Apply(shape.GetPrim()).CreateApproximationAttr('convexHull')
+        PhysxSchema.PhysxConvexHullCollisionAPI.Apply(shape.GetPrim()).CreateHullVertexLimitAttr(256)
+        shape.GetPrim().SetCustomDataByKey('handColliderFit', 'posed visual hand plus forearm seam')
+        shape.GetPrim().SetCustomDataByKey('handColliderMarginM', margin)
+        result.append(path)
+        print(f"[Teleop] fitted hand {side}: {len(indices)} visual vertices, "
+              f"hull={len(vertices)} vertices/{len(triangles)} faces, "
+              f"max expansion={margin:.4f}m, seam overlap={overlap:.4f}m", flush=True)
+    return result
+
+
 def sphere_world_geometry(prim):
     sphere = UsdGeom.Sphere(prim)
     xf = UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default())
@@ -210,13 +277,14 @@ def _sphere_guard_mesh():
 
 
 def append_hand_sphere_surfaces(body_prim, points, triangles):
-    """Include the actual enabled hand spheres in the existing surface guard."""
+    """Include the actual enabled hand spheres or hulls in the surface guard."""
     parent = body_prim.GetParent()
     # Visible meshes can be nested; locate the nearest ancestor owning spheres.
     spheres = []
     while parent and not parent.IsPseudoRoot():
         spheres = [p for p in parent.GetChildren()
-                   if p.IsA(UsdGeom.Sphere) and p.GetName().startswith('HandSphere_')
+                   if ((p.IsA(UsdGeom.Sphere) and p.GetName().startswith('HandSphere_'))
+                       or (p.IsA(UsdGeom.Mesh) and p.GetName().startswith('HandHull_')))
                    and p.HasAPI(UsdPhysics.CollisionAPI)
                    and UsdPhysics.CollisionAPI(p).GetCollisionEnabledAttr().Get() is not False]
         if spheres:
@@ -224,11 +292,21 @@ def append_hand_sphere_surfaces(body_prim, points, triangles):
         parent = parent.GetParent()
     if not spheres:
         return points, triangles
-    unit_points, unit_tris = _sphere_guard_mesh()
+    unit_points, unit_tris = (None, None)
     for prim in spheres:
-        centre, radius = sphere_world_geometry(prim)
-        triangles = np.concatenate((triangles, unit_tris + len(points)))
-        points = np.concatenate((points, centre + radius * unit_points))
-    print(f"[Teleop] surface guard includes {len(spheres)} wrist spheres "
-          f"({len(unit_tris)} faces each, radial excess <0.5%)", flush=True)
+        if prim.IsA(UsdGeom.Sphere):
+            if unit_points is None:
+                unit_points, unit_tris = _sphere_guard_mesh()
+            centre, radius = sphere_world_geometry(prim)
+            vertices, faces = centre + radius * unit_points, unit_tris
+        else:
+            mesh = UsdGeom.Mesh(prim)
+            if not np.all(np.asarray(mesh.GetFaceVertexCountsAttr().Get()) == 3):
+                raise ValueError('fitted hand guard requires triangular hull faces')
+            xf = UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default())
+            vertices = np.asarray([xf.Transform(Gf.Vec3d(*p)) for p in mesh.GetPointsAttr().Get()])
+            faces = np.asarray(mesh.GetFaceVertexIndicesAttr().Get(), dtype=np.int32).reshape(-1, 3)
+        triangles = np.concatenate((triangles, faces + len(points)))
+        points = np.concatenate((points, vertices))
+    print(f"[Teleop] surface guard includes {len(spheres)} enabled hand collision shapes", flush=True)
     return points, triangles

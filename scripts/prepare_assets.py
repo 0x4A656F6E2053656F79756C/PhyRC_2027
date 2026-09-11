@@ -21,4 +21,4 @@ for relative in ['Assets/Human/Mesh/manikin_exports/female2_c4-c5.usd',
     UsdGeom.SetStageMetersPerUnit(stage, 1.0)
     UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.z)
     stage.GetRootLayer().Save()
-print('Prepared pre-head-edit T-sleeve / enlarged-height runtime inputs.', flush=True)
+print('Prepared T-sleeve / collar-preserving 10/12-height runtime inputs.', flush=True)

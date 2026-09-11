@@ -1,0 +1,108 @@
+{
+  "body_reconstruction_max_error_m": 1.2103899541218927e-07,
+  "body_skin_margin_m": 0.003,
+  "human_translation_m": [
+    -3.1925533722741706e-13,
+    0.4499999904634832,
+    -0.36278321108120704
+  ],
+  "visual_vertices": 10475,
+  "hands": {
+    "left": {
+      "visual_hand_vertices": 781,
+      "sphere_radius_m": 0.029344375418561,
+      "sphere_centre_world_m": [
+        0.17250193316617116,
+        0.00606013872628782,
+        1.1072709272583696
+      ],
+      "visual_hand_centre_world_m": [
+        0.1879871087157823,
+        -0.0763104355403842,
+        1.1307709454753936
+      ],
+      "visual_vertices_outside_sphere_fraction": 0.9807938540332907,
+      "max_visual_protrusion_m": 0.09192128225821516,
+      "visual_hand_bounds_world_m": [
+        [
+          0.13901567800201828,
+          -0.11022788642145392,
+          1.0929093765611682
+        ],
+        [
+          0.22726631372359718,
+          0.0002975024309834762,
+          1.1594762565461438
+        ]
+      ],
+      "fitted_hull": {
+        "vertices": 76,
+        "triangles": 148,
+        "max_visual_outside_m": 0.0,
+        "visual_vertices_covered_fraction": 1.0,
+        "bounds_world_m": [
+          [
+            0.13854363201327452,
+            -0.110792001024207,
+            1.0877283191924088
+          ],
+          [
+            0.22783873909470082,
+            0.01432882139539643,
+            1.1599020844864052
+          ]
+        ],
+        "collision_enabled": true,
+        "approximation": "convexHull"
+      }
+    },
+    "right": {
+      "visual_hand_vertices": 778,
+      "sphere_radius_m": 0.029175638738971513,
+      "sphere_centre_world_m": [
+        -0.18954966166216264,
+        0.007026564015432426,
+        1.1045551777257354
+      ],
+      "visual_hand_centre_world_m": [
+        -0.2064773546011506,
+        -0.06865044371581838,
+        1.1238554633503481
+      ],
+      "visual_vertices_outside_sphere_fraction": 0.9730077120822622,
+      "max_visual_protrusion_m": 0.0849094570340075,
+      "visual_hand_bounds_world_m": [
+        [
+          -0.2456363201884595,
+          -0.10212239970246478,
+          1.0863032768315164
+        ],
+        [
+          -0.15722653607975398,
+          0.00787254163941653,
+          1.1523538715336359
+        ]
+      ],
+      "fitted_hull": {
+        "vertices": 78,
+        "triangles": 152,
+        "max_visual_outside_m": 0.0,
+        "visual_vertices_covered_fraction": 1.0,
+        "bounds_world_m": [
+          [
+            -0.24627786062288898,
+            -0.10274203249923503,
+            1.0809692334820946
+          ],
+          [
+            -0.1567098691799837,
+            0.022332345728530212,
+            1.152819161489604
+          ]
+        ],
+        "collision_enabled": true,
+        "approximation": "convexHull"
+      }
+    }
+  }
+}

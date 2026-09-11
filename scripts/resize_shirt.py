@@ -1,4 +1,4 @@
-"""Uniform shirt resizing with a separately specified final collar area."""
+"""Resize the shirt, then shorten its body without deforming the collar."""
 import numpy as np
 
 
@@ -18,8 +18,9 @@ def opening_area(points):
     return float(np.linalg.norm(np.cross(centred, np.roll(centred, -1, axis=0)).sum(axis=0))) * 0.5
 
 
-def resize_shirt(points, counts, indices, scale=1.2, neck_area_scale=1.2):
-    if not np.isfinite([scale, neck_area_scale]).all() or min(scale, neck_area_scale) <= 0:
+def resize_shirt(points, counts, indices, scale=1.2, neck_area_scale=1.2,
+                 length_scale=10.0 / 12.0):
+    if not np.isfinite([scale, neck_area_scale, length_scale]).all() or min(scale, neck_area_scale, length_scale) <= 0:
         raise ValueError('Shirt size and collar area scales must be positive and finite')
     p = np.asarray(points, dtype=float).copy()
     reference_area = surface_area(p, counts, indices)
@@ -67,11 +68,31 @@ def resize_shirt(points, counts, indices, scale=1.2, neck_area_scale=1.2):
     for vertices, factor in ((neck, local_scale), (ring, (1.0 + local_scale) * 0.5)):
         p[vertices] = centre + (p[vertices] - centre) * factor
     p *= scale
+    # Preserve every collar and adjacent-ring coordinate, not just its area.
+    # Raw Y is the neck-to-hem axis. Compress only below the protected band,
+    # keeping the neck end fixed and achieving the requested overall height.
+    neck_area_before_height = opening_area(p[neck])
+    direction = 1.0 if p[neck, 1].mean() > p[loops[hem], 1].mean() else -1.0
+    axial = direction * p[:, 1]
+    bottom, top = float(axial.min()), float(axial.max())
+    height_before = top - bottom
+    protected = np.concatenate((neck, np.asarray(ring, dtype=int)))
+    cutoff = float(axial[protected].min())
+    new_bottom = top - height_before * length_scale
+    if height_before <= 0 or cutoff <= bottom or new_bottom >= cutoff:
+        raise ValueError('Requested shirt height cannot preserve the complete collar band')
+    below = axial < cutoff
+    axial[below] = cutoff + (axial[below] - cutoff) * (cutoff - new_bottom) / (cutoff - bottom)
+    p[below, 1] = direction * axial[below]
     area = surface_area(p, counts, indices)
     if min(reference_area, area, neck_before) <= 0:
         raise ValueError('Shirt and collar areas must be nonzero')
     return p, {
         'resizeScale': float(scale),
+        'lengthScale': float(length_scale),
+        'heightBefore': height_before,
+        'heightAfter': float(np.ptp(p[:, 1])),
+        'neckAreaBeforeHeight': neck_area_before_height,
         'massAreaRatio': reference_area / area,
         'referenceSurfaceArea': reference_area,
         'neckAreaBefore': neck_before,

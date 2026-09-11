@@ -4,8 +4,17 @@ ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 cd "$ROOT"
 IMAGE=${PHYRC_IMAGE:-phyrc-2027:isaac-6.0.1}
 COMMAND=${1:-help}
+if [[ "${2:-}" == --no-randomization ]]; then
+    case "$COMMAND" in
+        gui|smoke|python)
+            export STRETCH4_RANDOMIZE=0
+            set -- "$1" "${@:3}";;
+        *) printf -- '--no-randomization requires gui, smoke, or python.\n' >&2; exit 2;;
+    esac
+fi
 if [[ "$COMMAND" == help ]]; then
     printf 'Usage: ./run.sh {doctor|build|prepare|gui|smoke|python SCRIPT [ARGS...]|cpu SCRIPT [ARGS...]}\n'
+    printf 'Use ./run.sh gui --no-randomization for fixed human and shirt placement.\n'
     exit 0
 fi
 if [[ "$COMMAND" == doctor ]]; then

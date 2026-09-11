@@ -98,6 +98,8 @@ sys.path.append(os.getcwd())
 from Env_StandAlone.BaseEnv import BaseEnv
 from Env_Config.Garment.Particle_Garment import Particle_Garment, SurfaceClothPrim
 from Env_Config.Human.Human import Human
+from Env_Config.Human.RandomSpawn import (
+    randomize_human_and_chair, placement_snapshot, placement_matches)
 
 from isaacsim.core.prims import SingleArticulation
 from isaacsim.core.utils.types import ArticulationAction
@@ -1175,7 +1177,8 @@ RESET_KEY = "P"
 # scripts/probe_camstate.py rather than assumed.
 STATE_SLOT_KEYS = ("F1", "F2", "F3", "F4", "F5")
 STATE_CLEAR_KEY = "F12"
-STATE_DIR = os.environ.get("STRETCH4_STATE_DIR", "/output/states_large20_neck20_near1m_mesh4" if int(os.environ.get("STRETCH4_MESH_REFINEMENT", "1")) else "/output/states_large20_neck20_near1m")
+STATE_DIR = os.environ.get("STRETCH4_STATE_DIR", "/output/states_neckfixed_shortheight_handfit_mesh4" if int(os.environ.get("STRETCH4_MESH_REFINEMENT", "1")) else "/output/states_neckfixed_shortheight_handfit")
+_STATE_GEOMETRY_REVISION = "20260911_neckfixed_shortheight_handfit_v1"
 # One key that throws away every checkpoint in the session is worth a
 # confirmation. ~3s at 60fps, and the arming lapses if it isn't answered.
 STATE_CLEAR_CONFIRM_FRAMES = 180
@@ -1376,7 +1379,9 @@ def save_state_slot(key, garment_cloths, rigs):
         "schema": np.array(1),
         "n_garments": np.array(len(garment_cloths)),
         "n_rigs": np.array(len(rigs)),
+        "scene_geometry_revision": np.array(_STATE_GEOMETRY_REVISION),
     }
+    payload.update(placement_snapshot(garment_cloths[0].prim.GetStage()))
     for i, cloth in enumerate(garment_cloths):
         payload[f"g{i}_pos"] = _to_np(cloth.get_world_positions())[0].astype(np.float32)
         payload[f"g{i}_vel"] = _to_np(cloth.get_velocities())[0].astype(np.float32)
@@ -1442,6 +1447,16 @@ def load_state_slot(key, garment_cloths, rigs):
         return False
 
     with data:
+        if ("scene_geometry_revision" not in data
+                or str(data["scene_geometry_revision"]) != _STATE_GEOMETRY_REVISION):
+            print(f"[Teleop] {key} NOT loaded: slot predates the collar/hand geometry revision. "
+                  "Use a new slot; the old file has been preserved.", flush=True)
+            return False
+        if not placement_matches(garment_cloths[0].prim.GetStage(), data):
+            print(f"[Teleop] {key} NOT loaded: human/chair placement differs. "
+                  "Use this run's slots or the same HUMAN_SPAWN_SEED and randomization mode. "
+                  "The saved file has been preserved.", flush=True)
+            return False
         # Swept contact requires a non-intersecting starting surface. Older
         # checkpoints can already contain an arm through a triangle interior.
         # Validate ALL shirts before mutating any cloth or robot state.
@@ -2238,9 +2253,14 @@ class TeleopTShirtStretch4_Env(BaseEnv):
         # per-instance color param, so each needs apply_visual_material +
         # set_color called on it individually anyway.
         self.garments = []
-        for (color_name, color), x_off in zip(GARMENT_COLORS.items(), GARMENT_X_OFFSETS):
-            # [scene: blue shirt only]
-            # Filter after pairing colours with their original positions.
+        from Env_Config.Garment.RandomSpawn import sample_garment_spawn
+        self.garment_table_centers = np.array([
+            [BOX_POS[0] + x, BOX_POS[1], BOX_POS[2]] for x in GARMENT_X_OFFSETS])
+        self.garment_spawn = sample_garment_spawn(self.garment_table_centers, BOX_SIZE)
+        print(f"[Teleop] garment spawn: table={self.garment_spawn['table_index'] + 1}/"
+              f"{len(self.tables)}, seed={self.garment_spawn['seed']}", flush=True)
+        for color_name, color in GARMENT_COLORS.items():
+            # Keep the single blue asset; only its support table changes.
             if color_name != "blue":
                 continue
             _usd = GARMENT_USD_BY_COLOR.get(color_name, TSHIRT_USD)
@@ -2258,7 +2278,7 @@ class TeleopTShirtStretch4_Env(BaseEnv):
                       f"+{GARMENT_YAW_BY_COLOR.get(color_name, 0.0)} "
                       f"offsets x{_gs} (particle {_pco:.4f} solid {_sro:.4f})",
                       flush=True)
-            pos = np.array([BOX_POS[0] + x_off, BOX_POS[1], BOX_TOP_Z + 0.2])
+            pos = np.array(self.garment_spawn['spawn_position_world_m'])
             g = Particle_Garment(
                 self.world,
                 pos=pos,
@@ -2695,10 +2715,10 @@ class TeleopTShirtStretch4_Env(BaseEnv):
             # Trim the visual skull before deriving its collision surface.
             from Env_Config.Human.RoundHead import round_human_head
             round_human_head(self.stage, self.human.prim_path)
-            # Default: small wrist spheres replace hand/finger mesh collision.
-            # wrist_sphere remains an explicit opt-in for the older mesh mode.
-            _mode = os.environ.get("STRETCH4_HUMAN_HAND_COLLIDER", "sphere")
-            if _mode not in ("none", "mitten", "sphere", "wrist_sphere"):
+            # Fit the complete posed hand, not just the cut forearm boundary.
+            # Legacy wrist spheres remain an explicit diagnostic option.
+            _mode = os.environ.get("STRETCH4_HUMAN_HAND_COLLIDER", "fitted")
+            if _mode not in ("none", "mitten", "sphere", "wrist_sphere", "fitted"):
                 raise ValueError(f"unknown human hand collider mode: {_mode}")
             _inflate = _feel("HUMAN_MITTEN_INFLATE", 0.012)
             if _mode == "none":
@@ -2719,11 +2739,16 @@ class TeleopTShirtStretch4_Env(BaseEnv):
                 _n, _cpath = build_mitten_collider(
                     self.stage, self.human.prim_path,
                     (_inflate / max(_hs, 1e-9)) if _mode in ("mitten", "wrist_sphere") else 0.0,
-                    _hs, drop_hands=(_mode == "sphere"))
+                    _hs, drop_hands=(_mode in ("sphere", "fitted")))
             print(f"[Teleop] hand collider mode={_mode}: {_n} hand vertices, "
                   f"body collider at {_cpath}; visible hands keep their "
                   f"fingers and no longer collide", flush=True)
-            if _mode in ("sphere", "wrist_sphere"):
+            if _mode == "fitted":
+                from Env_Config.Human.HandSphereColliders import build_fitted_hand_colliders
+                build_fitted_hand_colliders(
+                    self.stage, self.human.prim_path,
+                    _hand_vertex_sets(self.stage, self.human.prim_path, _hs), _feel)
+            elif _mode in ("sphere", "wrist_sphere"):
                 build_hand_spheres(
                     self.stage, self.human.prim_path, _hs,
                     _feel("GARMENT_PARTICLE_CONTACT_OFFSET", 0.012) * 1.26,
@@ -2734,14 +2759,17 @@ class TeleopTShirtStretch4_Env(BaseEnv):
             # screen. Visual only -- collision is unchanged either way.
             if os.environ.get("STRETCH4_SHOW_COLLIDER", "0") == "1":
                 for _cp in (_cpath, self.human.prim_path + "/HandSphere_left",
-                            self.human.prim_path + "/HandSphere_right"):
+                            self.human.prim_path + "/HandSphere_right",
+                            self.human.prim_path + "/HandHull_left",
+                            self.human.prim_path + "/HandHull_right"):
                     _pr = self.stage.GetPrimAtPath(_cp) if _cp else None
                     if _pr and _pr.IsValid():
                         UsdGeom.Imageable(_pr).MakeVisible()
                 for _pr in Usd.PrimRange(
                         self.stage.GetPrimAtPath(self.human.prim_path),
                         Usd.TraverseInstanceProxies()):
-                    if _pr.IsA(UsdGeom.Mesh) and _pr.GetName() != "CollisionBody":
+                    if (_pr.IsA(UsdGeom.Mesh) and _pr.GetName() != "CollisionBody"
+                            and not _pr.GetName().startswith("HandHull_")):
                         UsdGeom.Imageable(_pr).MakeInvisible()
                         break
                 print("[Teleop] STRETCH4_SHOW_COLLIDER: drawing the collision "
@@ -2837,6 +2865,8 @@ class TeleopTShirtStretch4_Env(BaseEnv):
                 _contact = _ContactSchema.PhysxCollisionAPI.Apply(_shape)
                 _contact.CreateContactOffsetAttr().Set(_feel("HUMAN_CONTACT_OFFSET", 0.006))
                 _contact.CreateRestOffsetAttr().Set(_feel("HUMAN_REST_OFFSET", 0.001))
+
+        self.human_spawn = randomize_human_and_chair(self.stage, self.human.prim_path)
 
         SimulationManager.set_physics_sim_device("cuda:0")
         SimulationManager.set_backend("torch")
