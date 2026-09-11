@@ -2,8 +2,9 @@
 
 This update supersedes earlier GUI-stopped and uncommitted-geometry statements.
 
-- User launched `happy_cori`; its current scene was visually inspected with the
-  mannequin wearing the shirt and both grippers released. Keep this GUI running.
+- User launched `happy_cori`; its scene was visually inspected with the
+  mannequin wearing the shirt and both grippers released. It has now been
+  closed normally at the user’s request; its --rm container is gone.
 - F1–F5 stages are preserved read-only with verified hashes outside the project:
   `/home/seoyul/PhyRC_backups/dressing_stages_20260911_155147/`.
   Future F-key writes cannot overwrite them. Do not point a GUI at this archive.
@@ -15,10 +16,17 @@ This update supersedes earlier GUI-stopped and uncommitted-geometry statements.
   material change through Script Editor without restart. CPU actual-asset USD
   isolation/rollback checks and live effective bindings passed. No post-change
   physical pull/slip measurement or dressing replay has been performed.
-- Current GUI has a session-only `Gripper friction trial` panel: `Restore 0`
-  rolls back immediately; `Apply 0.2` re-enables. Both buttons were tested and
-  final setting is 0.2. For future launches use
-  `STRETCH4_GRIPPER_CONTACT_FRICTION=0 ./run.sh gui` to restore zero friction.
+- User clarified that rollback must be through code, with no extra GUI windows.
+  The temporary panel and Script Editor were closed, the Script Editor extension
+  disabled, and the local panel-creation scripts retired. Production source and
+  runtime contain no panel creation. Future normal launches create no trial UI.
+- Keep gripper friction at 0.2 unless the user requests rollback. To roll back
+  through code, change the `STRETCH4_GRIPPER_CONTACT_FRICTION` fallback from 0.2
+  to 0 in `ZeroSceneFriction.py` and synchronize source/runtime. Geometry and
+  human friction remain unchanged. Friction is isolated in commit `83dd0ec`.
+- Shutdown snapshot is preserved at
+  `/home/seoyul/PhyRC_backups/gui_shutdown_20260911_160840/shutdown_state.npz`.
+  F1–F5 active and archived copies were checksum-verified unchanged afterward.
 - Pre-change live snapshot: `output/friction_trial_20260911/before_live/slot_LIVE.npz`.
   See `docs/GRIPPER_FRICTION_20260911.md` for evidence, backup and restore details.
 - The unrelated `docs/PhyRC_proposals.pdf` remains untracked and preserved.

@@ -309,5 +309,8 @@ used immediately before the historical frictionless patch. Cloth and mannequin
 materials remain zero; native grasp attachments remain enabled. Set
 `STRETCH4_GRIPPER_CONTACT_FRICTION=0 ./run.sh gui` to restore the previous zero
 contact friction on the next launch. This override is forwarded by the launcher.
-The current diagnostic GUI also has a session-only **Restore 0** button.
+No extra friction controls or diagnostic windows are created in the GUI.
+For code rollback, change the `STRETCH4_GRIPPER_CONTACT_FRICTION` fallback
+from `0.2` to `0` in `Env_Config/Garment/ZeroSceneFriction.py`, then synchronize
+the maintained source to the runtime (normally `./run.sh prepare` with GUI closed).
 See [trial evidence and preserved F1–F5 stages](docs/GRIPPER_FRICTION_20260911.md).

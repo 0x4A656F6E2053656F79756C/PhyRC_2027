@@ -65,15 +65,35 @@ changed; all live human bindings and the cloth coefficient were checked. Its
 pre-change full state is `output/friction_trial_20260911/before_live/slot_LIVE.npz`.
 Source/runtime copies are synchronized. There was no second GPU SimulationApp.
 
-The session-only **Gripper friction trial** panel offers **Restore 0** and
-**Apply 0.2**. Both buttons were exercised; the final setting is 0.2.
+The initial session-only buttons were removed at the user's clarification:
+rollback is a code change, and no extra GUI windows should be created. The
+production source and runtime never included the panel. The local scripts that
+created it have been retired; historical copies remain only in external backups.
+The Script Editor extension was disabled before normal application shutdown.
+
+For code rollback, change the environment fallback from `'0.2'` to `'0'` in
+`Env_Config/Garment/ZeroSceneFriction.py` at the call to
+`configure_gripper_cloth_friction`, then synchronize source to runtime. This
+restores zero/min finger materials while preserving the geometry changes and
+the zero cloth/human friction. The independent friction commit is `83dd0ec`;
+geometry is in `007e7cd`. No rollback has been applied: the default remains 0.2.
+
 For a subsequent launch, restore with:
 
 ```bash
 STRETCH4_GRIPPER_CONTACT_FRICTION=0 ./run.sh gui
 ```
 
-The GUI remains running. A force/slip or dressing replay after enabling friction
+The GUI was closed normally at the user’s request. A force/slip or dressing replay after enabling friction
 has not been performed; effective bindings are verified, not grip strength.
 `docs/verification-results/gripper-friction-live-20260911.json` records the live
 binding check. Full logs, source rollback archive and F-slots remain local.
+
+## Shutdown checkpoint
+
+The exact closing state was saved separately, without changing the stage slots:
+`/home/seoyul/PhyRC_backups/gui_shutdown_20260911_160840/shutdown_state.npz`.
+The output copy is `output/friction_trial_20260911/shutdown/slot_LIVE.npz`.
+All five active F-slots and their preserved copies still match their original
+SHA-256 hashes. Container `happy_cori` exited and was removed by its `--rm`
+launcher. No GUI was relaunched.
