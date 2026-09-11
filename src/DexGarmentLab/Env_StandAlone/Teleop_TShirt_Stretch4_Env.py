@@ -350,6 +350,7 @@ BASE_LINEAR_RATE = _feel("BASE_LINEAR_RATE", 0.616)
 BASE_ANGULAR_RATE = _feel("BASE_ANGULAR_RATE", 2.86)
 BASE_LINEAR_ACCEL = _feel("BASE_LINEAR_ACCEL", 1.32)
 BASE_ANGULAR_ACCEL = _feel("BASE_ANGULAR_ACCEL", 4.4)
+PREVENT_WHEEL_LIFT = int(_feel("PREVENT_WHEEL_LIFT", 1))
 
 # Ported over from Teleop_TShirt_Stretch4_Hand_Env.py's grab-follow fix
 # (same underlying bug, confirmed there first): the old formula here
@@ -4451,10 +4452,42 @@ def sync_grab_contact(rig, garment_cloths, post_step=False):
         state["_grab_post_anchor_pos"] = actual[mask].clone()
 
 
+def prevent_wheel_lift(rigs):
+    """Prevent Stretch4 mobile base from lifting off the floor under arm reaction forces.
+
+    Layer 2: a physics-rate P-controller holding the base at its spawn height.
+    Whenever the base climbs above its initial resting height (or is moving upward),
+    drive a corrective downward velocity proportional to how far above home it is.
+    """
+    if not PREVENT_WHEEL_LIFT:
+        return
+    for _r in rigs:
+        if "robot" not in _r or "state" not in _r:
+            continue
+        _rb = _r["robot"]
+        if not hasattr(_rb, "_articulation_view") or not _rb._articulation_view.is_physics_handle_valid():
+            continue
+        _pos_np = _to_np(_rb.get_world_pose()[0]).reshape(-1)
+        _home_z = _r["state"].get("_base_home_z")
+        if _home_z is None:
+            _home_z = _r["state"]["_base_home_z"] = float(_pos_np[2])
+        _z_err = float(_pos_np[2]) - _home_z
+        _lv = _to_np(_rb.get_linear_velocity()).reshape(-1)
+        if _z_err > 0.0 or _lv[2] > 0.0:
+            _av = _to_np(_rb.get_angular_velocity()).reshape(-1)
+            _lv[2] = float(np.clip(-_z_err * 20.0, -1.0, 0.0))
+            try:
+                _rb._articulation_view.set_velocities(
+                    _to_t(np.concatenate([_lv, _av])[None, :]))
+            except Exception:
+                pass
+
+
 def cloth_pre_step(garment_cloths, rigs, step_size):
     """Capture once; a native attachment does not overwrite nodal positions."""
     from Env_Config.Garment.ContinuousClothControl import apply_base_drive
     for _rig in rigs: apply_base_drive(_rig, step_size)
+    prevent_wheel_lift(rigs)
     begin_cloth_motion(garment_cloths)
     for rig in rigs:
         follow_grabbed(rig, garment_cloths, step_size)
@@ -4682,7 +4715,10 @@ def drive_robot(rig, keymap, held, garment_cloths, dt, _frame, commands=None):
         right_world /= _rn
     target_lin_vel = (forward_world * state["base_fwd"]
                       + right_world * state["base_strafe"])
-    target_lin_vel[2] = cur_lin_vel[2]
+    if PREVENT_WHEEL_LIFT:
+        target_lin_vel[2] = min(cur_lin_vel[2], 0.0)
+    else:
+        target_lin_vel[2] = cur_lin_vel[2]
 
     tilt_axis = np.cross(up_world, np.array([0.0, 0.0, 1.0]))
     # Hold the heading. Nothing was keeping it: the base is driven by

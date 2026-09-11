@@ -28,7 +28,15 @@
     - `BASE_LINEAR_ACCEL = 1.32` (기존 1.20)
     - `BASE_ANGULAR_ACCEL = 4.40` (기존 4.00)
 - `Teleop_TShirt_Stretch4_Env.py`의 `STATE_DIR` (`/output/states_neckfixed_shortheight_handfit_mesh4`) 및 `_STATE_GEOMETRY_REVISION` (`20260911_neckfixed_shortheight_handfit_v1`) 원복 및 `.runtime/DexGarmentLab/` 동기화 완료.
-- `scripts/check_gripper_friction.py` 및 `scripts/check_policy_contract.py` 회귀 테스트 통과.
+- **휠 들림 방지(Wheel-Lift Prevention) 기능 이식 완료 (`WHEEL_LIFT_PREVENTION_HANDOFF.md` 기준)**:
+  - 팔/그리퍼가 상자 등 장애물에 걸린 상태에서 계속 아래로 내릴 때 반작용력으로 베이스/휠이 들리는 현상 방지.
+  - **Layer 1**: `drive_robot`에서 베이스 명령 속도 `target_lin_vel[2] = min(cur_lin_vel[2], 0.0)` 클램핑 (상향 명령 차단, 중력 하향 유지).
+  - **Layer 2**: 물리 주기(240Hz, `cloth_pre_step` pre-step) P-컨트롤러 `prevent_wheel_lift(rigs)` 등록. 스폰 Z(`_base_home_z`, 약 0.0295m) 기준 들림(`z_err > 0` 또는 `lv[2] > 0`) 감지 시 $v_z = \text{clip}(-z\_err \times 20.0, -1.0, 0.0)\,\text{m/s}$ 하향 복원 속도를 `_rb._articulation_view.set_velocities`로 주입 (위치 텔레포트 없이 안전 제어).
+  - Isaac Sim 6.0.1 호환: `.reshape(-1)` 텐서 형상 방어 처리 및 `is_physics_handle_valid()` 검사 적용.
+  - 환경변수 `STRETCH4_PREVENT_WHEEL_LIFT` 토글 지원 (`1`: 기본 활성, `0`: 비활성).
+  - 로봇 및 옷의 기존 물리/기하 설정(속도, 마찰력, 메쉬, 형상, 솔버 등) 일절 변경 없이 유지.
+  - 단위 불변식 테스트 및 전체 GPU `policy-smoke` (`/output/policy_smoke_wheel_lift`, `passed: true`, exit code 0) 통과.
+- `scripts/check_gripper_friction.py`, `scripts/check_policy_contract.py`, `pickup_policy_invariants` 회귀 테스트 모두 통과.
 
 ## 2. 완료 범위와 미완료 범위
 
