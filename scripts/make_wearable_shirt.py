@@ -438,6 +438,132 @@ pts = Vt.Vec3fArray([Gf.Vec3f(*map(float, _q)) for _q in _p])
 for _report in _sleeve_reports:
     print(f"SHIRT-CONV: straight sleeve {_report}", flush=True)
 
+# Cut ceiling-facing front collar into a large, sharp symmetrical V-neck with prominent yellow stripe band.
+_VNECK_FACES = []
+if str(source_mesh.GetPath()) == "/t_shirt/t_shirt_001/t_shirt_001":
+    _is_short = (len(_p) < 4500)
+    _full_to_shirt = {
+        5077: 3982 if _is_short else 5077,
+        5076: 3981 if _is_short else 5076,
+        5075: 3980 if _is_short else 5075,
+        5074: 3979 if _is_short else 5074,
+        5073: 3978 if _is_short else 5073,
+        5072: 3977 if _is_short else 5072,
+        5071: 3976 if _is_short else 5071,
+        5069: 3974 if _is_short else 5069,
+        5068: 3973 if _is_short else 5068,
+        5067: 3972 if _is_short else 5067,
+        5066: 3971 if _is_short else 5066,
+        5065: 3970 if _is_short else 5065,
+        5064: 3969 if _is_short else 5064,
+        5063: 3968 if _is_short else 5063,
+        5061: 3966 if _is_short else 5061,
+        5062: 3967 if _is_short else 5062,
+        5114: 4019 if _is_short else 5114,
+    }
+    for _v in [1166, 1165, 1167, 1169, 1181, 1193, 1145, 1147, 1148, 1150, 1151,
+               1153, 1154, 1156, 1157, 1159, 1160, 1161, 1162, 1163, 1164, 1168, 1180]:
+        _full_to_shirt[_v] = _v
+
+    _faces_31_full = [
+        [1151, 1153, 1154], [1154, 1153, 1156], [1154, 1156, 1157], [1157, 1156, 1159],
+        [1157, 1159, 1160], [1160, 1159, 1162], [1156, 1161, 1159], [1159, 1161, 1164],
+        [1160, 1162, 1163], [1163, 1162, 1165], [1159, 1164, 1162], [1164, 1165, 1162],
+        [1163, 1165, 1166], [1164, 1167, 1165], [1167, 1164, 1168], [1167, 1168, 1169],
+        [5063, 1167, 1169], [5063, 1165, 1167], [5063, 5065, 1165], [5063, 5064, 5065],
+        [5063, 5061, 5064], [5061, 5066, 5064], [5065, 1166, 1165], [5065, 5071, 1166],
+        [5064, 5071, 5065], [5064, 5072, 5071], [5066, 5072, 5064], [5066, 5074, 5072],
+        [5066, 5073, 5074], [5066, 5067, 5073], [5067, 5075, 5073]
+    ]
+
+    _extra_rem_faces = [
+        [5068, 5076, 5075], [5067, 5068, 5075], [5069, 5077, 5076], [5068, 5069, 5076],
+        [1148, 1150, 1151], [1151, 1150, 1153], [1145, 1147, 1148], [1148, 1147, 1150]
+    ]
+
+    _all_rem_full = _faces_31_full + _extra_rem_faces
+    _all_rem_shirt_set = {tuple(sorted([_full_to_shirt[_v] for _v in _f])) for _f in _all_rem_full}
+
+    _face_off = 0
+    _orig_faces = []
+    _rem_indices = set()
+    for _fi, _c in enumerate(counts):
+        _f = [int(_v) for _v in idxs[_face_off:_face_off + _c]]
+        _orig_faces.append(_f)
+        _face_off += _c
+        if tuple(sorted(_f)) in _all_rem_shirt_set:
+            _rem_indices.add(_fi)
+
+    if len(_rem_indices) == 39:
+        _repl_full = [
+            [5077, 5068, 5069], [5077, 5067, 5068], [5077, 5066, 5067],
+            [1145, 1147, 1150], [1145, 1150, 1153], [1145, 1153, 1156],
+            [5066, 5063, 5061], [1156, 1161, 1164], [1164, 1168, 1169]
+        ]
+        _repl_shirt = [[_full_to_shirt[_v] for _v in _f] for _f in _repl_full]
+
+        _new_faces = []
+        _old_to_new_fi = {}
+        for _fi, _f in enumerate(_orig_faces):
+            if _fi not in _rem_indices:
+                _old_to_new_fi[_fi] = len(_new_faces)
+                _new_faces.append(_f)
+
+        for _f in _repl_shirt:
+            _new_faces.append(_f)
+
+        if _HEM_FACES:
+            _HEM_FACES = [_old_to_new_fi[_fi] for _fi in _HEM_FACES if _fi in _old_to_new_fi]
+
+        # Smooth, deep apex pull-down (v1169 down 30 mm) preserving triangle orientation
+        _p[_full_to_shirt[1169], 1] -= 0.030
+        _p[_full_to_shirt[1181], 1] -= 0.020
+        _p[_full_to_shirt[1168], 1] -= 0.015
+        _p[_full_to_shirt[5062], 1] -= 0.015
+        _p[_full_to_shirt[1180], 1] -= 0.010
+        _p[_full_to_shirt[5114], 1] -= 0.010
+        _p[_full_to_shirt[1193], 1] -= 0.010
+
+        # Define V-neck boundary polyline for thick stripe band
+        _ch_full = [5077, 5066, 5063, 1169, 1164, 1156, 1145]
+        _ch_shirt = [_full_to_shirt[_v] for _v in _ch_full]
+        _seg_a = _p[_ch_shirt[:-1], :2]
+        _seg_b = _p[_ch_shirt[1:], :2]
+
+        def _dist_to_v(_pt):
+            _d_min = float("inf")
+            for _a, _b in zip(_seg_a, _seg_b):
+                _ab = _b - _a
+                _t = _np.clip(_np.dot(_pt - _a, _ab) / _np.dot(_ab, _ab), 0.0, 1.0)
+                _proj = _a + _t * _ab
+                _d = float(_np.linalg.norm(_pt - _proj))
+                if _d < _d_min: _d_min = _d
+            return _d_min
+
+        _vneck_faces = []
+        for _nfi, _f in enumerate(_new_faces):
+            _f_pts = _p[_f]
+            if _f_pts[:, 2].mean() < -0.0005:
+                _cen = _f_pts[:, :2].mean(axis=0)
+                if _dist_to_v(_cen) <= 0.041 and _cen[1] <= 0.446 and _cen[1] >= _p[_full_to_shirt[1169], 1] - 0.015:
+                    if _cen[1] < 0.435 or abs(_cen[0]) < 0.065:
+                        _vneck_faces.append(_nfi)
+
+        _VNECK_FACES = _vneck_faces
+
+        # Prune unused interior collar vertices and compact indexing
+        _used_v = set(_v for _f in _new_faces for _v in _f)
+        _sorted_used = sorted(_used_v)
+        _v_map = {_old: _new for _new, _old in enumerate(_sorted_used)}
+
+        _p = _p[_sorted_used]
+        _faces_compact = [[_v_map[_v] for _v in _f] for _f in _new_faces]
+        counts = _np.array([len(_f) for _f in _faces_compact])
+        idxs = _np.array([_v for _f in _faces_compact for _v in _f])
+        pts = Vt.Vec3fArray([Gf.Vec3f(*map(float, _q)) for _q in _p])
+        print(f"SHIRT-CONV: large V-neck cutout applied ({len(_rem_indices)} faces removed, "
+              f"{len(_VNECK_FACES)} trim band faces, {len(_p)} points remain)", flush=True)
+
 _SUBDIV = int(os.environ.get("SHIRT_SUBDIV", "0"))
 for _round in range(_SUBDIV):
     _tris, _off = [], 0
@@ -473,6 +599,9 @@ for _round in range(_SUBDIV):
     if _HEM_FACES:
         _old = set(int(i) for i in _HEM_FACES)
         _HEM_FACES = [i for i, src in enumerate(_face_of) if src in _old]
+    if _VNECK_FACES:
+        _old_vn = set(int(i) for i in _VNECK_FACES)
+        _VNECK_FACES = [i for i, src in enumerate(_face_of) if src in _old_vn]
     pts = Vt.Vec3fArray([Gf.Vec3f(*map(float, _q)) for _q in _p])
     _elen = _np.linalg.norm(_p[idxs.reshape(-1, 3)[:, 0]]
                             - _p[idxs.reshape(-1, 3)[:, 1]], axis=1)
@@ -500,6 +629,12 @@ if _HEM_FACES:
     _subset = _UG.Subset.CreateGeomSubset(
         mesh, "hem", _UG.Tokens.face, Vt.IntArray([int(i) for i in _HEM_FACES]))
     _subset.CreateFamilyNameAttr("materialBind")
+
+if _VNECK_FACES:
+    from pxr import UsdGeom as _UG
+    _v_subset = _UG.Subset.CreateGeomSubset(
+        mesh, "vneck", _UG.Tokens.face, Vt.IntArray([int(i) for i in _VNECK_FACES]))
+    _v_subset.CreateFamilyNameAttr("materialBind")
 
 mesh.CreateDoubleSidedAttr(True)
 # faceVarying UVs are indexed per face-corner, so a crop invalidates them --

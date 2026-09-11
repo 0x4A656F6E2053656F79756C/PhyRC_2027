@@ -9,6 +9,7 @@ __pycache__/
 .env.*
 *.npz
 *.mp4
+!docs/videos/*.mp4
 *.log
 *.pem
 *.key

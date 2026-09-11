@@ -2351,6 +2351,12 @@ class TeleopTShirtStretch4_Env(BaseEnv):
                 UsdShade.MaterialBindingAPI(_hem).Bind(_mat)
                 print(f"[Teleop] {color_name} shirt: hem stripe {_hemcol} bound",
                       flush=True)
+                _vneck = self.stage.GetPrimAtPath(g.garment_mesh_prim_path + "/vneck")
+                if _vneck.IsValid():
+                    UsdShade.MaterialBindingAPI.Apply(_vneck)
+                    UsdShade.MaterialBindingAPI(_vneck).Bind(_mat)
+                    print(f"[Teleop] {color_name} shirt: vneck stripe {_hemcol} bound",
+                          flush=True)
                 # [isaac-5.1.0 compat: folded hem]
                 # Fold the red band up over the front of the shirt, the way
                 # a sheet of paper folds: rotate it 180 degrees about the
