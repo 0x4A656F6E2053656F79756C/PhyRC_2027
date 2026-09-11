@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "scope": "CPU policy invariants; not physical task success",
+  "results": [
+    {
+      "policy": "dual",
+      "sha256": "8a7f5cceb4b06dab0e9f696378f6bab9eaeb912c8c26535a022f3187ac14dd68",
+      "zero_error_zero_motion": true,
+      "signed_1cm_response_without_other_axis_motion": true,
+      "phase_gates": true
+    },
+    {
+      "policy": "cuff",
+      "sha256": "c50b8a34aef5b4e49a3f76221db7c71842f56bf9dc010d62a255dd2db94c62f1",
+      "zero_error_zero_motion": true,
+      "signed_1cm_response_without_other_axis_motion": true,
+      "phase_gates": true
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-"""CPU USD regression: real instanced robot bindings, isolation, and rollback."""
+"""CPU USD regression: real instanced robot bindings, isolation, table friction, and rollback."""
 import json
 import os
 import sys
@@ -17,6 +17,8 @@ for schema in Path("/isaac-sim/extscache").glob("omni.usd.schema.physx-*/plugins
 sys.path.insert(0, '/project/src/DexGarmentLab')
 from Env_Config.Garment.ZeroSceneFriction import zero_scene_friction
 from Env_Config.Garment.GripperClothFriction import configure_gripper_cloth_friction
+from Env_Config.Garment.TableClothFriction import configure_table_cloth_friction
+
 stage = Usd.Stage.CreateInMemory()
 for name in ('Stretch4', 'Stretch4_2'):
     stage.DefinePrim('/World/' + name).GetReferences().AddReference(
@@ -28,9 +30,12 @@ cloth = UsdShade.Material.Define(stage, '/World/ClothMaterial').GetPrim()
 cloth.ApplyAPI('OmniPhysicsBaseMaterialAPI')
 cloth.ApplyAPI('OmniPhysicsDeformableMaterialAPI')
 cloth.GetAttribute('omniphysics:dynamicFriction').Set(.7)
+
 os.environ['STRETCH4_HUMAN_CONTACT_FRICTION'] = '0'
 os.environ['STRETCH4_GRIPPER_CONTACT_FRICTION'] = '0'
+os.environ['STRETCH4_TABLE_CONTACT_FRICTION'] = '0'
 zero_scene_friction(stage)
+
 def read_materials():
     out = {}
     for p in Usd.PrimRange(stage.GetPseudoRoot(), Usd.TraverseInstanceProxies()):
@@ -42,27 +47,54 @@ def read_materials():
             out[str(p.GetPath())] = [a.GetStaticFrictionAttr().Get(), a.GetDynamicFrictionAttr().Get(),
                 PhysxSchema.PhysxMaterialAPI(m.GetPrim()).GetFrictionCombineModeAttr().Get()]
     return out
+
 before = read_materials()
-report = configure_gripper_cloth_friction(stage, .2)
-assert len(report['colliders']) == 8, report
+
+# Gripper and table friction configuration
+report_gripper = configure_gripper_cloth_friction(stage, .5)
+assert len(report_gripper['colliders']) == 8, report_gripper
+report_table = configure_table_cloth_friction(stage, .5)
+assert len(report_table['colliders']) == 1, report_table
+
 current = read_materials()
 changed = {p for p in before if before[p] != current[p]}
-assert changed == set(report['colliders']), changed
+expected_changed = set(report_gripper['colliders']) | set(report_table['colliders'])
+assert changed == expected_changed, (changed, expected_changed)
 assert cloth.GetAttribute('omniphysics:dynamicFriction').Get() == 0
-assert all(current[p] == before[p] for p in before if '/Human/' in p or p == '/World/Table')
-for value in (-1, float('nan'), float('inf')):
-    try:
-        configure_gripper_cloth_friction(stage, value)
-    except ValueError:
-        pass
-    else:
-        raise AssertionError(value)
+
+# Human colliders must remain strictly zero friction with min combine
+for p in before:
+    if '/Human/' in p:
+        assert current[p] == [0.0, 0.0, 'min'], (p, current[p])
+
+# Invalid value rejection
+for fn in (configure_gripper_cloth_friction, configure_table_cloth_friction):
+    for value in (-1, float('nan'), float('inf')):
+        try:
+            fn(stage, value)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f'{fn.__name__} allowed invalid value: {value}')
+
+# Rollback to zero
 configure_gripper_cloth_friction(stage, 0)
+configure_table_cloth_friction(stage, 0)
 assert read_materials() == before
-# Exercise production defaults and repeated application as well.
+
+# Exercise production defaults
 os.environ.pop('STRETCH4_GRIPPER_CONTACT_FRICTION')
+os.environ.pop('STRETCH4_TABLE_CONTACT_FRICTION')
 zero_scene_friction(stage)
 assert read_materials() == current
-print(json.dumps({'passed': True, 'finger_colliders': len(changed),
-                  'nonfinger_colliders_unchanged': len(before) - len(changed),
-                  'cloth_friction': 0, 'rollback_passed': True}, indent=2))
+
+print(json.dumps({
+    'passed': True,
+    'finger_colliders': len(report_gripper['colliders']),
+    'table_colliders': len(report_table['colliders']),
+    'gripper_friction': 0.5,
+    'table_friction': 0.5,
+    'human_cloth_friction': 0.0,
+    'cloth_friction': 0,
+    'rollback_passed': True
+}, indent=2))

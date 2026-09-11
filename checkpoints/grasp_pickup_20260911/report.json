@@ -1,0 +1,72 @@
+{
+  "status": "complete",
+  "success": true,
+  "inputs_sha256": {
+    "/output/stage_review_20260911_161340/states/slot_F1.npz": "332e303ad6e477a5a0ec9e245d53228fa5e2a818cd95fa243f8efb2760e7b470",
+    "/output/stage_review_20260911_161340/states/slot_F2.npz": "a603a0bd78689aec332d0740d0b162a950d1e652dc60dcf3230153f9153b05af"
+  },
+  "script_sha256": "2b53c9341700fd5ef9bb2c4906f7fd7cff769a7aac5f9125047c639310451aa4",
+  "scope": "robot 0 pickup from F1, measured-state imitation, scripted phase sequencing",
+  "physics": "current production FEM, grasp attachments, guards and friction; no overrides",
+  "teacher": {
+    "success": true,
+    "steps": 183,
+    "last_phase": 5,
+    "max_lift_m": 0.0896749198436737,
+    "max_hold_steps": 20,
+    "ever_attached": true,
+    "target_shift_m": 0.0,
+    "initial_lift_tip_z": 0.6263238787651062
+  },
+  "environment": {
+    "source_sha256": {
+      "__init__.py": "71d223fb5d8acf29318a57b7363b233dd78a126632dbd26a9fa193eb2845cc4a",
+      "contract.py": "f8c3ddb105417c337dab04ad0a32f7235902fad28989cb7476c026c1d8d100ee",
+      "environment.py": "f9a7e1981d2c931cf22b8df11ad10e3865defcadf68debe33492b7ac7197ea56",
+      "sensors.py": "f4612ebac14fff2cb081ac1892e7dd0384d57420fd895716d924425e4af661d4",
+      "stages.py": "d0a68b37edea1fccc4a0de816f8f65cfc796690b4c1cf761ae814354ec09b348",
+      "state.py": "7f51612c66650070b0bea00b07495cc16059c8e29973a1764eaf3eb6e8a064f3",
+      "garment_random_spawn.py": "d72e453725e71d4f62e4db39408a9bce12eb638789099dd9ab5dd69fbd879683",
+      "contract": "85991b966eb20a29e1ac36d86d188e11f89b021a06673f7f9924cda18f35ca6c",
+      "teleop": "27617d5d1e0ce79987ff54b3036a3b267811375a869c5e35d952e05e8d379e1c"
+    },
+    "rates": {
+      "BASE_LINEAR_RATE": 0.504,
+      "BASE_ANGULAR_RATE": 2.34,
+      "LIFT_RATE": 1.26,
+      "ARM_RATE": 0.99,
+      "WRIST_RATE": 4.5
+    },
+    "initial_slot": "/output/stage_review_20260911_161340/states/slot_F1.npz",
+    "native_grasp": true
+  },
+  "training": {
+    "samples": 183,
+    "epochs": 600,
+    "loss_before": 0.203321635723114,
+    "loss_after": 9.710963058751076e-05,
+    "evaluation_reloaded_saved_weights": true
+  },
+  "evaluation": {
+    "success": true,
+    "steps": 183,
+    "last_phase": 5,
+    "max_lift_m": 0.09120121598243713,
+    "max_hold_steps": 20,
+    "ever_attached": true,
+    "target_shift_m": 0.0,
+    "initial_lift_tip_z": 0.6262801587581635
+  },
+  "evaluation_shift_1cm": {
+    "success": true,
+    "steps": 183,
+    "last_phase": 5,
+    "max_lift_m": 0.09201279282569885,
+    "max_hold_steps": 20,
+    "ever_attached": true,
+    "target_shift_m": 0.01,
+    "initial_lift_tip_z": 0.6262108385562897
+  },
+  "elapsed_s": 290.85987417700017,
+  "inputs_unchanged": true
+}

@@ -1,0 +1,210 @@
+{
+  "scope": "dual pickup only, not arm insertion",
+  "planner_version": 4,
+  "algorithm": "behavior cloning with scripted phases",
+  "checkpoint_sha256": "8a7f5cceb4b06dab0e9f696378f6bab9eaeb912c8c26535a022f3187ac14dd68",
+  "evaluations": [
+    {
+      "artifact": "output/dual_continuous_v2/learned_eval_0.json",
+      "sha256": "1779b35d7df317aff230ed07069154e1efb4c19133299126d3c3a2e99d7931af",
+      "result": {
+        "success": true,
+        "steps": 326,
+        "last_phase": 5,
+        "max_lift_m_each": [
+          0.09209668636322021,
+          0.09798961877822876
+        ],
+        "max_both_hold_steps": 40,
+        "both_ever_attached": true,
+        "target_shift_m": 0.0,
+        "final_grasps": [
+          true,
+          true
+        ]
+      },
+      "last_measured_grasp_health": [
+        {
+          "attached": true,
+          "anchor_count": 48,
+          "anchor_p95_error_m": 3.0111921066814775e-05
+        },
+        {
+          "attached": true,
+          "anchor_count": 48,
+          "anchor_p95_error_m": 0.0009301556225977205
+        }
+      ]
+    },
+    {
+      "artifact": "output/dual_continuous_v3/reloaded.json",
+      "sha256": "fa87c0577f550bbd793ab4c6c8140d89f2eb01b8df00c91b4316e4e9ec134e10",
+      "result": {
+        "success": true,
+        "steps": 326,
+        "last_phase": 5,
+        "max_lift_m_each": [
+          0.09223541617393494,
+          0.09798473119735718
+        ],
+        "max_both_hold_steps": 40,
+        "both_ever_attached": true,
+        "target_shift_m": 0.0,
+        "final_grasps": [
+          true,
+          true
+        ]
+      },
+      "last_measured_grasp_health": [
+        {
+          "attached": true,
+          "anchor_count": 48,
+          "anchor_p95_error_m": 2.8990989418981978e-05
+        },
+        {
+          "attached": true,
+          "anchor_count": 48,
+          "anchor_p95_error_m": 0.0009509213210039077
+        }
+      ]
+    },
+    {
+      "artifact": "output/dual_material_v1/reloaded.json",
+      "sha256": "23fa2a3501f43303a77e921f8351dcbc59067a1a08720e12405ba440f478aeeb",
+      "result": {
+        "success": true,
+        "steps": 326,
+        "last_phase": 5,
+        "max_lift_m_each": [
+          0.09222900867462158,
+          0.09798985719680786
+        ],
+        "max_both_hold_steps": 40,
+        "both_ever_attached": true,
+        "target_shift_m": 0.0,
+        "final_grasps": [
+          true,
+          true
+        ]
+      },
+      "last_measured_grasp_health": [
+        {
+          "attached": true,
+          "anchor_count": 48,
+          "anchor_p95_error_m": 2.9388831064882555e-05
+        },
+        {
+          "attached": true,
+          "anchor_count": 48,
+          "anchor_p95_error_m": 0.0009520267905779723
+        }
+      ]
+    },
+    {
+      "artifact": "output/dual_pickup_offsets_v4/reloaded_0.json",
+      "sha256": "d81023e9282fb9a9123ff9ea28a4525f4f8cc7260213b996679ac59e754ac2db",
+      "result": {
+        "success": true,
+        "steps": 324,
+        "last_phase": 5,
+        "final_grasp_health": [
+          {
+            "attached": true,
+            "anchor_count": 48,
+            "anchor_p95_error_m": 1.3072108319267367e-05
+          },
+          {
+            "attached": true,
+            "anchor_count": 48,
+            "anchor_p95_error_m": 0.0011316597812756637
+          }
+        ],
+        "final_lift_m_each": [
+          0.09070813655853271,
+          0.09803837537765503
+        ],
+        "final_base_tilt_rad": [
+          0.006916232446466594,
+          0.006917220977641849
+        ],
+        "max_lift_m_each": [
+          0.090716153383255,
+          0.09805983304977417
+        ],
+        "max_both_hold_steps": 40,
+        "both_ever_attached": true,
+        "target_shift_m": 0.01,
+        "final_grasps": [
+          true,
+          true
+        ]
+      },
+      "last_measured_grasp_health": [
+        {
+          "attached": true,
+          "anchor_count": 48,
+          "anchor_p95_error_m": 1.3072108319267367e-05
+        },
+        {
+          "attached": true,
+          "anchor_count": 48,
+          "anchor_p95_error_m": 0.0011316597812756637
+        }
+      ]
+    },
+    {
+      "artifact": "output/dual_pickup_offsets_v4/reloaded_1.json",
+      "sha256": "f5696d0f38c1694fea5c97ed6fa7b48354beaa21652288205db5aa43b6c5e8d4",
+      "result": {
+        "success": true,
+        "steps": 326,
+        "last_phase": 5,
+        "final_grasp_health": [
+          {
+            "attached": true,
+            "anchor_count": 48,
+            "anchor_p95_error_m": 1.735301300480876e-05
+          },
+          {
+            "attached": true,
+            "anchor_count": 48,
+            "anchor_p95_error_m": 0.0009637603371910171
+          }
+        ],
+        "final_lift_m_each": [
+          0.0925009548664093,
+          0.09798121452331543
+        ],
+        "final_base_tilt_rad": [
+          0.006916416151016051,
+          0.0069160158305027995
+        ],
+        "max_lift_m_each": [
+          0.09249550104141235,
+          0.09798172116279602
+        ],
+        "max_both_hold_steps": 40,
+        "both_ever_attached": true,
+        "target_shift_m": -0.01,
+        "final_grasps": [
+          true,
+          true
+        ]
+      },
+      "last_measured_grasp_health": [
+        {
+          "attached": true,
+          "anchor_count": 48,
+          "anchor_p95_error_m": 1.735301300480876e-05
+        },
+        {
+          "attached": true,
+          "anchor_count": 48,
+          "anchor_p95_error_m": 0.0009637603371910171
+        }
+      ]
+    }
+  ],
+  "offset_retests_pending": false,
+  "all_recorded_pickups_passed": true
+}

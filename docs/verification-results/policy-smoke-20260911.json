@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "depth_probe_m": [
+    0.9000000953674316,
+    1.2000000476837158
+  ],
+  "lift_delta_m": 0.07151980698108673,
+  "repeat_seed_q_max_abs": 0.0,
+  "repeat_seed_cloth_max_abs": 0.00099945068359375,
+  "elapsed_wall_s": 105.32127155099988,
+  "artifact": "output/policy_smoke_restored_20260911/report.json",
+  "artifact_sha256": "a34744949af6fdea1bc550a78df3277781c532990618bcce50c80d065f5679ea",
+  "script_sha256": "43a5142e69f546f140bdcc30df78866eaeb4e4057de1fd2dcc459bec619e05ea",
+  "resolution_wh": [
+    128,
+    128
+  ],
+  "action_elapsed_sim_s": 0.40000002086162567,
+  "expected_action_elapsed_sim_s": 0.4,
+  "source_sha256": {
+    "__init__.py": "71d223fb5d8acf29318a57b7363b233dd78a126632dbd26a9fa193eb2845cc4a",
+    "contract.py": "f8c3ddb105417c337dab04ad0a32f7235902fad28989cb7476c026c1d8d100ee",
+    "dressing_task.py": "6375e3c4dbc82cb73568718ed8ea42a662263514e376703b567dd37fccb26db8",
+    "environment.py": "f9a7e1981d2c931cf22b8df11ad10e3865defcadf68debe33492b7ac7197ea56",
+    "material_policy.py": "c1f9f91e69a3ce7128447ceb185ada9b2ab8c760d01842b18031d9557267b16c",
+    "pickup_policy.py": "5f83e16ada0f3787565cbe345239968fdd31bd81cf4bdc0b6835eeb5620f204a",
+    "sensors.py": "f4612ebac14fff2cb081ac1892e7dd0384d57420fd895716d924425e4af661d4",
+    "stages.py": "5190f0545867e544badab7a4415249efc552f71d0821eb0621c1798a8a883058",
+    "state.py": "7f51612c66650070b0bea00b07495cc16059c8e29973a1764eaf3eb6e8a064f3",
+    "garment_random_spawn.py": "d72e453725e71d4f62e4db39408a9bce12eb638789099dd9ab5dd69fbd879683",
+    "contract": "85991b966eb20a29e1ac36d86d188e11f89b021a06673f7f9924cda18f35ca6c",
+    "teleop": "27617d5d1e0ce79987ff54b3036a3b267811375a869c5e35d952e05e8d379e1c"
+  },
+  "scope": "Real GPU RGB-D freshness and metric depth, numerical controls, invalid actions, repeated seeded reset, termination/truncation; not dressing success",
+  "source_commit": "d1c45522cb2544189c610340b4a5cdb1f764c3f4",
+  "source_is_dirty": true
+}

@@ -1,0 +1,2298 @@
+{
+  "scope": "Continuous dressing experiments; pickup and insertion are separate outcomes",
+  "arm_insertion_verified": false,
+  "physics": "Current production FEM64, native grasp, contact guards and gripper friction 0.2; cloth and mannequin friction zero",
+  "experiments": [
+    {
+      "status": "complete",
+      "success": false,
+      "scope": "two-robot pickup from F1, measured-state imitation, scripted phase sequencing",
+      "artifact": "output/dual_grasp_probe_v1/report.json",
+      "sha256": "7223c4319daa28c995e12f004cf194f738c616db0563d8a5a4de460372e483ec"
+    },
+    {
+      "status": "complete",
+      "success": false,
+      "scope": "two-robot pickup from F1, measured-state imitation, scripted phase sequencing",
+      "evaluation": {
+        "success": true,
+        "steps": 325,
+        "last_phase": 5,
+        "max_lift_m_each": [
+          0.0976044237613678,
+          0.10393139719963074
+        ],
+        "max_both_hold_steps": 40,
+        "both_ever_attached": true,
+        "target_shift_m": 0.0,
+        "final_grasps": [
+          true,
+          true
+        ]
+      },
+      "training": {
+        "samples": 650,
+        "epochs": 1200,
+        "loss_before": 0.1576259583234787,
+        "loss_after": 4.5790646254317835e-05,
+        "evaluation_reloaded_saved_weights": true
+      },
+      "artifact": "output/dual_grasp_learning_v1/report.json",
+      "sha256": "2c0a8f4d27eef7c4d668e8ffb892b33f078c13745c0bac6db51b5648eb90d5ee"
+    },
+    {
+      "status": "error",
+      "success": false,
+      "scope": "two-robot pickup from F1, measured-state imitation, scripted phase sequencing",
+      "error": "TypeError: 'NoneType' object is not iterable",
+      "evaluation": {
+        "success": true,
+        "steps": 326,
+        "last_phase": 5,
+        "max_lift_m_each": [
+          0.09209668636322021,
+          0.09798961877822876
+        ],
+        "max_both_hold_steps": 40,
+        "both_ever_attached": true,
+        "target_shift_m": 0.0,
+        "final_grasps": [
+          true,
+          true
+        ]
+      },
+      "evaluations": [
+        {
+          "success": true,
+          "steps": 326,
+          "last_phase": 5,
+          "max_lift_m_each": [
+            0.09209668636322021,
+            0.09798961877822876
+          ],
+          "max_both_hold_steps": 40,
+          "both_ever_attached": true,
+          "target_shift_m": 0.0,
+          "final_grasps": [
+            true,
+            true
+          ]
+        }
+      ],
+      "training": {
+        "samples": 650,
+        "epochs": 1200,
+        "loss_before": 0.09851229190826416,
+        "loss_after": 4.404661012813449e-05,
+        "evaluation_reloaded_saved_weights": true
+      },
+      "artifact": "output/dual_continuous_v2/report.json",
+      "sha256": "0f53260aa09428bcb66d7e61d301d8b68a00c9e30ab917102cb9256b4332a639"
+    },
+    {
+      "status": "stopped_after_failed_teacher_insertion",
+      "success": false,
+      "scope": "two-robot pickup from F1, measured-state imitation, scripted phase sequencing",
+      "reason": "Both grasps remained healthy but neither cuff enclosed its hand; do not train a failed dressing demonstration.",
+      "pickup": {
+        "success": true,
+        "steps": 326,
+        "last_phase": 5,
+        "max_lift_m_each": [
+          0.09223541617393494,
+          0.09798473119735718
+        ],
+        "max_both_hold_steps": 40,
+        "both_ever_attached": true,
+        "target_shift_m": 0.0,
+        "final_grasps": [
+          true,
+          true
+        ]
+      },
+      "artifact": "output/dual_continuous_v3/report.json",
+      "sha256": "70d4a3b8c224f11b18221addd4337a902af0b63610b0fb5f35cec4a5f0fb4429"
+    },
+    {
+      "status": "stopped_after_unreached_carry",
+      "success": false,
+      "scope": "two-robot pickup from F1, measured-state imitation, scripted phase sequencing",
+      "reason": "Carry goal not reached; robot 1 tipped over (confirmed in front/above images). One transient cuff crossing is not a stable two-arm insertion. Subsequent controller adds posture guidance, path progress pause, target-reached and upright gates.",
+      "pickup": {
+        "success": true,
+        "steps": 326,
+        "last_phase": 5,
+        "max_lift_m_each": [
+          0.09222900867462158,
+          0.09798985719680786
+        ],
+        "max_both_hold_steps": 40,
+        "both_ever_attached": true,
+        "target_shift_m": 0.0,
+        "final_grasps": [
+          true,
+          true
+        ]
+      },
+      "artifact": "output/dual_material_v1/report.json",
+      "sha256": "72d2157272f002f7641e12faa44bbc7cad5af794a9c82f89948132bdc9c75158",
+      "continuous_phases": {
+        "material_teacher_carry": {
+          "steps": 467,
+          "initial_sim_time_s": 27.608334773220122,
+          "final_sim_time_s": 50.95833599101752,
+          "episode_id": 1,
+          "checkpoint_loads_during_phase": 0,
+          "required_grasps_healthy": true,
+          "grasp_health": [
+            {
+              "attached": true,
+              "anchor_count": 48,
+              "anchor_p95_error_m": 8.751191122120702e-05
+            },
+            {
+              "attached": true,
+              "anchor_count": 48,
+              "anchor_p95_error_m": 0.0021599954064920736
+            }
+          ],
+          "errors": [
+            {
+              "robot": 0,
+              "position_error_m": 0.20951660271711287,
+              "orientation_error_rad": 0.6939232826151172
+            },
+            {
+              "robot": 1,
+              "position_error_m": 0.8752838361055403,
+              "orientation_error_rad": 2.5263631318143482
+            }
+          ],
+          "stable_insertion_steps": 0,
+          "arms": [
+            {
+              "forearm_to_hand_crosses_cuff": true,
+              "forearm_signed_m": -0.10147332771908049,
+              "hand_signed_m": 0.030467858195511257,
+              "crossing_inside": true,
+              "plane_ratio": 0.5851060748100281,
+              "cuff_centre": [
+                -0.20848259329795837,
+                -0.0018187662353739142,
+                1.0822266340255737
+              ],
+              "hand_centre": [
+                -0.22817911454314072,
+                -0.052809246982723525,
+                1.1238554808433108
+              ],
+              "forearm_centre": [
+                -0.19305157200490353,
+                0.12411508579636611,
+                1.0422976790584244
+              ]
+            },
+            {
+              "forearm_to_hand_crosses_cuff": false,
+              "forearm_signed_m": -0.4573791273149037,
+              "hand_signed_m": -0.5911694447987854,
+              "crossing_inside": false,
+              "plane_ratio": 0.26485157012939453,
+              "cuff_centre": [
+                -0.327404648065567,
+                0.17946256697177887,
+                0.5730026364326477
+              ],
+              "hand_centre": [
+                0.16481644202623955,
+                -0.0876715591749961,
+                1.1307709629683564
+              ],
+              "forearm_centre": [
+                0.15941609965062176,
+                0.0930317236204366,
+                1.0477469872435046
+              ]
+            }
+          ],
+          "both_cross_cuffs": false,
+          "visual_intersections": 0,
+          "insertion_candidate": false
+        },
+        "material_teacher_raise": {
+          "steps": 196,
+          "initial_sim_time_s": 17.808334262110293,
+          "final_sim_time_s": 27.608334773220122,
+          "episode_id": 1,
+          "checkpoint_loads_during_phase": 0,
+          "required_grasps_healthy": true,
+          "grasp_health": [
+            {
+              "attached": true,
+              "anchor_count": 48,
+              "anchor_p95_error_m": 2.9511307294009374e-05
+            },
+            {
+              "attached": true,
+              "anchor_count": 48,
+              "anchor_p95_error_m": 0.0009751766654880381
+            }
+          ],
+          "errors": [
+            {
+              "robot": 0,
+              "position_error_m": 0.0007004983342772404,
+              "orientation_error_rad": 0.0001485427820824929
+            },
+            {
+              "robot": 1,
+              "position_error_m": 0.027013287186988606,
+              "orientation_error_rad": 0.009370790323669503
+            }
+          ],
+          "stable_insertion_steps": 0,
+          "arms": [
+            {
+              "forearm_to_hand_crosses_cuff": false,
+              "forearm_signed_m": -0.2715981308948176,
+              "hand_signed_m": -0.34470659710418794,
+              "crossing_inside": false,
+              "plane_ratio": 0.021861014887690544,
+              "cuff_centre": [
+                -1.3821688890457153,
+                -1.3078066110610962,
+                0.8812270164489746
+              ],
+              "hand_centre": [
+                -0.22817911454314072,
+                -0.052809246982723525,
+                1.1238554808433108
+              ],
+              "forearm_centre": [
+                -0.19305157200490353,
+                0.12411508579636611,
+                1.0422976790584244
+              ]
+            },
+            {
+              "forearm_to_hand_crosses_cuff": false,
+              "forearm_signed_m": 1.4427148615125325,
+              "hand_signed_m": 1.2799093199055886,
+              "crossing_inside": false,
+              "plane_ratio": 0.06796067208051682,
+              "cuff_centre": [
+                -0.8121426701545715,
+                -1.3044366836547852,
+                0.7821939587593079
+              ],
+              "hand_centre": [
+                0.16481644202623955,
+                -0.0876715591749961,
+                1.1307709629683564
+              ],
+              "forearm_centre": [
+                0.15941609965062176,
+                0.0930317236204366,
+                1.0477469872435046
+              ]
+            }
+          ],
+          "both_cross_cuffs": false,
+          "visual_intersections": 0,
+          "insertion_candidate": false
+        }
+      }
+    },
+    {
+      "status": "complete",
+      "success": false,
+      "scope": "robot 0 pickup from F1, measured-state imitation, scripted phase sequencing",
+      "artifact": "output/single_cuff_v1/report.json",
+      "sha256": "b151486584d787f32cd5efa8f5028b2686a9ca8997bb32d1f7873f16c5587ad8"
+    },
+    {
+      "status": "stopped_after_policy_stall",
+      "success": false,
+      "scope": "robot 0 pickup from F1, measured-state imitation, scripted phase sequencing",
+      "reason": "Dense learned policy remained in preparation phase beyond140steps with small unintended cross-axis commands. No pickup/continuation success claimed. Reuse only the successful physical teacher data.",
+      "artifact": "output/single_cuff_v2/report.json",
+      "sha256": "257b34bdc7a3b857d2cb93992827669bb9d639b0ce3027f081ce6b40fd2baa47"
+    },
+    {
+      "status": "complete",
+      "success": false,
+      "pickup_success": true,
+      "scope": "robot 0 pickup from F1, measured-state imitation, scripted phase sequencing",
+      "evaluation": {
+        "success": true,
+        "final_grasp_health": {
+          "attached": true,
+          "anchor_count": 48,
+          "anchor_p95_error_m": 1.975225171707501e-05
+        },
+        "final_lift_m": 0.08806127309799194,
+        "steps": 242,
+        "last_phase": 5,
+        "max_lift_m": 0.08800563216209412,
+        "max_hold_steps": 20,
+        "ever_attached": true,
+        "target_shift_m": 0.0,
+        "initial_lift_tip_z": 0.6113738417625427
+      },
+      "evaluations": [
+        {
+          "success": true,
+          "final_grasp_health": {
+            "attached": true,
+            "anchor_count": 48,
+            "anchor_p95_error_m": 1.975225171707501e-05
+          },
+          "final_lift_m": 0.08806127309799194,
+          "steps": 242,
+          "last_phase": 5,
+          "max_lift_m": 0.08800563216209412,
+          "max_hold_steps": 20,
+          "ever_attached": true,
+          "target_shift_m": 0.0,
+          "initial_lift_tip_z": 0.6113738417625427
+        }
+      ],
+      "training": {
+        "samples": 241,
+        "epochs": 1200,
+        "loss_before": 0.11848582327365875,
+        "loss_after": 4.9468268116470426e-05,
+        "evaluation_reloaded_saved_weights": true
+      },
+      "artifact": "output/single_cuff_v3/report.json",
+      "sha256": "2d513d48f776cd12f2d31a33e3eb2b489e964498be29f340216c052593253d14",
+      "continuous_phases": {
+        "material_teacher_carry": {
+          "steps": 431,
+          "initial_sim_time_s": 27.40833476278931,
+          "final_sim_time_s": 48.95833588670939,
+          "episode_id": 1,
+          "checkpoint_loads_during_phase": 0,
+          "required_grasps_healthy": true,
+          "grasp_health": [
+            {
+              "attached": true,
+              "anchor_count": 48,
+              "anchor_p95_error_m": 2.31876003839228e-05
+            },
+            {
+              "attached": false,
+              "anchor_p95_error_m": null
+            }
+          ],
+          "errors": [
+            {
+              "robot": 0,
+              "position_error_m": 0.0030513274300822952,
+              "orientation_error_rad": 0.0021379700329872595
+            }
+          ],
+          "base_tilt_rad": [
+            0.0069177048484831225,
+            0.006916557160431782
+          ],
+          "robots_upright": true,
+          "stable_insertion_steps": 0,
+          "arms": [
+            {
+              "forearm_to_hand_crosses_cuff": false,
+              "forearm_signed_m": -0.025354057153217917,
+              "hand_signed_m": -0.03167048916609285,
+              "crossing_inside": false,
+              "plane_ratio": 0.3428429365158081,
+              "cuff_centre": [
+                -0.24567599594593048,
+                -0.14471851289272308,
+                1.2159613370895386
+              ],
+              "hand_centre": [
+                -0.22817911454314072,
+                -0.052809246982723525,
+                1.1238554808433108
+              ],
+              "forearm_centre": [
+                -0.17680054171626142,
+                0.21815268271977767,
+                0.9884407066075027
+              ]
+            },
+            {
+              "forearm_to_hand_crosses_cuff": false,
+              "forearm_signed_m": -0.6252400672388643,
+              "hand_signed_m": -0.6774247132939833,
+              "crossing_inside": false,
+              "plane_ratio": 0.040182605385780334,
+              "cuff_centre": [
+                -0.26901689171791077,
+                -0.35906195640563965,
+                0.5309741497039795
+              ],
+              "hand_centre": [
+                0.16481644202623955,
+                -0.0876715591749961,
+                1.1307709629683564
+              ],
+              "forearm_centre": [
+                0.15927801000605693,
+                0.1878656270924735,
+                0.9948384331925962
+              ]
+            }
+          ],
+          "both_cross_cuffs": false,
+          "visual_intersections": 0,
+          "insertion_candidate": false,
+          "target_reached": true
+        },
+        "material_teacher_insertion": {
+          "steps": 114,
+          "initial_sim_time_s": 48.95833588670939,
+          "final_sim_time_s": 54.65833618398756,
+          "episode_id": 1,
+          "checkpoint_loads_during_phase": 0,
+          "required_grasps_healthy": true,
+          "grasp_health": [
+            {
+              "attached": true,
+              "anchor_count": 48,
+              "anchor_p95_error_m": 0.00012488152108528581
+            },
+            {
+              "attached": false,
+              "anchor_p95_error_m": null
+            }
+          ],
+          "errors": [
+            {
+              "robot": 0,
+              "position_error_m": 0.0009804764678042527,
+              "orientation_error_rad": 0.0075015710869465405
+            }
+          ],
+          "base_tilt_rad": [
+            0.006915285116169048,
+            0.006916135231073217
+          ],
+          "robots_upright": true,
+          "stable_insertion_steps": 0,
+          "arms": [
+            {
+              "forearm_to_hand_crosses_cuff": false,
+              "forearm_signed_m": -0.07177542513192017,
+              "hand_signed_m": -0.04701712119953925,
+              "crossing_inside": false,
+              "plane_ratio": 0.32842782139778137,
+              "cuff_centre": [
+                -0.2648330330848694,
+                0.1790422946214676,
+                1.0406386852264404
+              ],
+              "hand_centre": [
+                -0.22817911454314072,
+                -0.052809246982723525,
+                1.1238554808433108
+              ],
+              "forearm_centre": [
+                -0.17680054171626142,
+                0.21815268271977767,
+                0.9884407066075027
+              ]
+            },
+            {
+              "forearm_to_hand_crosses_cuff": false,
+              "forearm_signed_m": -0.5595290105652259,
+              "hand_signed_m": -0.5785811206476268,
+              "crossing_inside": false,
+              "plane_ratio": 0.04136860743165016,
+              "cuff_centre": [
+                -0.14091429114341736,
+                -0.07543527334928513,
+                0.49710220098495483
+              ],
+              "hand_centre": [
+                0.16481644202623955,
+                -0.0876715591749961,
+                1.1307709629683564
+              ],
+              "forearm_centre": [
+                0.15927801000605693,
+                0.1878656270924735,
+                0.9948384331925962
+              ]
+            }
+          ],
+          "both_cross_cuffs": false,
+          "visual_intersections": 0,
+          "insertion_candidate": false,
+          "target_reached": true
+        },
+        "material_teacher_raise": {
+          "steps": 276,
+          "initial_sim_time_s": 13.608334043063223,
+          "final_sim_time_s": 27.40833476278931,
+          "episode_id": 1,
+          "checkpoint_loads_during_phase": 0,
+          "required_grasps_healthy": true,
+          "grasp_health": [
+            {
+              "attached": true,
+              "anchor_count": 48,
+              "anchor_p95_error_m": 4.329203365253971e-05
+            },
+            {
+              "attached": false,
+              "anchor_p95_error_m": null
+            }
+          ],
+          "errors": [
+            {
+              "robot": 0,
+              "position_error_m": 0.027053193889003308,
+              "orientation_error_rad": 0.009368921007331754
+            }
+          ],
+          "base_tilt_rad": [
+            0.006916332021790488,
+            0.00691539929703985
+          ],
+          "robots_upright": true,
+          "stable_insertion_steps": 0,
+          "arms": [
+            {
+              "forearm_to_hand_crosses_cuff": false,
+              "forearm_signed_m": -0.37528001700480557,
+              "hand_signed_m": -0.29535223539647526,
+              "crossing_inside": false,
+              "plane_ratio": 0.10115361213684082,
+              "cuff_centre": [
+                -1.483160376548767,
+                -1.652547836303711,
+                1.2280058860778809
+              ],
+              "hand_centre": [
+                -0.22817911454314072,
+                -0.052809246982723525,
+                1.1238554808433108
+              ],
+              "forearm_centre": [
+                -0.17680054171626142,
+                0.21815268271977767,
+                0.9884407066075027
+              ]
+            },
+            {
+              "forearm_to_hand_crosses_cuff": false,
+              "forearm_signed_m": -0.19800442827505163,
+              "hand_signed_m": -0.30291266732147887,
+              "crossing_inside": false,
+              "plane_ratio": 0.15556292235851288,
+              "cuff_centre": [
+                -1.1779029369354248,
+                -1.7428354024887085,
+                0.5758567452430725
+              ],
+              "hand_centre": [
+                0.16481644202623955,
+                -0.0876715591749961,
+                1.1307709629683564
+              ],
+              "forearm_centre": [
+                0.15927801000605693,
+                0.1878656270924735,
+                0.9948384331925962
+              ]
+            }
+          ],
+          "both_cross_cuffs": false,
+          "visual_intersections": 0,
+          "insertion_candidate": false,
+          "target_reached": true
+        }
+      }
+    },
+    {
+      "status": "stopped_after_blocked_approach",
+      "success": false,
+      "scope": "robot 0 pickup from F1, measured-state imitation, scripted phase sequencing",
+      "reason": "At upper-middle cuff target, the base stopped against the table: tip Y stayed near -1.629m across120steps while goal remained about5.5cm farther. Next attempt increases commanded extension within existing joint limits; collision geometry remains unchanged.",
+      "artifact": "output/single_cuff_v4/report.json",
+      "sha256": "febd2e7917dcb19abbd98f4a0be091b2249d8ebfe867038149cceeec5a6dc79e"
+    },
+    {
+      "status": "complete",
+      "success": false,
+      "pickup_success": true,
+      "scope": "robot 0 pickup from F1, measured-state imitation, scripted phase sequencing",
+      "evaluation": {
+        "success": true,
+        "final_base_tilt_rad": 0.006916205247192125,
+        "final_grasp_health": {
+          "attached": true,
+          "anchor_count": 48,
+          "anchor_p95_error_m": 7.930456061734215e-06
+        },
+        "final_lift_m": 0.08771413564682007,
+        "steps": 238,
+        "last_phase": 5,
+        "max_lift_m": 0.08763709664344788,
+        "max_hold_steps": 20,
+        "ever_attached": true,
+        "target_shift_m": 0.0,
+        "initial_lift_tip_z": 0.6077691614627838
+      },
+      "evaluations": [
+        {
+          "success": true,
+          "final_base_tilt_rad": 0.006916205247192125,
+          "final_grasp_health": {
+            "attached": true,
+            "anchor_count": 48,
+            "anchor_p95_error_m": 7.930456061734215e-06
+          },
+          "final_lift_m": 0.08771413564682007,
+          "steps": 238,
+          "last_phase": 5,
+          "max_lift_m": 0.08763709664344788,
+          "max_hold_steps": 20,
+          "ever_attached": true,
+          "target_shift_m": 0.0,
+          "initial_lift_tip_z": 0.6077691614627838
+        }
+      ],
+      "artifact": "output/single_cuff_v5/report.json",
+      "sha256": "4e8adc1b73279f7bf02b1334d71dedccb7b85c98b196d484a998be8057b078df",
+      "continuous_phases": {
+        "material_teacher_carry": {
+          "steps": 430,
+          "initial_sim_time_s": 20.908334423787892,
+          "final_sim_time_s": 42.40833554510027,
+          "episode_id": 1,
+          "checkpoint_loads_during_phase": 0,
+          "required_grasps_healthy": true,
+          "grasp_health": [
+            {
+              "attached": true,
+              "anchor_count": 48,
+              "anchor_p95_error_m": 2.9439091106199676e-05
+            },
+            {
+              "attached": false,
+              "anchor_p95_error_m": null
+            }
+          ],
+          "errors": [
+            {
+              "robot": 0,
+              "position_error_m": 0.004009554188245386,
+              "orientation_error_rad": 0.003454706223043613
+            }
+          ],
+          "base_tilt_rad": [
+            0.006917174257459437,
+            0.006915665857199335
+          ],
+          "robots_upright": true,
+          "stable_insertion_steps": 0,
+          "arms": [
+            {
+              "forearm_to_hand_crosses_cuff": false,
+              "forearm_signed_m": -0.11189651299808592,
+              "hand_signed_m": -0.03235338085088488,
+              "crossing_inside": true,
+              "plane_ratio": 0.2821589708328247,
+              "cuff_centre": [
+                -0.24732527136802673,
+                -0.17898687720298767,
+                1.1832836866378784
+              ],
+              "hand_centre": [
+                -0.22817911454314072,
+                -0.052809246982723525,
+                1.1238554808433108
+              ],
+              "forearm_centre": [
+                -0.17680054171626142,
+                0.21815268271977767,
+                0.9884407066075027
+              ]
+            },
+            {
+              "forearm_to_hand_crosses_cuff": false,
+              "forearm_signed_m": -0.4405927261798892,
+              "hand_signed_m": -0.5171665911691327,
+              "crossing_inside": false,
+              "plane_ratio": 0.06885316967964172,
+              "cuff_centre": [
+                0.05833809822797775,
+                -0.32030802965164185,
+                0.5418660640716553
+              ],
+              "hand_centre": [
+                0.16481644202623955,
+                -0.0876715591749961,
+                1.1307709629683564
+              ],
+              "forearm_centre": [
+                0.15927801000605693,
+                0.1878656270924735,
+                0.9948384331925962
+              ]
+            }
+          ],
+          "both_cross_cuffs": false,
+          "visual_intersections": 0,
+          "insertion_candidate": false,
+          "target_reached": true
+        },
+        "material_teacher_preinsert": {
+          "steps": 53,
+          "initial_sim_time_s": 42.40833554510027,
+          "final_sim_time_s": 45.05833568330854,
+          "episode_id": 1,
+          "checkpoint_loads_during_phase": 0,
+          "required_grasps_healthy": false,
+          "grasp_health": [
+            {
+              "attached": true,
+              "anchor_count": 48,
+              "anchor_p95_error_m": 0.06035167663706897
+            },
+            {
+              "attached": false,
+              "anchor_p95_error_m": null
+            }
+          ],
+          "errors": [
+            {
+              "robot": 0,
+              "position_error_m": 0.0560296571763821,
+              "orientation_error_rad": 0.2083120445533024
+            }
+          ],
+          "base_tilt_rad": [
+            0.0069168144893116115,
+            0.006916495863619533
+          ],
+          "robots_upright": true,
+          "stable_insertion_steps": 0,
+          "arms": [
+            {
+              "forearm_to_hand_crosses_cuff": false,
+              "forearm_signed_m": -0.06547888219542039,
+              "hand_signed_m": -0.02886919412275857,
+              "crossing_inside": false,
+              "plane_ratio": 0.05486183241009712,
+              "cuff_centre": [
+                -0.3159148395061493,
+                -0.10073089599609375,
+                1.1311943531036377
+              ],
+              "hand_centre": [
+                -0.22817911454314072,
+                -0.052809246982723525,
+                1.1238554808433108
+              ],
+              "forearm_centre": [
+                -0.17680054171626142,
+                0.21815268271977767,
+                0.9884407066075027
+              ]
+            },
+            {
+              "forearm_to_hand_crosses_cuff": false,
+              "forearm_signed_m": -0.42749638763167563,
+              "hand_signed_m": -0.479961964089887,
+              "crossing_inside": false,
+              "plane_ratio": 0.0759897530078888,
+              "cuff_centre": [
+                0.055943917483091354,
+                -0.2999703884124756,
+                0.5485087037086487
+              ],
+              "hand_centre": [
+                0.16481644202623955,
+                -0.0876715591749961,
+                1.1307709629683564
+              ],
+              "forearm_centre": [
+                0.15927801000605693,
+                0.1878656270924735,
+                0.9948384331925962
+              ]
+            }
+          ],
+          "both_cross_cuffs": false,
+          "visual_intersections": 0,
+          "insertion_candidate": false,
+          "target_reached": false
+        },
+        "material_teacher_raise": {
+          "steps": 150,
+          "initial_sim_time_s": 13.40833403263241,
+          "final_sim_time_s": 20.908334423787892,
+          "episode_id": 1,
+          "checkpoint_loads_during_phase": 0,
+          "required_grasps_healthy": true,
+          "grasp_health": [
+            {
+              "attached": true,
+              "anchor_count": 48,
+              "anchor_p95_error_m": 8.221249937978259e-06
+            },
+            {
+              "attached": false,
+              "anchor_p95_error_m": null
+            }
+          ],
+          "errors": [
+            {
+              "robot": 0,
+              "position_error_m": 0.0007671495315699084,
+              "orientation_error_rad": 0.0009183673340101784
+            }
+          ],
+          "base_tilt_rad": [
+            0.006915531359072955,
+            0.0069162615376284495
+          ],
+          "robots_upright": true,
+          "stable_insertion_steps": 0,
+          "arms": [
+            {
+              "forearm_to_hand_crosses_cuff": false,
+              "forearm_signed_m": -0.6016712052207515,
+              "hand_signed_m": -0.5043584641068964,
+              "crossing_inside": false,
+              "plane_ratio": 0.1082892194390297,
+              "cuff_centre": [
+                -1.4816628694534302,
+                -1.6865272521972656,
+                1.2055597305297852
+              ],
+              "hand_centre": [
+                -0.22817911454314072,
+                -0.052809246982723525,
+                1.1238554808433108
+              ],
+              "forearm_centre": [
+                -0.17680054171626142,
+                0.21815268271977767,
+                0.9884407066075027
+              ]
+            },
+            {
+              "forearm_to_hand_crosses_cuff": false,
+              "forearm_signed_m": 0.11600750196428179,
+              "hand_signed_m": 0.040979354583847154,
+              "crossing_inside": false,
+              "plane_ratio": 0.08703001588582993,
+              "cuff_centre": [
+                -1.0920966863632202,
+                -1.8030850887298584,
+                0.6048871874809265
+              ],
+              "hand_centre": [
+                0.16481644202623955,
+                -0.0876715591749961,
+                1.1307709629683564
+              ],
+              "forearm_centre": [
+                0.15927801000605693,
+                0.1878656270924735,
+                0.9948384331925962
+              ]
+            }
+          ],
+          "both_cross_cuffs": false,
+          "visual_intersections": 0,
+          "insertion_candidate": false,
+          "target_reached": true
+        }
+      }
+    },
+    {
+      "status": "complete",
+      "success": false,
+      "pickup_success": true,
+      "evaluation": {
+        "success": true,
+        "final_base_tilt_rad": 0.006916091237779889,
+        "final_grasp_health": {
+          "attached": true,
+          "anchor_count": 48,
+          "anchor_p95_error_m": 9.431269163313567e-06
+        },
+        "final_lift_m": 0.08747115731239319,
+        "steps": 238,
+        "last_phase": 5,
+        "max_lift_m": 0.08738765120506287,
+        "max_hold_steps": 20,
+        "ever_attached": true,
+        "target_shift_m": 0.0,
+        "initial_lift_tip_z": 0.6076969802379608
+      },
+      "continuous_dressing": {
+        "active_robots": [
+          0
+        ],
+        "starts_from_live_successful_pickup": true,
+        "arm_insertion_verified": false,
+        "thread_arm": true,
+        "controller_source_sha256": "c1f9f91e69a3ce7128447ceb185ada9b2ab8c760d01842b18031d9557267b16c",
+        "reference_files_sha256": {
+          "/output/stage_review_20260911_161340/states/slot_F2.npz": "a603a0bd78689aec332d0740d0b162a950d1e652dc60dcf3230153f9153b05af",
+          "/output/stage_review_20260911_161340/states/slot_F4.npz": "1191df497ab30cf81d299f22c4c91ec50d70256738468d0691ea29dc9711f825"
+        },
+        "teacher": {
+          "raise": {
+            "steps": 150,
+            "initial_sim_time_s": 13.40833403263241,
+            "final_sim_time_s": 20.908334423787892,
+            "episode_id": 1,
+            "checkpoint_loads_during_phase": 0,
+            "required_grasps_healthy": true,
+            "grasp_health": [
+              {
+                "attached": true,
+                "anchor_count": 48,
+                "anchor_p95_error_m": 1.475493724022871e-05
+              },
+              {
+                "attached": false,
+                "anchor_p95_error_m": null
+              }
+            ],
+            "errors": [
+              {
+                "robot": 0,
+                "position_error_m": 0.0007948257009469736,
+                "orientation_error_rad": 0.001120611596883621
+              }
+            ],
+            "base_tilt_rad": [
+              0.006917351488224518,
+              0.0069162615376284495
+            ],
+            "robots_upright": true,
+            "stable_insertion_steps": 0,
+            "arms": [
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.6024762473021265,
+                "hand_signed_m": -0.5064423473981375,
+                "crossing_inside": false,
+                "plane_ratio": 0.10827329754829407,
+                "cuff_centre": [
+                  -1.4807121753692627,
+                  -1.68643319606781,
+                  1.2042810916900635
+                ],
+                "hand_centre": [
+                  -0.22817911454314072,
+                  -0.052809246982723525,
+                  1.1238554808433108
+                ],
+                "forearm_centre": [
+                  -0.17680054171626142,
+                  0.21815268271977767,
+                  0.9884407066075027
+                ]
+              },
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": 0.12364776283573278,
+                "hand_signed_m": 0.04902228799189298,
+                "crossing_inside": false,
+                "plane_ratio": 0.08826085180044174,
+                "cuff_centre": [
+                  -1.0878902673721313,
+                  -1.8037042617797852,
+                  0.6061392426490784
+                ],
+                "hand_centre": [
+                  0.16481644202623955,
+                  -0.0876715591749961,
+                  1.1307709629683564
+                ],
+                "forearm_centre": [
+                  0.15927801000605693,
+                  0.1878656270924735,
+                  0.9948384331925962
+                ]
+              }
+            ],
+            "both_cross_cuffs": false,
+            "visual_intersections": 0,
+            "insertion_candidate": false,
+            "target_reached": true
+          },
+          "carry": {
+            "steps": 429,
+            "initial_sim_time_s": 20.908334423787892,
+            "final_sim_time_s": 42.35833554249257,
+            "episode_id": 1,
+            "checkpoint_loads_during_phase": 0,
+            "required_grasps_healthy": true,
+            "grasp_health": [
+              {
+                "attached": true,
+                "anchor_count": 48,
+                "anchor_p95_error_m": 3.2793222435100865e-05
+              },
+              {
+                "attached": false,
+                "anchor_p95_error_m": null
+              }
+            ],
+            "errors": [
+              {
+                "robot": 0,
+                "position_error_m": 0.004396904082719262,
+                "orientation_error_rad": 0.003924292076465226
+              }
+            ],
+            "base_tilt_rad": [
+              0.0069161200485954085,
+              0.006915011178930038
+            ],
+            "robots_upright": true,
+            "stable_insertion_steps": 0,
+            "arms": [
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.03228869390368002,
+                "hand_signed_m": -0.016085482259653026,
+                "crossing_inside": false,
+                "plane_ratio": 0.40357306599617004,
+                "cuff_centre": [
+                  -0.24571506679058075,
+                  -0.16742850840091705,
+                  1.1910964250564575
+                ],
+                "hand_centre": [
+                  -0.22817911454314072,
+                  -0.052809246982723525,
+                  1.1238554808433108
+                ],
+                "forearm_centre": [
+                  -0.17680054171626142,
+                  0.21815268271977767,
+                  0.9884407066075027
+                ]
+              },
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.5393055763429426,
+                "hand_signed_m": -0.5773729499504042,
+                "crossing_inside": false,
+                "plane_ratio": 0.06667736917734146,
+                "cuff_centre": [
+                  -0.05330777168273926,
+                  -0.4274385869503021,
+                  0.5452739000320435
+                ],
+                "hand_centre": [
+                  0.16481644202623955,
+                  -0.0876715591749961,
+                  1.1307709629683564
+                ],
+                "forearm_centre": [
+                  0.15927801000605693,
+                  0.1878656270924735,
+                  0.9948384331925962
+                ]
+              }
+            ],
+            "both_cross_cuffs": false,
+            "visual_intersections": 0,
+            "insertion_candidate": false,
+            "target_reached": true
+          },
+          "insertion": {
+            "insertion_candidate": false,
+            "stopped_reason": "Arm axis does not pass through the current open cuff projection"
+          }
+        },
+        "stopped_reason": "No stable geometrically verified insertion; failed dressing demonstration is not cloned"
+      },
+      "artifact": "output/single_thread_v1/report.json",
+      "sha256": "66f7a3fef25edb81dfb9f1300796f682a2300b524904f9232c0c033412581813",
+      "rendered_review": {
+        "arm_inserted": false,
+        "views": [
+          "material_teacher_carry_front.png",
+          "material_teacher_carry_above.png"
+        ],
+        "finding": "Cuff remains ahead of hand; insertion gate rejected misaligned opening"
+      }
+    },
+    {
+      "status": "complete",
+      "success": false,
+      "pickup_success": true,
+      "evaluation": {
+        "success": true,
+        "final_base_tilt_rad": 0.0069161957885989995,
+        "final_grasp_health": {
+          "attached": true,
+          "anchor_count": 48,
+          "anchor_p95_error_m": 6.485358840595481e-06
+        },
+        "final_lift_m": 0.08775255084037781,
+        "steps": 238,
+        "last_phase": 5,
+        "max_lift_m": 0.08769255876541138,
+        "max_hold_steps": 20,
+        "ever_attached": true,
+        "target_shift_m": 0.0,
+        "initial_lift_tip_z": 0.6076993048191071
+      },
+      "continuous_dressing": {
+        "active_robots": [
+          0
+        ],
+        "starts_from_live_successful_pickup": true,
+        "arm_insertion_verified": false,
+        "thread_arm": true,
+        "controller_source_sha256": "dcb4a3aab2aa6eb4a4105feabe1457b2a7f11a847c20c39978fec2b476c319b3",
+        "reference_files_sha256": {
+          "/output/stage_review_20260911_161340/states/slot_F2.npz": "a603a0bd78689aec332d0740d0b162a950d1e652dc60dcf3230153f9153b05af",
+          "/output/stage_review_20260911_161340/states/slot_F4.npz": "1191df497ab30cf81d299f22c4c91ec50d70256738468d0691ea29dc9711f825"
+        },
+        "teacher": {
+          "raise": {
+            "steps": 150,
+            "initial_sim_time_s": 13.40833403263241,
+            "final_sim_time_s": 20.908334423787892,
+            "episode_id": 1,
+            "checkpoint_loads_during_phase": 0,
+            "required_grasps_healthy": true,
+            "grasp_health": [
+              {
+                "attached": true,
+                "anchor_count": 48,
+                "anchor_p95_error_m": 1.0463281793284195e-05
+              },
+              {
+                "attached": false,
+                "anchor_p95_error_m": null
+              }
+            ],
+            "errors": [
+              {
+                "robot": 0,
+                "position_error_m": 0.0007676720795987644,
+                "orientation_error_rad": 0.0007512704370569995
+              }
+            ],
+            "base_tilt_rad": [
+              0.006916160577962844,
+              0.0069162615376284495
+            ],
+            "robots_upright": true,
+            "stable_insertion_steps": 0,
+            "arms": [
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.6076970674463871,
+                "hand_signed_m": -0.5098829470341264,
+                "crossing_inside": false,
+                "plane_ratio": 0.1088809072971344,
+                "cuff_centre": [
+                  -1.481034517288208,
+                  -1.6860733032226562,
+                  1.2052465677261353
+                ],
+                "hand_centre": [
+                  -0.22817911454314072,
+                  -0.052809246982723525,
+                  1.1238554808433108
+                ],
+                "forearm_centre": [
+                  -0.17680054171626142,
+                  0.21815268271977767,
+                  0.9884407066075027
+                ]
+              },
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": 0.12175912522075735,
+                "hand_signed_m": 0.04619290168364181,
+                "crossing_inside": false,
+                "plane_ratio": 0.0872272476553917,
+                "cuff_centre": [
+                  -1.0907793045043945,
+                  -1.8012571334838867,
+                  0.6047520041465759
+                ],
+                "hand_centre": [
+                  0.16481644202623955,
+                  -0.0876715591749961,
+                  1.1307709629683564
+                ],
+                "forearm_centre": [
+                  0.15927801000605693,
+                  0.1878656270924735,
+                  0.9948384331925962
+                ]
+              }
+            ],
+            "both_cross_cuffs": false,
+            "visual_intersections": 0,
+            "insertion_candidate": false,
+            "target_reached": true
+          },
+          "carry": {
+            "steps": 429,
+            "initial_sim_time_s": 20.908334423787892,
+            "final_sim_time_s": 42.35833554249257,
+            "episode_id": 1,
+            "checkpoint_loads_during_phase": 0,
+            "required_grasps_healthy": true,
+            "grasp_health": [
+              {
+                "attached": true,
+                "anchor_count": 48,
+                "anchor_p95_error_m": 2.7063483773067285e-05
+              },
+              {
+                "attached": false,
+                "anchor_p95_error_m": null
+              }
+            ],
+            "errors": [
+              {
+                "robot": 0,
+                "position_error_m": 0.00444097960094875,
+                "orientation_error_rad": 0.003929333532126367
+              }
+            ],
+            "base_tilt_rad": [
+              0.0069162072688904045,
+              0.006915011178930038
+            ],
+            "robots_upright": true,
+            "stable_insertion_steps": 0,
+            "arms": [
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.03393456335020085,
+                "hand_signed_m": -0.01707669247497567,
+                "crossing_inside": false,
+                "plane_ratio": 0.4101981222629547,
+                "cuff_centre": [
+                  -0.2458282709121704,
+                  -0.1670701503753662,
+                  1.1916625499725342
+                ],
+                "hand_centre": [
+                  -0.22817911454314072,
+                  -0.052809246982723525,
+                  1.1238554808433108
+                ],
+                "forearm_centre": [
+                  -0.17680054171626142,
+                  0.21815268271977767,
+                  0.9884407066075027
+                ]
+              },
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.5418892348477653,
+                "hand_signed_m": -0.5808458938068141,
+                "crossing_inside": false,
+                "plane_ratio": 0.06354710459709167,
+                "cuff_centre": [
+                  -0.05914784595370293,
+                  -0.42706388235092163,
+                  0.5443080067634583
+                ],
+                "hand_centre": [
+                  0.16481644202623955,
+                  -0.0876715591749961,
+                  1.1307709629683564
+                ],
+                "forearm_centre": [
+                  0.15927801000605693,
+                  0.1878656270924735,
+                  0.9948384331925962
+                ]
+              }
+            ],
+            "both_cross_cuffs": false,
+            "visual_intersections": 0,
+            "insertion_candidate": false,
+            "target_reached": true
+          },
+          "align_0": {
+            "steps": 47,
+            "initial_sim_time_s": 42.35833554249257,
+            "final_sim_time_s": 44.70833566505462,
+            "episode_id": 1,
+            "checkpoint_loads_during_phase": 0,
+            "required_grasps_healthy": true,
+            "grasp_health": [
+              {
+                "attached": true,
+                "anchor_count": 48,
+                "anchor_p95_error_m": 2.4141455290150543e-05
+              },
+              {
+                "attached": false,
+                "anchor_p95_error_m": null
+              }
+            ],
+            "errors": [
+              {
+                "robot": 0,
+                "position_error_m": 0.0006944608232490276,
+                "orientation_error_rad": 0.0016326991018797818
+              }
+            ],
+            "base_tilt_rad": [
+              0.006917097692899283,
+              0.006915149652214277
+            ],
+            "robots_upright": true,
+            "stable_insertion_steps": 0,
+            "arms": [
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.07917070085967363,
+                "hand_signed_m": -0.021260039584738367,
+                "crossing_inside": true,
+                "plane_ratio": 0.3708353042602539,
+                "cuff_centre": [
+                  -0.23536229133605957,
+                  -0.19988174736499786,
+                  1.1892266273498535
+                ],
+                "hand_centre": [
+                  -0.22817911454314072,
+                  -0.052809246982723525,
+                  1.1238554808433108
+                ],
+                "forearm_centre": [
+                  -0.17680054171626142,
+                  0.21815268271977767,
+                  0.9884407066075027
+                ]
+              },
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.5284764308658211,
+                "hand_signed_m": -0.5877962673850258,
+                "crossing_inside": false,
+                "plane_ratio": 0.05090314522385597,
+                "cuff_centre": [
+                  -0.032183460891246796,
+                  -0.40701135993003845,
+                  0.5289949774742126
+                ],
+                "hand_centre": [
+                  0.16481644202623955,
+                  -0.0876715591749961,
+                  1.1307709629683564
+                ],
+                "forearm_centre": [
+                  0.15927801000605693,
+                  0.1878656270924735,
+                  0.9948384331925962
+                ]
+              }
+            ],
+            "both_cross_cuffs": false,
+            "visual_intersections": 0,
+            "insertion_candidate": false,
+            "target_reached": true
+          },
+          "insertion": {
+            "steps": 155,
+            "initial_sim_time_s": 44.70833566505462,
+            "final_sim_time_s": 52.45833606924862,
+            "episode_id": 1,
+            "checkpoint_loads_during_phase": 0,
+            "required_grasps_healthy": true,
+            "grasp_health": [
+              {
+                "attached": true,
+                "anchor_count": 48,
+                "anchor_p95_error_m": 6.520004018354111e-06
+              },
+              {
+                "attached": false,
+                "anchor_p95_error_m": null
+              }
+            ],
+            "errors": [
+              {
+                "robot": 0,
+                "position_error_m": 0.0009773331239571544,
+                "orientation_error_rad": 0.001379399732220454
+              }
+            ],
+            "base_tilt_rad": [
+              0.0069163339238137896,
+              0.006915985292193774
+            ],
+            "robots_upright": true,
+            "stable_insertion_steps": 0,
+            "arms": [
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": 0.01120317311051115,
+                "hand_signed_m": 0.10140274716706961,
+                "crossing_inside": false,
+                "plane_ratio": 0.10572262108325958,
+                "cuff_centre": [
+                  -0.17522478103637695,
+                  0.09701582789421082,
+                  1.0021617412567139
+                ],
+                "hand_centre": [
+                  -0.22817911454314072,
+                  -0.052809246982723525,
+                  1.1238554808433108
+                ],
+                "forearm_centre": [
+                  -0.17680054171626142,
+                  0.21815268271977767,
+                  0.9884407066075027
+                ]
+              },
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.5675858896815575,
+                "hand_signed_m": -0.6503788296894029,
+                "crossing_inside": false,
+                "plane_ratio": 0.058203794062137604,
+                "cuff_centre": [
+                  0.1703418344259262,
+                  -0.04943346977233887,
+                  0.4035789370536804
+                ],
+                "hand_centre": [
+                  0.16481644202623955,
+                  -0.0876715591749961,
+                  1.1307709629683564
+                ],
+                "forearm_centre": [
+                  0.15927801000605693,
+                  0.1878656270924735,
+                  0.9948384331925962
+                ]
+              }
+            ],
+            "both_cross_cuffs": false,
+            "visual_intersections": 0,
+            "insertion_candidate": false,
+            "target_reached": true
+          }
+        },
+        "stopped_reason": "No stable geometrically verified insertion; failed dressing demonstration is not cloned"
+      },
+      "artifact": "output/single_thread_v2/report.json",
+      "sha256": "ce4c4a9f653cb61d7ce0359d564442fd1f47c1e88f814c9d0df917da43f82956",
+      "rendered_review": {
+        "arm_inserted": false,
+        "views": [
+          "material_teacher_insertion_front.png",
+          "material_teacher_insertion_above.png",
+          "material_teacher_insertion_left.png"
+        ],
+        "finding": "Open sleeve remains below and outside the forearm despite gripper goal arrival"
+      }
+    },
+    {
+      "status": "complete",
+      "success": false,
+      "pickup_success": true,
+      "evaluation": {
+        "success": true,
+        "final_base_tilt_rad": 0.006916862236641851,
+        "final_grasp_health": {
+          "attached": true,
+          "anchor_count": 48,
+          "anchor_p95_error_m": 1.0545688243498911e-05
+        },
+        "final_lift_m": 0.08781826496124268,
+        "steps": 238,
+        "last_phase": 5,
+        "max_lift_m": 0.08775642514228821,
+        "max_hold_steps": 20,
+        "ever_attached": true,
+        "target_shift_m": 0.0,
+        "initial_lift_tip_z": 0.6077583432197571
+      },
+      "continuous_dressing": {
+        "active_robots": [
+          0
+        ],
+        "starts_from_live_successful_pickup": true,
+        "arm_insertion_verified": false,
+        "thread_arm": true,
+        "controller_source_sha256": "508760a52eff8934ab20bec825267926d86ea861384e6e95c3e260d30d5cf68b",
+        "reference_files_sha256": {
+          "/output/stage_review_20260911_161340/states/slot_F2.npz": "a603a0bd78689aec332d0740d0b162a950d1e652dc60dcf3230153f9153b05af",
+          "/output/stage_review_20260911_161340/states/slot_F4.npz": "1191df497ab30cf81d299f22c4c91ec50d70256738468d0691ea29dc9711f825"
+        },
+        "teacher": {
+          "raise": {
+            "steps": 150,
+            "initial_sim_time_s": 13.40833403263241,
+            "final_sim_time_s": 20.908334423787892,
+            "episode_id": 1,
+            "checkpoint_loads_during_phase": 0,
+            "required_grasps_healthy": true,
+            "grasp_health": [
+              {
+                "attached": true,
+                "anchor_count": 48,
+                "anchor_p95_error_m": 6.734522968070786e-06
+              },
+              {
+                "attached": false,
+                "anchor_p95_error_m": null
+              }
+            ],
+            "errors": [
+              {
+                "robot": 0,
+                "position_error_m": 0.0009056802974275134,
+                "orientation_error_rad": 0.0009815391339844143
+              }
+            ],
+            "base_tilt_rad": [
+              0.006916599383068255,
+              0.0069162615376284495
+            ],
+            "robots_upright": true,
+            "stable_insertion_steps": 0,
+            "arms": [
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.6075966951675346,
+                "hand_signed_m": -0.5098711992224965,
+                "crossing_inside": false,
+                "plane_ratio": 0.10921239852905273,
+                "cuff_centre": [
+                  -1.481478214263916,
+                  -1.6856050491333008,
+                  1.205207347869873
+                ],
+                "hand_centre": [
+                  -0.22817911454314072,
+                  -0.052809246982723525,
+                  1.1238554808433108
+                ],
+                "forearm_centre": [
+                  -0.17680054171626142,
+                  0.21815268271977767,
+                  0.9884407066075027
+                ]
+              },
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": 0.12032859396392015,
+                "hand_signed_m": 0.04496181633501962,
+                "crossing_inside": false,
+                "plane_ratio": 0.0871785432100296,
+                "cuff_centre": [
+                  -1.0912679433822632,
+                  -1.8010673522949219,
+                  0.6047303080558777
+                ],
+                "hand_centre": [
+                  0.16481644202623955,
+                  -0.0876715591749961,
+                  1.1307709629683564
+                ],
+                "forearm_centre": [
+                  0.15927801000605693,
+                  0.1878656270924735,
+                  0.9948384331925962
+                ]
+              }
+            ],
+            "both_cross_cuffs": false,
+            "visual_intersections": 0,
+            "insertion_candidate": false,
+            "target_reached": true
+          },
+          "carry": {
+            "steps": 429,
+            "initial_sim_time_s": 20.908334423787892,
+            "final_sim_time_s": 42.35833554249257,
+            "episode_id": 1,
+            "checkpoint_loads_during_phase": 0,
+            "required_grasps_healthy": true,
+            "grasp_health": [
+              {
+                "attached": true,
+                "anchor_count": 48,
+                "anchor_p95_error_m": 2.6320799236957814e-05
+              },
+              {
+                "attached": false,
+                "anchor_p95_error_m": null
+              }
+            ],
+            "errors": [
+              {
+                "robot": 0,
+                "position_error_m": 0.00401454766253078,
+                "orientation_error_rad": 0.003515783810011596
+              }
+            ],
+            "base_tilt_rad": [
+              0.006918096285343917,
+              0.006915011178930038
+            ],
+            "robots_upright": true,
+            "stable_insertion_steps": 0,
+            "arms": [
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.11791327391383005,
+                "hand_signed_m": -0.03411718118204248,
+                "crossing_inside": true,
+                "plane_ratio": 0.280593603849411,
+                "cuff_centre": [
+                  -0.24704954028129578,
+                  -0.18104225397109985,
+                  1.1836364269256592
+                ],
+                "hand_centre": [
+                  -0.22817911454314072,
+                  -0.052809246982723525,
+                  1.1238554808433108
+                ],
+                "forearm_centre": [
+                  -0.17680054171626142,
+                  0.21815268271977767,
+                  0.9884407066075027
+                ]
+              },
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.43371062504169017,
+                "hand_signed_m": -0.5140875529016593,
+                "crossing_inside": false,
+                "plane_ratio": 0.06723839789628983,
+                "cuff_centre": [
+                  0.06317286193370819,
+                  -0.3125312924385071,
+                  0.5422000288963318
+                ],
+                "hand_centre": [
+                  0.16481644202623955,
+                  -0.0876715591749961,
+                  1.1307709629683564
+                ],
+                "forearm_centre": [
+                  0.15927801000605693,
+                  0.1878656270924735,
+                  0.9948384331925962
+                ]
+              }
+            ],
+            "both_cross_cuffs": false,
+            "visual_intersections": 0,
+            "insertion_candidate": false,
+            "target_reached": true
+          },
+          "align_0": {
+            "steps": 53,
+            "initial_sim_time_s": 42.35833554249257,
+            "final_sim_time_s": 45.00833568070084,
+            "episode_id": 1,
+            "checkpoint_loads_during_phase": 0,
+            "required_grasps_healthy": true,
+            "grasp_health": [
+              {
+                "attached": true,
+                "anchor_count": 48,
+                "anchor_p95_error_m": 2.7468554579119496e-05
+              },
+              {
+                "attached": false,
+                "anchor_p95_error_m": null
+              }
+            ],
+            "errors": [
+              {
+                "robot": 0,
+                "position_error_m": 0.0007514614307254099,
+                "orientation_error_rad": 0.00031533721766940323
+              }
+            ],
+            "base_tilt_rad": [
+              0.006917350760118219,
+              0.006916901455205528
+            ],
+            "robots_upright": true,
+            "stable_insertion_steps": 0,
+            "arms": [
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.14106661544073132,
+                "hand_signed_m": -0.04845360075992982,
+                "crossing_inside": true,
+                "plane_ratio": 0.22626960277557373,
+                "cuff_centre": [
+                  -0.25565266609191895,
+                  -0.19403524696826935,
+                  1.1943775415420532
+                ],
+                "hand_centre": [
+                  -0.22817911454314072,
+                  -0.052809246982723525,
+                  1.1238554808433108
+                ],
+                "forearm_centre": [
+                  -0.17680054171626142,
+                  0.21815268271977767,
+                  0.9884407066075027
+                ]
+              },
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.4054526541898796,
+                "hand_signed_m": -0.4948018092021675,
+                "crossing_inside": false,
+                "plane_ratio": 0.07464754581451416,
+                "cuff_centre": [
+                  0.05537012964487076,
+                  -0.31127315759658813,
+                  0.5508180856704712
+                ],
+                "hand_centre": [
+                  0.16481644202623955,
+                  -0.0876715591749961,
+                  1.1307709629683564
+                ],
+                "forearm_centre": [
+                  0.15927801000605693,
+                  0.1878656270924735,
+                  0.9948384331925962
+                ]
+              }
+            ],
+            "both_cross_cuffs": false,
+            "visual_intersections": 0,
+            "insertion_candidate": false,
+            "target_reached": true,
+            "cuff_target_centre": [
+              -0.25493518091585665,
+              -0.19391622946018258,
+              1.1943745024500012
+            ],
+            "cuff_centre_error_m": 0.0007272959378278036
+          },
+          "insertion": {
+            "steps": 292,
+            "initial_sim_time_s": 45.00833568070084,
+            "final_sim_time_s": 59.608336442150176,
+            "episode_id": 1,
+            "checkpoint_loads_during_phase": 0,
+            "required_grasps_healthy": true,
+            "grasp_health": [
+              {
+                "attached": true,
+                "anchor_count": 48,
+                "anchor_p95_error_m": 0.034949269661158355
+              },
+              {
+                "attached": false,
+                "anchor_p95_error_m": null
+              }
+            ],
+            "errors": [
+              {
+                "robot": 0,
+                "position_error_m": 0.02464181082862279,
+                "orientation_error_rad": 0.024552602995612037
+              }
+            ],
+            "base_tilt_rad": [
+              0.006915334033123484,
+              0.0069172658953173235
+            ],
+            "robots_upright": true,
+            "stable_insertion_steps": 1,
+            "arms": [
+              {
+                "forearm_to_hand_crosses_cuff": true,
+                "forearm_signed_m": -0.13421122276749883,
+                "hand_signed_m": 0.06945983154932127,
+                "crossing_inside": true,
+                "plane_ratio": 0.53343266248703,
+                "cuff_centre": [
+                  -0.23485855758190155,
+                  0.040642328560352325,
+                  1.0757036209106445
+                ],
+                "hand_centre": [
+                  -0.22817911454314072,
+                  -0.052809246982723525,
+                  1.1238554808433108
+                ],
+                "forearm_centre": [
+                  -0.17680054171626142,
+                  0.21815268271977767,
+                  0.9884407066075027
+                ]
+              },
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.4135667940439673,
+                "hand_signed_m": -0.42093077348290237,
+                "crossing_inside": false,
+                "plane_ratio": 0.06602565944194794,
+                "cuff_centre": [
+                  -0.06479337811470032,
+                  -0.28194230794906616,
+                  0.611873984336853
+                ],
+                "hand_centre": [
+                  0.16481644202623955,
+                  -0.0876715591749961,
+                  1.1307709629683564
+                ],
+                "forearm_centre": [
+                  0.15927801000605693,
+                  0.1878656270924735,
+                  0.9948384331925962
+                ]
+              }
+            ],
+            "both_cross_cuffs": false,
+            "visual_intersections": 0,
+            "insertion_candidate": false,
+            "target_reached": true,
+            "cuff_target_centre": [
+              -0.21019661405373297,
+              0.04202742841315188,
+              1.076460309860778
+            ],
+            "cuff_centre_error_m": 0.024712396451094246
+          }
+        },
+        "stopped_reason": "No stable geometrically verified insertion; failed dressing demonstration is not cloned"
+      },
+      "artifact": "output/single_thread_v3/report.json",
+      "sha256": "77b1113fcd22193e158c28585f3a3fa84ee703d889625296836387a18a66d241",
+      "rendered_review": {
+        "hand_crossing_visible": true,
+        "stable_final_insertion_verified": false,
+        "views": [
+          "material_teacher_insertion_front.png",
+          "material_teacher_insertion_left.png"
+        ],
+        "finding": "Hand passed through the cuff, but continued centring produced anchor error around 3.5 cm; final consecutive healthy insertion count was only one step"
+      },
+      "maximum_consecutive_healthy_insertion_steps": 47
+    },
+    {
+      "status": "complete",
+      "success": false,
+      "pickup_success": true,
+      "evaluation": {
+        "success": true,
+        "final_base_tilt_rad": 0.006915273193081164,
+        "final_grasp_health": {
+          "attached": true,
+          "anchor_count": 48,
+          "anchor_p95_error_m": 7.041546175034252e-06
+        },
+        "final_lift_m": 0.08774533867835999,
+        "steps": 238,
+        "last_phase": 5,
+        "max_lift_m": 0.08765828609466553,
+        "max_hold_steps": 20,
+        "ever_attached": true,
+        "target_shift_m": 0.0,
+        "initial_lift_tip_z": 0.6077269315719604
+      },
+      "continuous_dressing": {
+        "active_robots": [
+          0
+        ],
+        "starts_from_live_successful_pickup": true,
+        "arm_insertion_verified": false,
+        "thread_arm": true,
+        "controller_source_sha256": "b2e9ff6752056d09e47d45042ee16313773c07c0c26903bfe5d2519089c06de5",
+        "reference_files_sha256": {
+          "/output/stage_review_20260911_161340/states/slot_F2.npz": "a603a0bd78689aec332d0740d0b162a950d1e652dc60dcf3230153f9153b05af",
+          "/output/stage_review_20260911_161340/states/slot_F4.npz": "1191df497ab30cf81d299f22c4c91ec50d70256738468d0691ea29dc9711f825"
+        },
+        "teacher": {
+          "raise": {
+            "steps": 150,
+            "initial_sim_time_s": 13.40833403263241,
+            "final_sim_time_s": 20.908334423787892,
+            "episode_id": 1,
+            "checkpoint_loads_during_phase": 0,
+            "required_grasps_healthy": true,
+            "grasp_health": [
+              {
+                "attached": true,
+                "anchor_count": 48,
+                "anchor_p95_error_m": 7.521772524334718e-06
+              },
+              {
+                "attached": false,
+                "anchor_p95_error_m": null
+              }
+            ],
+            "errors": [
+              {
+                "robot": 0,
+                "position_error_m": 0.0006897104692626023,
+                "orientation_error_rad": 0.000906897668484159
+              }
+            ],
+            "base_tilt_rad": [
+              0.006916872371486129,
+              0.0069162615376284495
+            ],
+            "robots_upright": true,
+            "stable_insertion_steps": 0,
+            "arms": [
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.6067276700472015,
+                "hand_signed_m": -0.5092685228086807,
+                "crossing_inside": false,
+                "plane_ratio": 0.10914392024278641,
+                "cuff_centre": [
+                  -1.4796087741851807,
+                  -1.6867530345916748,
+                  1.2047643661499023
+                ],
+                "hand_centre": [
+                  -0.22817911454314072,
+                  -0.052809246982723525,
+                  1.1238554808433108
+                ],
+                "forearm_centre": [
+                  -0.17680054171626142,
+                  0.21815268271977767,
+                  0.9884407066075027
+                ]
+              },
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": 0.12374110888165044,
+                "hand_signed_m": 0.04794015322526782,
+                "crossing_inside": false,
+                "plane_ratio": 0.0881403237581253,
+                "cuff_centre": [
+                  -1.0896440744400024,
+                  -1.8018970489501953,
+                  0.6041998267173767
+                ],
+                "hand_centre": [
+                  0.16481644202623955,
+                  -0.0876715591749961,
+                  1.1307709629683564
+                ],
+                "forearm_centre": [
+                  0.15927801000605693,
+                  0.1878656270924735,
+                  0.9948384331925962
+                ]
+              }
+            ],
+            "both_cross_cuffs": false,
+            "visual_intersections": 0,
+            "stopped_at_verified_insertion": false,
+            "stationary_insertion_hold_steps": 0,
+            "insertion_candidate": false,
+            "target_reached": true
+          },
+          "carry": {
+            "steps": 429,
+            "initial_sim_time_s": 20.908334423787892,
+            "final_sim_time_s": 42.35833554249257,
+            "episode_id": 1,
+            "checkpoint_loads_during_phase": 0,
+            "required_grasps_healthy": true,
+            "grasp_health": [
+              {
+                "attached": true,
+                "anchor_count": 48,
+                "anchor_p95_error_m": 2.9561731138859573e-05
+              },
+              {
+                "attached": false,
+                "anchor_p95_error_m": null
+              }
+            ],
+            "errors": [
+              {
+                "robot": 0,
+                "position_error_m": 0.004379595087205,
+                "orientation_error_rad": 0.003913170913354167
+              }
+            ],
+            "base_tilt_rad": [
+              0.006917337789445003,
+              0.006915011178930038
+            ],
+            "robots_upright": true,
+            "stable_insertion_steps": 0,
+            "arms": [
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.04003615253439285,
+                "hand_signed_m": -0.017901854361016042,
+                "crossing_inside": false,
+                "plane_ratio": 0.39128583669662476,
+                "cuff_centre": [
+                  -0.24623188376426697,
+                  -0.1696063131093979,
+                  1.1912970542907715
+                ],
+                "hand_centre": [
+                  -0.22817911454314072,
+                  -0.052809246982723525,
+                  1.1238554808433108
+                ],
+                "forearm_centre": [
+                  -0.17680054171626142,
+                  0.21815268271977767,
+                  0.9884407066075027
+                ]
+              },
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.5321469669522172,
+                "hand_signed_m": -0.5738922086714195,
+                "crossing_inside": false,
+                "plane_ratio": 0.06848854571580887,
+                "cuff_centre": [
+                  -0.04728613421320915,
+                  -0.41926121711730957,
+                  0.5432231426239014
+                ],
+                "hand_centre": [
+                  0.16481644202623955,
+                  -0.0876715591749961,
+                  1.1307709629683564
+                ],
+                "forearm_centre": [
+                  0.15927801000605693,
+                  0.1878656270924735,
+                  0.9948384331925962
+                ]
+              }
+            ],
+            "both_cross_cuffs": false,
+            "visual_intersections": 0,
+            "stopped_at_verified_insertion": false,
+            "stationary_insertion_hold_steps": 0,
+            "insertion_candidate": false,
+            "target_reached": true
+          },
+          "align_0": {
+            "steps": 58,
+            "initial_sim_time_s": 42.35833554249257,
+            "final_sim_time_s": 45.258335693739355,
+            "episode_id": 1,
+            "checkpoint_loads_during_phase": 0,
+            "required_grasps_healthy": true,
+            "grasp_health": [
+              {
+                "attached": true,
+                "anchor_count": 48,
+                "anchor_p95_error_m": 3.0546222920884716e-05
+              },
+              {
+                "attached": false,
+                "anchor_p95_error_m": null
+              }
+            ],
+            "errors": [
+              {
+                "robot": 0,
+                "position_error_m": 0.0023443840854773814,
+                "orientation_error_rad": 0.0002591062293079739
+              }
+            ],
+            "base_tilt_rad": [
+              0.006916102936290751,
+              0.006915598839344058
+            ],
+            "robots_upright": true,
+            "stable_insertion_steps": 0,
+            "arms": [
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.07255904411812579,
+                "hand_signed_m": -0.023951732136027026,
+                "crossing_inside": true,
+                "plane_ratio": 0.35942864418029785,
+                "cuff_centre": [
+                  -0.2566412091255188,
+                  -0.19502046704292297,
+                  1.1930830478668213
+                ],
+                "hand_centre": [
+                  -0.22817911454314072,
+                  -0.052809246982723525,
+                  1.1238554808433108
+                ],
+                "forearm_centre": [
+                  -0.17680054171626142,
+                  0.21815268271977767,
+                  0.9884407066075027
+                ]
+              },
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.4934924690829741,
+                "hand_signed_m": -0.5544742371516805,
+                "crossing_inside": false,
+                "plane_ratio": 0.0664643794298172,
+                "cuff_centre": [
+                  -0.03271796181797981,
+                  -0.3993127644062042,
+                  0.535946786403656
+                ],
+                "hand_centre": [
+                  0.16481644202623955,
+                  -0.0876715591749961,
+                  1.1307709629683564
+                ],
+                "forearm_centre": [
+                  0.15927801000605693,
+                  0.1878656270924735,
+                  0.9948384331925962
+                ]
+              }
+            ],
+            "both_cross_cuffs": false,
+            "visual_intersections": 0,
+            "stopped_at_verified_insertion": false,
+            "stationary_insertion_hold_steps": 0,
+            "insertion_candidate": false,
+            "target_reached": true,
+            "cuff_target_centre": [
+              -0.25493518091585665,
+              -0.19391622946018258,
+              1.1943745024500012
+            ],
+            "cuff_centre_error_m": 0.0024078471362849827
+          },
+          "insertion": {
+            "steps": 176,
+            "initial_sim_time_s": 45.258335693739355,
+            "final_sim_time_s": 54.05833615269512,
+            "episode_id": 1,
+            "checkpoint_loads_during_phase": 0,
+            "required_grasps_healthy": false,
+            "grasp_health": [
+              {
+                "attached": true,
+                "anchor_count": 48,
+                "anchor_p95_error_m": 0.06067131453793726
+              },
+              {
+                "attached": false,
+                "anchor_p95_error_m": null
+              }
+            ],
+            "errors": [
+              {
+                "robot": 0,
+                "position_error_m": 0.01742440458841976,
+                "orientation_error_rad": 0.006990304420320961
+              }
+            ],
+            "base_tilt_rad": [
+              0.006915518903024587,
+              0.006915124177127792
+            ],
+            "robots_upright": true,
+            "stable_insertion_steps": 0,
+            "arms": [
+              {
+                "forearm_to_hand_crosses_cuff": true,
+                "forearm_signed_m": -0.15568535668244735,
+                "hand_signed_m": 0.014645591238447624,
+                "crossing_inside": true,
+                "plane_ratio": 0.4810900092124939,
+                "cuff_centre": [
+                  -0.2351749837398529,
+                  -0.025792738422751427,
+                  1.1146626472473145
+                ],
+                "hand_centre": [
+                  -0.22817911454314072,
+                  -0.052809246982723525,
+                  1.1238554808433108
+                ],
+                "forearm_centre": [
+                  -0.17680054171626142,
+                  0.21815268271977767,
+                  0.9884407066075027
+                ]
+              },
+              {
+                "forearm_to_hand_crosses_cuff": false,
+                "forearm_signed_m": -0.454600232202085,
+                "hand_signed_m": -0.4916483871422442,
+                "crossing_inside": false,
+                "plane_ratio": 0.05792170390486717,
+                "cuff_centre": [
+                  0.01781529374420643,
+                  -0.2468184232711792,
+                  0.5978938341140747
+                ],
+                "hand_centre": [
+                  0.16481644202623955,
+                  -0.0876715591749961,
+                  1.1307709629683564
+                ],
+                "forearm_centre": [
+                  0.15927801000605693,
+                  0.1878656270924735,
+                  0.9948384331925962
+                ]
+              }
+            ],
+            "both_cross_cuffs": false,
+            "visual_intersections": 0,
+            "stopped_at_verified_insertion": false,
+            "stationary_insertion_hold_steps": 0,
+            "insertion_candidate": false,
+            "target_reached": false,
+            "cuff_target_centre": [
+              -0.21019661405373297,
+              0.04202742841315188,
+              1.076460309860778
+            ],
+            "cuff_centre_error_m": 0.08174908295278303
+          }
+        },
+        "stopped_reason": "No stable geometrically verified insertion; failed dressing demonstration is not cloned"
+      },
+      "artifact": "output/single_thread_v4/report.json",
+      "sha256": "a9bdae911639f62402b1c4a401f61b4cecdbeb4bcc1bbf741cafd157038fc479",
+      "rendered_review": {
+        "stable_final_insertion_verified": false,
+        "views": [
+          "material_teacher_insertion_left.png"
+        ],
+        "finding": "Arm begins crossing the cuff but native grasp has over 6 cm anchor error; aborted before stable hold"
+      }
+    }
+  ],
+  "summary": "Dual pickup and single cuff pickup verified; no repeatable final arm insertion policy achieved. One direct-cuff trial had 47 healthy crossing steps, but its final hold failed and the repeat failed grasp health."
+}

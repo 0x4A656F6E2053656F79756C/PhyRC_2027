@@ -4,7 +4,7 @@ import math
 from pxr import PhysxSchema, Usd, UsdPhysics, UsdShade
 
 
-def configure_gripper_cloth_friction(stage, coefficient=0.2):
+def configure_gripper_cloth_friction(stage, coefficient=0.5):
     """Bind only finger/fingertip shapes, including instance-proxy colliders.
 
     Rigid/FEM contact uses the rigid material's combine rule. max(mu, 0)

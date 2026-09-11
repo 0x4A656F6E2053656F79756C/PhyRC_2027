@@ -35,7 +35,11 @@ F슬롯은 solver·속도 등 Python 설정을 과거 값으로 되돌리지 않
 
 Isaac Sim **6.0.1**에서 두 대의 Stretch4로 티셔츠를 조작하는 로컬 GUI teleop 환경입니다.
 이 저장소는 현재 작동 중인 FEM 천 시뮬레이션과 사용자 수정 사항을 분리한 유지보수용 스냅샷입니다.
-학습 데이터, 정책 학습 환경, 과거 백업, 개인 F1-F5 저장 파일은 포함하지 않습니다.
+Gymnasium 정책 환경과 작은 모방학습 예제를 포함합니다. 학습 데이터, 과거 백업,
+개인 F1-F5 저장 파일은 Git에 포함하지 않습니다.
+옷 집기 실험은 [학습 복원 기록](docs/GRASP_LEARNING_20260911.md), 관측·행동 명세는
+[정책 인터페이스](docs/POLICY_INTERFACE.md)를 참고하세요.
+학습 복원 전 코드는 GitHub 태그 `pre-grasp-learning-20260911`로 보존했습니다.
 
 **설치 경로는 Docker 방식 하나로 통일합니다.** Isaac Sim을 호스트에 별도로 설치하거나
 Conda/ROS/시스템 CUDA Toolkit을 추가로 설치할 필요는 없습니다. NVIDIA 드라이버는 호스트에 필요합니다.

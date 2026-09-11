@@ -78,10 +78,12 @@ class BaseEnv:
         # table contact, so use the capacity from NVIDIA's 6.0 surface demo.
         _physx_scene_api = PhysxSchema.PhysxSceneAPI.Apply(self.physics._physics_scene.GetPrim())
         _physx_scene_api.GetGpuMaxDeformableSurfaceContactsAttr().Set(4 * 1048576)
-        # set camera prim view
+        # set camera prim view (zoomed in toward workspace center, configurable via env)
+        _cam_eye = [float(x) for x in os.environ.get("STRETCH4_CAMERA_EYE", "0.0,3.15,2.7").split(",")]
+        _cam_target = [float(x) for x in os.environ.get("STRETCH4_CAMERA_TARGET", "0.0,0.0,0.4").split(",")]
         set_camera_view(
-            eye=[0.0, 4.5, 3.5],
-            target=[0.0, 0.0, 0.0],
+            eye=_cam_eye,
+            target=_cam_target,
             camera_prim_path="/OmniverseKit_Persp",
         )
         # set global light

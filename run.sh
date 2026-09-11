@@ -6,14 +6,14 @@ IMAGE=${PHYRC_IMAGE:-phyrc-2027:isaac-6.0.1}
 COMMAND=${1:-help}
 if [[ "${2:-}" == --no-randomization ]]; then
     case "$COMMAND" in
-        gui|smoke|python)
+        gui|smoke|python|policy-smoke|train-demo|train-grasp|train-single-grasp)
             export STRETCH4_RANDOMIZE=0
             set -- "$1" "${@:3}";;
         *) printf -- '--no-randomization requires gui, smoke, or python.\n' >&2; exit 2;;
     esac
 fi
 if [[ "$COMMAND" == help ]]; then
-    printf 'Usage: ./run.sh {doctor|build|prepare|gui|smoke|python SCRIPT [ARGS...]|cpu SCRIPT [ARGS...]}\n'
+    printf 'Usage: ./run.sh {doctor|build|prepare|gui|smoke|policy-smoke|train-demo|train-grasp|train-single-grasp|python SCRIPT [ARGS...]|cpu SCRIPT [ARGS...]}\n'
     printf 'Use ./run.sh gui --no-randomization for fixed human and shirt placement.\n'
     exit 0
 fi
@@ -41,8 +41,12 @@ for folder in kit ov pip warp glcache computecache logs data documents mpl; do
     chmod g+rwx "cache/$folder"
 done
 chmod g+rwx output .runtime .runtime/DexGarmentLab .runtime/RCareWorld-2.0
+PROJECT_COMMIT=$(git rev-parse HEAD)
+PROJECT_DIRTY=0
+if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then PROJECT_DIRTY=1; fi
 ARGS=(run --rm --network=host --user "1234:$(id -g)" --label phyrc.project=PhyRC_2027
       -e ACCEPT_EULA=Y -e PRIVACY_CONSENT=Y -e OMNI_KIT_ACCEPT_EULA=YES
+      -e "PHYRC_SOURCE_COMMIT=$PROJECT_COMMIT" -e "PHYRC_SOURCE_DIRTY=$PROJECT_DIRTY"
       -e MPLCONFIGDIR=/isaac-sim/.cache/matplotlib -e OPENBLAS_NUM_THREADS=1
       -v "$ROOT/.runtime/DexGarmentLab:/workspace/DexGarmentLab:rw"
       -v "$ROOT/.runtime/RCareWorld-2.0:/workspace/RCareWorld-2.0:rw"
@@ -106,6 +110,15 @@ if [[ "$COMMAND" == gui ]]; then
     exec docker "${ARGS[@]}" "$IMAGE" Env_StandAlone/Teleop_TShirt_Stretch4_Env.py
 elif [[ "$COMMAND" == smoke ]]; then
     exec docker "${ARGS[@]}" -e STRETCH4_HEADLESS=1 "$IMAGE" /scripts/smoke.py
+elif [[ "$COMMAND" == policy-smoke || "$COMMAND" == train-demo || "$COMMAND" == train-grasp || "$COMMAND" == train-single-grasp ]]; then
+    case "$COMMAND" in
+        policy-smoke) script=/scripts/policy_smoke.py;;
+        train-demo) script=/scripts/train_policy_demo.py;;
+        train-grasp) script=/scripts/train_dual_grasp.py;;
+        train-single-grasp) script=/scripts/train_grasp.py;;
+    esac
+    shift
+    exec docker "${ARGS[@]}" -e STRETCH4_HEADLESS=1 "$IMAGE" "$script" "$@"
 elif [[ "$COMMAND" == python ]]; then
     shift
     exec docker "${ARGS[@]}" -e STRETCH4_HEADLESS=1 "$IMAGE" "$@"

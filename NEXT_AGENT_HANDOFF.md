@@ -1,3 +1,168 @@
+# 다음 에이전트 인계 — 2026-09-11 20:20 KST
+
+이 문서 상단이 현재 상태의 기준이다. 아래 과거 기록의 실행 중인 컨테이너,
+미커밋 상태, 다음 작업 지시는 이 상단과 충돌하면 과거 정보로 취급한다.
+
+## 1. 사용자의 최신 요청과 현재 상태
+
+- 사용자는 마찰계수 조정(옷-마네킹 0 무마찰 유지, 옷-그리퍼 및 옷-상자 마찰 0.5 복원), 로봇 속도 10% 상향(원래 100% 속도 복원), 시작 카메라 줌인 적용, GUI 종료 및 GitHub 푸시를 요청했다.
+- 해당 설정(`GripperClothFriction.py` 0.5, `TableClothFriction.py` 0.5 신규 연동, `Teleop_TShirt_Stretch4_Env.py` 속도 복원, `BaseEnv.py` 줌인 시점 `[0, 3.15, 2.7]`)을 모두 적용하고 `.runtime/DexGarmentLab/` 동기화 및 CPU USD 검증(`check_gripper_friction.py`) 통과를 완료했다.
+- 현재 GUI 컨테이너는 정상 종료되었으며(`docker ps` 클린), 사용자가 직접 실행할 수 있는 명령어가 제공되었다.
+- 사용자가 19:15 KST에 수동 조작으로 저장한 `output/manual_control_20260911_1905/states/slot_F2.npz` 및 전체 슬롯은 `output/manual_control_backup_20260911_1941/`에 안전하게 이중 백업되어 있다.
+- 이번 작업분(정책 인터페이스, 파지/삽입 학습 스크립트 및 체크포인트, 마찰/속도 복원, 카메라 줌인, 인계 문서)을 GitHub `feat/policy-learning-env`에 커밋 및 푸시한다. 무관한 `docs/PhyRC_proposals.pdf`는 제외한다.
+- 사용자 요청 없이 서브에이전트를 사용하지 않는다.
+
+## 2. 완료 범위와 미완료 범위
+
+| 항목 | 확인된 결과 |
+|---|---|
+| 두 로봇 동시 집기·들기 | 수정된 structured policy로 기준 위치 3회, +1cm 1회, −1cm 1회 모두 통과 |
+| 동시 들기 유지 | 각 로봇 약 9~10cm 상승, 두 실제 grasp를 유지한 채 2초 공동 유지 |
+| 한 로봇 소매 집기 | upper-middle 소매 위치에서 약 8.75cm 상승, 1초 유지 반복 통과 |
+| 마찰 및 속도 설정 | 옷-마네킹 0.0 (min combine, 무마찰), 옷-그리퍼 0.5 (max combine), 옷-상자 0.5 (max combine), 로봇 속도 100% 원본 복원 (LIFT 1.4, ARM 1.1, WRIST 5.0, BASE 0.56/2.6) |
+| 카메라 시점 | `BaseEnv.py` 기본 시작 시점이 거리 약 3.9m (`eye=[0, 3.15, 2.7]`, `target=[0, 0, 0.4]`)로 줌인됨 |
+| 두 팔 삽입 | 미완료. 연속 이동에서 소매가 팔 밖으로 가거나 로봇이 넘어지는 실패 |
+| 한 팔 삽입 | 손 통과 장면과 47개 연속 정상 crossing step(2.35초)은 확인. 최종 안정 유지와 반복 성공은 실패 |
+| 학습 방식 | 로봇·옷의 실제 좌표를 쓰는 behavior cloning + 단계별 제어. RL/영상 정책은 아직 아님 |
+| 전체 F1~F5 정책 | 없음. 안정적인 팔 삽입 정책 체크포인트도 아직 없음 |
+
+## 3. 현재 GUI 상태와 작업 슬롯
+
+- GUI 컨테이너: 현재 모두 종료됨 (`docker ps`에 활성 컨테이너 없음).
+- 직접 실행 명령어:
+  ```bash
+  PHYRC_ACCEPT_EULA=1 STRETCH4_RANDOMIZE=0 STRETCH4_SHOW_COLLIDER=0 STRETCH4_STATE_DIR=/output/manual_control_20260911_1905/states ./run.sh gui
+  ```
+- 작업용 슬롯: `output/manual_control_20260911_1905/states/` (F1은 시작 시 자동 저장, F2는 사용자가 19:15에 저장한 상태 유지).
+- 백업 경로: `output/manual_control_backup_20260911_1941/`.
+- 보존 원본 슬롯: `/home/seoyul/PhyRC_backups/dressing_stages_20260911_155147/` (15개 파일 SHA256 불변 유지).
+
+## 4. 물리 및 제어 설정 요약
+
+- FEM 64, 로봇 속도 100% 원래 기준 복원 (LIFT 1.4, ARM 1.1, WRIST 5.0, BASE 0.56/2.6), contact guard 최종 재검사 및 기본 24회 repair.
+- 뒤통수 둥글게 수정, 전체 손에 맞춘 collider, 목을 보존한 옷 높이 10/12.
+- 옷-마네킹 마찰 0.0 / combine=min (완전 무마찰 유지).
+- 그리퍼 마찰 0.5 / combine=max (손가락/핑거팁 8개 콜라이더, 파지력 복원).
+- 상자(테이블) 마찰 0.5 / combine=max (옷이 상자 위에서 얼음처럼 미끄러지지 않도록 복원).
+- native attachment 및 성공을 위한 물리/충돌 허용치 완화 없음.
+
+## 5. Git 상태 — 이번 학습분은 아직 커밋/푸시 전
+
+- 작업 경로: `/home/seoyul/PhyRC_2027`.
+- 브랜치: `feat/policy-learning-env`.
+- origin: `git@github.com:0x4A656F6E2053656F79756C/PhyRC_2027.git`.
+- 현재 HEAD: `d1c4552`.
+- 이전에 원격 푸시 확인한 기준 태그: `pre-grasp-learning-20260911` → `d1c4552`.
+- 기준 코드의 GitHub 보존과 달리 **이번 학습 소스/체크포인트/결과/인계 문서는 아직 커밋·푸시되지 않았다**.
+  이번 인계 작성 중 원격을 새로 조회하거나 푸시하지 않았다.
+- 많은 파일이 staged 상태이고, 일부는 그 이후 수정되어 `AM`/`MM`이다.
+  기존 index만 커밋하면 오래된 버전이 포함될 수 있으므로 최종 working tree diff를 확인하고 다시 stage해야 한다.
+- `docs/PhyRC_proposals.pdf`는 무관한 untracked 파일이다. 보존하고 커밋에 넣지 않는다.
+- 사용자가 이전에 push를 요청한 이력은 있다. 추후 푸시 시 미완성/미검증 범위를 명확히 적고 원격 반영까지 확인한다.
+
+## 6. 다음 에이전트가 읽을 소스와 결과
+
+주요 상세 문서:
+
+- `docs/GRASP_LEARNING_20260911.md`: 실험 결과, 재현 명령, 정책 범위.
+- `docs/POLICY_INTERFACE.md`: 관측/행동/시간 간격과 환경 계약.
+- `docs/verification-results/continuous-dressing-20260911.json`: 삽입 실패 증거(현재 thread v4까지; 중단된 oriented 결과는 아래 로컬 report 참조).
+- `docs/verification-results/policy-smoke-20260911.json`: 전체 GPU 환경 smoke 결과.
+- `docs/verification-results/pickup-policy-invariants-20260911.json`: structured 정책 CPU 검증.
+
+주요 소스:
+
+- `src/DexGarmentLab/Policy/`: 복원한 contract/state/sensors/environment 및 새 stages/pickup_policy/dressing_task/material_policy.
+- `scripts/train_dual_grasp.py`, `scripts/train_grasp.py`: 실제 집기와 연속 삽입 실험.
+- `scripts/check_policy_contract.py`, `scripts/check_pickup_policy.py`, `scripts/policy_smoke.py`.
+- `run.sh`: `train-grasp`(dual), `train-single-grasp`, `train-demo`, `policy-smoke`.
+- teleop의 공통 초기화 및 `drive_robot(..., commands=None)` 숫자 명령 경로를 추출했다. 키보드 경로는 유지했다.
+- 과거 정책 인터페이스/작은 lift BC는 `e409213`에서 복원했다. 과거에도 완성된 dressing/RL은 아니었다.
+- 정책은 20Hz, control 60Hz, physics 240Hz. 기본 reward는 0이고 evaluator 주입을 지원한다.
+
+체크포인트:
+
+| 디렉터리 | 범위 |
+|---|---|
+| `checkpoints/dual_pickup_20260911/` | structured dual planner v4, 650개 실제 transition. `evaluations.json`에 5회 통과, offset 재검증 pending=false |
+| `checkpoints/cuff_pickup_20260911/` | structured single cuff planner v3, 241개 transition. upper-middle target transfer도 실험 기록 |
+| `checkpoints/grasp_pickup_20260911/` | 초기 한 로봇 옷자락 pickup MLP. 팔 삽입 정책 아님 |
+
+정책 해시:
+
+- dual: `8a7f5cceb4b06dab0e9f696378f6bab9eaeb912c8c26535a022f3187ac14dd68`.
+- cuff: `c50b8a34aef5b4e49a3f76221db7c71842f56bf9dc010d62a255dd2db94c62f1`.
+
+## 7. 마지막 실험의 정확한 중단 지점
+
+- `output/single_thread_oriented_v1/report.json`: `status=paused_by_user`, `success=false`.
+- headless 컨테이너 `thirsty_kare` / `36545019c568`를 사용자 요청으로 중단했다. 이전 실행 세션 `16407`은 활성 학습이 아니다.
+- 실제 F1 한 로봇 pickup(약 8.77cm), raise, carry까지 성공 후 첫 cuff normal alignment 도중 중단했다.
+- 마지막 기록의 normal alignment cosine 약 0.402로 목표 0.75에 미달했다. 전체 orientation/insertion 검증은 완료되지 않았다.
+- 보존된 단계 스냅샷:
+  `output/single_thread_oriented_v1/states/slot_RELOADED_0.npz`,
+  `slot_MATERIAL_TEACHER_RAISE.npz`, `slot_MATERIAL_TEACHER_CARRY.npz`.
+- 중단 순간의 alignment 최종 상태는 저장하지 못했다. 위 carry 스냅샷을 정확한 중단 상태라고 설명하지 말 것.
+
+이전 중요한 연속 실험:
+
+| 경로 (`output/` 아래) | 결과 |
+|---|---|
+| `dual_continuous_v3` | 동시 집기 이후 reference 경로 이동, 실제 grasp 유지/최종 visual 교차 0이나 양 소매 모두 삽입 실패 |
+| `dual_material_v1` | 동시 집기 성공 후 carry 중 한 로봇 넘어짐 |
+| `single_cuff_v5` | upper-middle 집기/운반 성공, F3 wrist rotation에서 anchor 오차 6cm 초과 |
+| `single_thread_v2` | 정렬/이동 성공, 옷이 팔 아래/바깥으로 지나감. 이미지에서 삽입 아님 확인 |
+| `single_thread_v3` | 47개 정상 crossing step, 손 통과 시각 확인. 이후 anchor 오차 약 3.5cm 경계, 최종 유지 실패 |
+| `single_thread_v4` | 40 crossing step 이후 멈춤/3초 유지 제어를 추가했으나, 재실험은 해당 gate 이전 anchor 오차 6.067cm로 중단 |
+
+## 8. 현재 코드에 있지만 아직 검증되지 않은 실험 옵션
+
+`Policy/material_policy.py`와 `scripts/train_grasp.py`:
+
+- `--orient-cuff`: 관측한 소매 입구 normal을 팔 방향으로 회전시키며 중심을 추종한다.
+  각도 보정은 0.25배, 최대 0.25rad; plane ratio >=0.6이면 회전을 유지한다.
+  첫 GPU 실험이 사용자 요청으로 중단되어 효과는 미확인이다.
+- `--release-after-insertion`: **컴파일만 통과, GPU 미실행**.
+  정상 grasp 상태에서 40 crossing step + visual 교차 0 확인 후 일반 open 명령,
+  12 tick 대기, 바깥 방향 6cm 후퇴, 총 80 post-insertion step 확인을 시도한다.
+  최종 후보는 실제 attachment 해제, 실제 후퇴 >=4cm, 지속 crossing, visual 교차 0을 요구한다.
+  이는 release 가설용 코드이며 성공 사례/검증된 기능으로 취급하지 않는다.
+- release 소스는 oriented 실험이 모듈을 로드한 뒤 바뀌었다. 각 실험 output에 캡처한 소스/해시가 그 실험의 기준이다.
+- 정상 held-grasp 후보 기준: anchor p95 <=3.5cm, upright, 40개 연속 crossing,
+  visual 교차 0 및 추가 정지 유지 60 step. anchor >6cm 또는 grasp 상실 시 중단한다.
+- 안정적인 물리 teacher가 성공해야만 material policy를 학습하고 저장/재로드한 뒤
+  새 F1에서 집기부터 전체 연속 경로를 평가하도록 구현했다. 아직 그 단계에 도달한 성공 teacher가 없다.
+- `arm_insertion_verified`는 렌더링을 직접 확인하기 전 true로 바꾸지 않는다.
+
+## 9. 검증 및 재개 순서
+
+이미 완료한 검증:
+
+- GPU policy smoke: 실제 RGB-D freshness/depth, 8개 행동 0.4초, seed reset, invalid action, termination/truncation 통과.
+  반복 reset cloth 차이 최대 약 0.9995mm.
+- CPU policy contract 및 structured weights의 zero-error/1cm 방향 반응/phase gate 검증 통과.
+- 당시 Python compile, shell 문법, whitespace 검사 통과. 최신 선택적 release 옵션은 compile만 통과했다.
+- 중단 뒤 `cp -a src/DexGarmentLab/. .runtime/DexGarmentLab/` 실행 후 현재 GUI를 시작했다.
+- Isaac GPU simulator는 한 번에 하나만 실행한다. CPU-only 검사는 실행 중 컨테이너에서 가능하다.
+  `/project`는 컨테이너 안에서 읽기 전용이고 결과는 `/output`에 쓴다.
+
+사용자가 재개를 요청하면:
+
+1. 현재 GUI/사용자 수동 작업 상태를 먼저 확인하고 필요한 사용자 상태를 보존한다.
+2. 원본 F1 GUI 자동 덮어쓰기 문제와 실제 학습 입력 경로를 구분한다.
+3. 상세 문서 및 thread v3/v4 이미지/anchor trace를 읽고 삽입 실패 원인을 확인한다.
+4. oriented 중단 결과를 정리하고, orientation 또는 release 가설 중 하나를 제한된 실험으로 검증한다.
+   물리 설정이나 성공 판정 문턱을 낮추어 성공으로 만들지 않는다.
+5. F1 실제 집기부터 연속 진행하고 저장 상태를 중간 복원하지 않는다. 삽입 후 안정 유지와 렌더를 확인한다.
+6. 성공 teacher가 생기면 학습/체크포인트 재로드/새 F1 반복 평가까지 수행한다.
+7. 새 결과를 docs/evidence/handoff에 반영하고 intended 파일만 최종 stage/commit/push한다.
+
+지금은 위 재개 절차를 실행하지 말고 사용자의 다음 지시를 기다린다.
+
+---
+
+# 과거 기록 — 아래 실행 상태와 지시는 현재 상태가 아님
+
 # CURRENT UPDATE: 2026-09-11, user stages preserved and gripper friction trial
 
 This update supersedes earlier GUI-stopped and uncommitted-geometry statements.

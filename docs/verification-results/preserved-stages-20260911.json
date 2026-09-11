@@ -1,0 +1,28 @@
+{
+  "baseline_tag": "pre-grasp-learning-20260911",
+  "code_commit": "d1c4552",
+  "snapshots_stored_in_git": false,
+  "local_backup": "/home/seoyul/PhyRC_backups/dressing_stages_20260911_155147",
+  "slots": {
+    "slot_F1.npz": {
+      "sha256": "332e303ad6e477a5a0ec9e245d53228fa5e2a818cd95fa243f8efb2760e7b470",
+      "bytes": 344700
+    },
+    "slot_F2.npz": {
+      "sha256": "a603a0bd78689aec332d0740d0b162a950d1e652dc60dcf3230153f9153b05af",
+      "bytes": 368037
+    },
+    "slot_F3.npz": {
+      "sha256": "a16e70f01c844f4e69c87ffb5f8853c56d8b5fec4a203e88c7f034d75cf4f384",
+      "bytes": 362403
+    },
+    "slot_F4.npz": {
+      "sha256": "1191df497ab30cf81d299f22c4c91ec50d70256738468d0691ea29dc9711f825",
+      "bytes": 361506
+    },
+    "slot_F5.npz": {
+      "sha256": "ca3776e250ac7ad4a954bd97d09ccc484c1a137f17b364b817e168e3ef42d2e3",
+      "bytes": 357086
+    }
+  }
+}

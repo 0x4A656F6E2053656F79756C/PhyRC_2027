@@ -52,4 +52,7 @@ def zero_scene_friction(stage):
     configure_human_cloth_friction(stage, os.environ.get('STRETCH4_HUMAN_CONTACT_FRICTION', '0'))
 
     from .GripperClothFriction import configure_gripper_cloth_friction
-    configure_gripper_cloth_friction(stage, os.environ.get('STRETCH4_GRIPPER_CONTACT_FRICTION', '0.2'))
+    configure_gripper_cloth_friction(stage, os.environ.get('STRETCH4_GRIPPER_CONTACT_FRICTION', '0.5'))
+
+    from .TableClothFriction import configure_table_cloth_friction
+    configure_table_cloth_friction(stage, os.environ.get('STRETCH4_TABLE_CONTACT_FRICTION', '0.5'))

@@ -1,0 +1,25 @@
+{
+  "scope": "one-robot cuff pickup only; not insertion",
+  "algorithm": "behavior cloning with scripted phases",
+  "planner_version": 3,
+  "grasp_region": "left-cuff",
+  "pickup_pitch_rad": 0.4,
+  "policy_sha256": "c50b8a34aef5b4e49a3f76221db7c71842f56bf9dc010d62a255dd2db94c62f1",
+  "result": {
+    "success": true,
+    "final_grasp_health": {
+      "attached": true,
+      "anchor_count": 48,
+      "anchor_p95_error_m": 1.975225171707501e-05
+    },
+    "final_lift_m": 0.08806127309799194,
+    "steps": 242,
+    "last_phase": 5,
+    "max_lift_m": 0.08800563216209412,
+    "max_hold_steps": 20,
+    "ever_attached": true,
+    "target_shift_m": 0.0,
+    "initial_lift_tip_z": 0.6113738417625427
+  },
+  "source_artifacts": "output/single_cuff_v3"
+}

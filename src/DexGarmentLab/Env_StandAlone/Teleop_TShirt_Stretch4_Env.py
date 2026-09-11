@@ -337,19 +337,19 @@ else:
               f"{_SHIRT_PATH}, falling back to the shipped mesh")
     TSHIRT_USD = build_reshaped_tshirt_usd(TSHIRT_USD)
 
-# 2026-09-11 tuning: 90% of the original command rates (10% slower).
-LIFT_RATE = _feel("LIFT_RATE", 1.26)
-ARM_RATE = _feel("ARM_RATE", 0.99)
-WRIST_RATE = _feel("WRIST_RATE", 4.5)
+# Restored original command rates (+10% speedup relative to the 90% tuning).
+LIFT_RATE = _feel("LIFT_RATE", 1.4)
+ARM_RATE = _feel("ARM_RATE", 1.1)
+WRIST_RATE = _feel("WRIST_RATE", 5.0)
 GRIPPER_OPEN = 0.5
 # 0.0 was the joint limit, not the point of contact -- see patch_meet.
 GRIPPER_CLOSED = _feel("GRIPPER_CLOSED", 0.103)
 GRIPPER_CLOSE_TIME = 0.4
 GRIPPER_RATE = (GRIPPER_OPEN - GRIPPER_CLOSED) / GRIPPER_CLOSE_TIME
-BASE_LINEAR_RATE = _feel("BASE_LINEAR_RATE", 0.504)
-BASE_ANGULAR_RATE = _feel("BASE_ANGULAR_RATE", 2.34)
-BASE_LINEAR_ACCEL = _feel("BASE_LINEAR_ACCEL", 1.08)
-BASE_ANGULAR_ACCEL = _feel("BASE_ANGULAR_ACCEL", 3.6)
+BASE_LINEAR_RATE = _feel("BASE_LINEAR_RATE", 0.56)
+BASE_ANGULAR_RATE = _feel("BASE_ANGULAR_RATE", 2.6)
+BASE_LINEAR_ACCEL = _feel("BASE_LINEAR_ACCEL", 1.2)
+BASE_ANGULAR_ACCEL = _feel("BASE_ANGULAR_ACCEL", 4.0)
 
 # Ported over from Teleop_TShirt_Stretch4_Hand_Env.py's grab-follow fix
 # (same underlying bug, confirmed there first): the old formula here
@@ -4578,7 +4578,7 @@ def snap_grab_anchors(rig, garment_cloths, dt):
         state["_body_safe_pos"] = safe_all
 
 
-def drive_robot(rig, keymap, held, garment_cloths, dt, _frame):
+def drive_robot(rig, keymap, held, garment_cloths, dt, _frame, commands=None):
     state = rig["state"]
     robot = rig["robot"]
     ctrl = rig["ctrl"]
@@ -4599,6 +4599,8 @@ def drive_robot(rig, keymap, held, garment_cloths, dt, _frame):
     # mismatch was a NameError on the first frame -- which Kit
     # swallows under fastShutdown, so the app just vanished four
     # seconds in with no traceback and looked like a memory problem.
+    if commands is not None:
+        target_base_strafe = commands["base_strafe"]
     strafe_delta = np.clip(target_base_strafe - state["base_strafe"],
                            -BASE_LINEAR_ACCEL * dt, BASE_LINEAR_ACCEL * dt)
     state["base_strafe"] += strafe_delta
@@ -4606,6 +4608,9 @@ def drive_robot(rig, keymap, held, garment_cloths, dt, _frame):
         target_base_turn += BASE_ANGULAR_RATE
     if keymap["base_turn_neg"] in held:
         target_base_turn -= BASE_ANGULAR_RATE
+    if commands is not None:
+        target_base_fwd = commands["base_fwd"]
+        target_base_turn = commands["base_turn"]
     base_fwd_delta = np.clip(target_base_fwd - state["base_fwd"],
                               -BASE_LINEAR_ACCEL * dt, BASE_LINEAR_ACCEL * dt)
     state["base_fwd"] += base_fwd_delta
@@ -4633,6 +4638,11 @@ def drive_robot(rig, keymap, held, garment_cloths, dt, _frame):
         state["roll"] = min(rig["roll_hi"], state["roll"] + WRIST_RATE * dt)
     if keymap["roll_neg"] in held:
         state["roll"] = max(rig["roll_lo"], state["roll"] - WRIST_RATE * dt)
+
+    if commands is not None:
+        for axis in ("lift", "arm", "yaw", "pitch", "roll"):
+            state[axis] = float(np.clip(state[axis] + commands[axis + "_rate"] * dt,
+                                        rig[axis + "_lo"], rig[axis + "_hi"]))
 
     _grip_target = GRIPPER_CLOSED if state["gripper_closed"] else GRIPPER_OPEN
     _grip_delta = np.clip(_grip_target - state["grip_pos"],
@@ -4916,8 +4926,49 @@ def stop_recording():
 
 
 
-def main():
-    env = TeleopTShirtStretch4_Env()
+def rebuild_contact_guards(env, garment_cloths):
+    """Rebuild world-space contact data after static placement changes."""
+    stage = env.stage
+    _BODY_GEOM.clear()
+    _SHIELD.clear()
+    _body_surf = _body_vis = None
+    for _p in Usd.PrimRange(stage.GetPrimAtPath(env.human.prim_path),
+                            Usd.TraverseInstanceProxies()):
+        if _p.IsA(UsdGeom.Mesh):
+            if _p.GetName() == "CollisionBody":
+                _body_surf = _p
+            elif _body_vis is None:
+                _body_vis = _p
+    register_body_collider(_body_surf if _body_surf is not None else _body_vis)
+
+    # # [isaac-5.1.0 compat: cloth shield] -- bake the figure and hand the shield the cloth's edges.
+    build_cloth_shield(_body_surf if _body_surf is not None else _body_vis,
+                       garment_cloths)
+    for _ci, _g in enumerate(env.garments):
+        _gm = UsdGeom.Mesh(stage.GetPrimAtPath(_g.garment_mesh_prim_path))
+        _cnt = np.asarray(_gm.GetFaceVertexCountsAttr().Get())
+        _idx = np.asarray(_gm.GetFaceVertexIndicesAttr().Get())
+        _es, _o = set(), 0
+        for _c in _cnt:
+            _f = _idx[_o:_o + _c]
+            _o += _c
+            for _i in range(_c):
+                _u, _v = int(_f[_i]), int(_f[(_i + 1) % _c])
+                _es.add((_u, _v) if _u < _v else (_v, _u))
+        _tris, _o = [], 0
+        for _c in _cnt:
+            _f = [int(v) for v in _idx[_o:_o + _c]]
+            _o += _c
+            for _k in range(1, _c - 1):
+                _tris.append((_f[0], _f[_k], _f[_k + 1]))
+        set_shield_edges(_ci, np.array(sorted(_es)), np.asarray(_tris))
+    print(f"[Teleop] cloth shield watching {len(env.garments)} garment(s)",
+          flush=True)
+
+
+
+def initialize_manipulation(env):
+    """Shared cloth callbacks/contact setup for teleoperation and policy control."""
     stage = env.stage
     rig = env.rig
     rig2 = env.rig2
@@ -4977,39 +5028,15 @@ def main():
           f"{1.0 / max(float(env.world.get_physics_dt()), 1e-9):.0f} Hz "
           f"against a {1.0 / (1.0 / 60.0):.0f} Hz control loop")
 
-    _body_surf = _body_vis = None
-    for _p in Usd.PrimRange(stage.GetPrimAtPath(env.human.prim_path),
-                            Usd.TraverseInstanceProxies()):
-        if _p.IsA(UsdGeom.Mesh):
-            if _p.GetName() == "CollisionBody":
-                _body_surf = _p
-            elif _body_vis is None:
-                _body_vis = _p
-    register_body_collider(_body_surf if _body_surf is not None else _body_vis)
+    rebuild_contact_guards(env, garment_cloths)
 
-    # # [isaac-5.1.0 compat: cloth shield] -- bake the figure and hand the shield the cloth's edges.
-    build_cloth_shield(_body_surf if _body_surf is not None else _body_vis,
-                       garment_cloths)
-    for _ci, _g in enumerate(env.garments):
-        _gm = UsdGeom.Mesh(stage.GetPrimAtPath(_g.garment_mesh_prim_path))
-        _cnt = np.asarray(_gm.GetFaceVertexCountsAttr().Get())
-        _idx = np.asarray(_gm.GetFaceVertexIndicesAttr().Get())
-        _es, _o = set(), 0
-        for _c in _cnt:
-            _f = _idx[_o:_o + _c]
-            _o += _c
-            for _i in range(_c):
-                _u, _v = int(_f[_i]), int(_f[(_i + 1) % _c])
-                _es.add((_u, _v) if _u < _v else (_v, _u))
-        _tris, _o = [], 0
-        for _c in _cnt:
-            _f = [int(v) for v in _idx[_o:_o + _c]]
-            _o += _c
-            for _k in range(1, _c - 1):
-                _tris.append((_f[0], _f[_k], _f[_k + 1]))
-        set_shield_edges(_ci, np.array(sorted(_es)), np.asarray(_tris))
-    print(f"[Teleop] cloth shield watching {len(env.garments)} garment(s)",
-          flush=True)
+    return garment_cloths, garment_faces, _grab_post_subscription
+
+
+def main():
+    env = TeleopTShirtStretch4_Env()
+    stage, rig, rig2 = env.stage, env.rig, env.rig2
+    garment_cloths, garment_faces, _grab_post_subscription = initialize_manipulation(env)
 
     held = rig["held"]
     quit_flag = {"quit": False}
