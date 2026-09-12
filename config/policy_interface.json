@@ -455,5 +455,58 @@
       "garment_spawn"
     ],
     "reward_and_success": "default reward zero and no success termination; replaceable evaluator(previous, action, next, info) returns reward, terminated, task_info"
+  },
+  "competition_access": {
+    "rules": "docs/POLICY_DATASET.md",
+    "allowed_policy_observations": [
+      "joint_position",
+      "joint_velocity",
+      "base_pose_world",
+      "base_twist_world",
+      "grasp_pose_base",
+      "fingertip_position_base",
+      "fingertip_origin_distance",
+      "controller_target",
+      "gripper_close_command",
+      "simulation_time_s",
+      "rgb",
+      "depth",
+      "depth_valid",
+      "previous_action"
+    ],
+    "allowed_action": "normalized float32 (2,9) defined in action; no direct scene mutation",
+    "allowed_cameras": [
+      "overview",
+      "robot_0_wrist",
+      "robot_1_wrist",
+      "robot_0_head",
+      "robot_1_head"
+    ],
+    "robot_world_localization": "permitted ideal simulator localization; other objects world poses are forbidden",
+    "forbidden_in_training_and_inference": [
+      "cloth vertex/particle state",
+      "object/mannequin/chair ground-truth pose",
+      "ground-truth segmentation",
+      "native grasp/anchor state",
+      "collision mesh or evaluator internal geometry",
+      "privileged teacher or demonstration generation",
+      "raw trajectory playback as a policy",
+      "free GUI viewport images"
+    ],
+    "audit_data": "not policy inputs; scores/success for reporting and demonstration selection only",
+    "enforcement": "Confirmed violations in organizer verification exclude the submission from judging; local schema checks are not a security sandbox"
+  },
+  "training_recording": {
+    "enabled_by": "./run.sh gui --training-record 1",
+    "schema": "phyrc-policy-dataset-v1",
+    "format": "robomimic-style HDF5; lossless LZF",
+    "sampling": "20Hz sample-and-hold; commands applied for 3 control ticks / 12 physics ticks; no averaging",
+    "alignment": "obs before action, next_obs after exactly 12 physics ticks; synchronous 5-camera RGBD and audit viewport capture without physics advance",
+    "actions_on_disk": [
+      18
+    ],
+    "raw_recording": "automatically preserved at 240Hz",
+    "audit": "separate audit.hdf5 and evaluation JSON, never returned by PolicyDataset",
+    "backpressure": "synchronous blocking writes, no frame dropping"
   }
 }

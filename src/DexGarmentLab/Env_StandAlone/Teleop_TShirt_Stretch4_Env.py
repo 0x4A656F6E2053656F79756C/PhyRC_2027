@@ -5082,6 +5082,9 @@ def initialize_manipulation(env):
 
 
 def main():
+    training_setting = os.environ.get('STRETCH4_TRAINING_RECORD', '0')
+    if training_setting not in ('0', '1'):
+        raise ValueError('STRETCH4_TRAINING_RECORD must be 0 or 1')
     full_record_setting = os.environ.get('STRETCH4_FULL_RECORD', '0')
     if full_record_setting not in ('0', '1'):
         raise ValueError('STRETCH4_FULL_RECORD must be 0 or 1')
@@ -5095,7 +5098,7 @@ def main():
                                    os.environ.get('STRETCH4_EVALUATION_DIR', '/output/evaluation/teleop'))
     pending_evaluation = {'command': None}
     full_recorder = None
-    if full_record_setting == '1':
+    if full_record_setting == '1' or training_setting == '1':
         from Policy.teleop_recording import FullTeleopRecorder
         full_recorder = FullTeleopRecorder(env, garment_cloths, (rig, rig2), sys.modules[__name__],
                                           os.environ.get('STRETCH4_FULL_RECORD_DIR', '/output/full_teleop'))
@@ -5119,6 +5122,12 @@ def main():
 
     toggle_gripper1 = _make_gripper_toggle(rig, "robot1")
     toggle_gripper2 = _make_gripper_toggle(rig2, "robot2")
+    training = None
+    if training_setting == '1':
+        from Policy.training_teleop import TrainingTeleop
+        training = TrainingTeleop(env, garment_cloths, (rig, rig2), sys.modules[__name__], full_recorder,
+                                  (toggle_gripper1, toggle_gripper2),
+                                  os.environ.get('STRETCH4_TRAINING_RECORD_DIR', '/output/policy_datasets'))
 
     # world.reset() puts every physics prim on the stage (both robots'
     # articulations, all 4 garments' cloth particles) back to the pose
@@ -5203,12 +5212,16 @@ def main():
         clear_armed["frame"] = None
         rigs = (rig, rig2)
         if state_slot_exists(key) and not force_save:
+            if training:
+                training.boundary('checkpoint_load')
             evaluation.finish(reason='checkpoint_load', valid=False, take_final=False)
             if full_recorder:
                 full_recorder.begin_discontinuity('load_' + key)
             loaded = load_state_slot(key, garment_cloths, rigs)
             if full_recorder:
                 full_recorder.end_discontinuity('load_' + key)
+            if training:
+                training.sensors.reset_episode()
             return loaded
         if force_save and state_slot_exists(key):
             print(f"[Teleop] {key} overwriting the state already in that slot")
@@ -5247,10 +5260,10 @@ def main():
                 request_slot(name)
                 return True
             if name in ROBOT1_GRIP_KEYS:
-                toggle_gripper1()
+                training.toggle(0) if training else toggle_gripper1()
                 return True
             if name in ROBOT2_GRIP_KEYS:
-                toggle_gripper2()
+                training.toggle(1) if training else toggle_gripper2()
                 return True
             if name not in held:
                 print(f"[Teleop] key down: {name}")
@@ -5351,7 +5364,7 @@ def main():
     BLOWUP_STREAK_TO_ACT = 6
     robots_for_watchdog = [rig["robot"], rig2["robot"]]
     try:
-        while simulation_app.is_running() and not quit_flag["quit"]:
+        while simulation_app.is_running() and (not quit_flag["quit"] or (training and training.inflight)):
             _frame += 1
 
             # Deferred reset (see do_reset). Done here, before anything touches
@@ -5360,8 +5373,10 @@ def main():
             # re-initialized afterwards for the same reason, and the blowup
             # history is dropped because those snapshots describe the pre-reset
             # world.
-            if pending_reset["want"]:
+            if pending_reset["want"] and (not training or not training.inflight):
                 pending_reset["want"] = False
+                if training:
+                    training.boundary('scene_reset')
                 evaluation.finish(reason='scene_reset', valid=False, take_final=False)
                 if full_recorder:
                     full_recorder.begin_discontinuity('reset')
@@ -5403,6 +5418,8 @@ def main():
                 env.world.play()
                 if full_recorder:
                     full_recorder.end_discontinuity('reset')
+                if training:
+                    training.sensors.reset_episode()
                 print("[Teleop] reset to start")
                 continue
 
@@ -5411,7 +5428,7 @@ def main():
             # those snapshots describe a world that no longer exists -- and the
             # frame is given up afterwards so nothing else writes over what was
             # just restored.
-            if pending_slot["key"] is not None:
+            if pending_slot["key"] is not None and (not training or not training.inflight):
                 if service_slot(_frame):
                     blowup_streak = 0
                     paused = False
@@ -5443,13 +5460,21 @@ def main():
                       f"robot1_pos={_to_np(_p1)} robot2_pos={_to_np(_p2)}")
 
             if not paused:
+                commands = training.before_control(held) if training else None
                 if full_recorder:
                     full_recorder.event('control', control_frame=_frame, held_keys=sorted(held), control_dt_s=dt)
                 # [control algorithms: one measurement per cloth per control tick]
                 from Env_Config.Garment.ContinuousClothControl import cloth_control_batch
                 with cloth_control_batch():
-                    _drive_robot(rig, ROBOT1_KEYMAP)
-                    _drive_robot(rig2, ROBOT2_KEYMAP)
+                    if training:
+                        for _r, command in zip((rig, rig2), commands):
+                            drive_robot(_r, ROBOT1_KEYMAP, set(), garment_cloths, dt, _frame,
+                                        commands=command['velocity_commands'])
+                    else:
+                        _drive_robot(rig, ROBOT1_KEYMAP)
+                        _drive_robot(rig2, ROBOT2_KEYMAP)
+                if training:
+                    training.after_drive()
 
                 # Deferred grab: the fingers must have reached the closed
                 # position AND the cloth must have settled after being
@@ -5471,6 +5496,8 @@ def main():
             simulation_app.update()
             if full_recorder:
                 full_recorder.check()
+            if training and not paused:
+                training.after_control()
             # After update(), so the frame just rendered is the one written.
             record_frame()
 
@@ -5489,6 +5516,8 @@ def main():
                     # recover explicitly from the newest user-visible F-slot
                     # checkpoint rather than from a hidden rolling snapshot.
                     if is_hard:
+                        if training:
+                            training.boundary('nonfinite_state_recovery', valid=False)
                         evaluation.finish(reason='nonfinite_state_recovery', valid=False, take_final=False)
                         if full_recorder:
                             full_recorder.check()
@@ -5512,12 +5541,21 @@ def main():
                         if full_recorder:
                             full_recorder.end_discontinuity('watchdog_recovery')
     finally:
-        if full_recorder:
-            full_recorder.close(reason='normal_exit' if sys.exc_info()[0] is None else 'exception',
-                                capture_final=simulation_app.is_running())
+        failure = sys.exc_info()[1]
+        if failure is not None:
+            # Kit fast shutdown can exit before Python prints a pending error.
+            import traceback
+            traceback.print_exception(type(failure), failure, failure.__traceback__)
+        try:
+            if training:
+                training.close(complete=sys.exc_info()[0] is None)
+        finally:
+            if full_recorder:
+                full_recorder.close(reason='normal_exit' if sys.exc_info()[0] is None else 'exception',
+                                    capture_final=simulation_app.is_running())
         evaluation.finish(reason='gui_closed')
         input_iface.unsubscribe_to_keyboard_events(keyboard, sub)
-        simulation_app.close()
+        simulation_app.close(exit_code=1 if failure is not None else 0)
 
 
 if __name__ == "__main__":

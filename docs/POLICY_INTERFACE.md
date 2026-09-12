@@ -5,6 +5,11 @@ RGB-D 센서를 연결한 실험용 환경이다. 명세는
 [`config/policy_interface.json`](../config/policy_interface.json), 구현은
 [`Policy/`](../src/DexGarmentLab/Policy/)에 있다.
 
+**참가자 학습·추론에는 공개 observation/action만 허용한다.** 데이터 수집 명령,
+HDF5 구조, 금지 정보 사용 및 심사 제외 규정은 [POLICY_DATASET.md](POLICY_DATASET.md)를
+따른다. 아래 디버그/연구 API 설명이 참가자에게 내부 정답 정보 사용을 허용하는 것은 아니다.
+`./run.sh gui --training-record 1`로 20Hz 정책 구간에 동기화된 학습 데이터를 수집한다.
+
 기존 teleop와 동일한 구동기·천 제어·native grasp를 사용한다. 이후 물리 패치가
 정책 데이터 형태와 얽히지 않도록 상태 읽기, 스키마, 센서, 환경 어댑터를 분리했다.
 착의 성공 판정과 보상은 별도 evaluator로 주입한다. 기본 보상은 0이고

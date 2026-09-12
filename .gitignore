@@ -8,6 +8,8 @@ __pycache__/
 .env
 .env.*
 *.npz
+*.hdf5
+*.h5
 *.mp4
 !docs/videos/*.mp4
 *.log

@@ -39,6 +39,21 @@ Gymnasium 정책 환경과 작은 모방학습 예제를 포함합니다. 학습
 개인 F1-F5 저장 파일은 Git에 포함하지 않습니다.
 옷 집기 실험은 [학습 복원 기록](docs/GRASP_LEARNING_20260911.md), 관측·행동 명세는
 [정책 인터페이스](docs/POLICY_INTERFACE.md)를 참고하세요.
+참가자의 **허용 관측·행동, 내부 정답 정보 사용 금지 및 위반 시 심사 제외 규정**은
+[정책 데이터·참가 규칙](docs/POLICY_DATASET.md)에 명시되어 있습니다.
+학습과 실행에는 명시된 공개 관측 및 `(2,9)` action만 사용해야 합니다.
+옷 정점·물체 정답 위치를 직접 읽는 제어/시연 생성/교사 학습 등의 우회 사용은 금지합니다.
+주최 측의 별도 검증에서 위반이 확인되면 심사에서 제외합니다.
+
+```bash
+PHYRC_ACCEPT_EULA=1 ./run.sh gui --training-record 1
+```
+
+이 모드는 20Hz로 입력을 받아 60Hz 제어 3회 동안 유지하고, 같은 physics tick의
+5개 RGB-D 카메라·로봇 상태·action/next observation을 HDF5로 저장합니다.
+`ESC`로 종료하면 `output/policy_datasets/<실행ID>/policy.hdf5`에 저장됩니다.
+240Hz 전체 기록도 자동 보존하며 viewport 영상·점수·내부 검증 정보는 별도 감사 파일에
+저장합니다. 자세한 파일 구조·동기화·로딩·검증 범위는 위 문서를 참고하세요.
 학습 복원 전 코드는 GitHub 태그 `pre-grasp-learning-20260911`로 보존했습니다.
 
 Phase 1 채점 함수와 실행 방법은 [평가 스크립트 안내](docs/PHASE1_EVALUATION.md)를

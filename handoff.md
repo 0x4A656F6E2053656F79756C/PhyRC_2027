@@ -8,6 +8,84 @@
 이번 게시를 막는 지시가 아니다. 향후 새 작업을 자동으로 게시하라는 상시 승인은 아니다.
 또한 사용자는 replay 배속을 더 이상 수정하지 말라고 요청했다.
 
+# 인계 시작점 — 2026-09-13, 정책 학습 데이터 수집 및 참가 규칙
+
+이번 사용자는 공개 observation/action 명시, teleop와 동기화된 일반 학습 데이터 저장,
+금지 내부 정보 사용 시 심사 제외 규칙의 GitHub 게시를 요청하고 커밋·푸시를 승인했다.
+이 절이 아래 누적 구현 인계보다 최신이다.
+
+## 구현 및 사용
+
+- `PHYRC_ACCEPT_EULA=1 ./run.sh gui --training-record 1`.
+- opt-in 학습 기록 모드: 20Hz 경계에서 키/그리퍼 의도를 샘플링하고 3개 60Hz 제어
+  구간(12개 240Hz physics ticks) 동안 유지한다. 기존 속도/가속/한계/파지/FEM 설정은
+  유지한다. 일반 gui 또는 full-record만 켠 경우 기존 입력 처리 유지.
+- obs[t] → action[t] → 12 physics ticks → obs[t+1]. 같은 상태에서 5개 RGBD와
+  active GUI camera의 pose/lens 고정 복사본을 동기 렌더링한다. 렌더링 중 physics tick
+  증가, 카메라/상태 timestamp 불일치, 제어 tick 누락 시 오류로 중단한다.
+- `output/policy_datasets/<ID>/policy.hdf5`: robomimic-style HDF5
+  `data/demo_N/{obs,next_obs,actions,rewards,dones,terminated,truncated}`.
+  이미지 카메라별 키, 저차원 값 flatten, action (18,) = (2,9) row-major.
+  lossless LZF, 동기 blocking 쓰기. reward0은 BC용 placeholder이며 최종 점수가 아니다.
+- 같은 폴더 `audit.hdf5`: viewport RGB/pose/lens/timestamp, 5개 카메라 K/pose/time,
+  60Hz 실제 제어 목표3개, raw action 시작/종료 tick, 점수 항목, 접촉 tick, seed,
+  source/config 버전 및 자동 평가 결과. `evaluation/`에 episode별 평가 JSON도 저장.
+  접촉 tick은 episode 기준; raw tick과 비교하려면 episode metadata.start_tick을 더한다.
+- 전체 상태240Hz 원본은 `output/full_teleop/<같은ID>/`에 자동 보존된다.
+  예전 archive에서 이미지 학습 데이터로 변환하는 exporter는 이번 범위에 포함되지 않는다.
+- ESC/SIGINT/SIGTERM은 현재 정책 구간을 마치고 저장. reset/LOAD는 구간 경계로 미뤄
+  에피소드 분리; SAVE는 유지. 갑작스러운 앱 종료/강제 kill/쓰기 오류는 불완전 상태를
+  정상 학습 데이터로 위장하지 않는다. 기본 로더는 incomplete 파일/episode를 거부한다.
+- `Policy.dataset_reader.PolicyDataset`: 허용 관측 및 action만 반환하는 NumPy/PyTorch
+  DataLoader용 lazy 로더. 카메라/행동/관측 contract 검사, process별 HDF5 handle.
+- CPU 검사:
+  `PHYRC_ACCEPT_EULA=1 ./run.sh cpu /scripts/inspect_policy_dataset.py /output/policy_datasets/<ID>/policy.hdf5`
+- h5py==3.16.0을 requirements-runtime.txt에 명시. 현재 로컬 Docker 이미지에도 이미 설치됨.
+
+## 허용 데이터와 심사 규칙
+
+- README, docs/POLICY_DATASET.md, docs/POLICY_INTERFACE.md 및 config/policy_interface.json.
+- 기존 공개 observation 전부와 (2,9) action만 학습/추론에 사용. 외부 overview 및
+  **로봇 자체**의 이상적 월드 localization 허용. 다른 물체 정답 위치는 허용하지 않음.
+- 옷 정점/입자, 물체/마네킹 pose, 정답 segmentation, native grasp/anchor, 평가기
+  내부 기하, 이 정보를 사용한 시연/교사 학습/증류 및 raw 궤적 재생 정책 금지.
+- 자유 GUI viewport 영상은 감사용이며 참가자 정책 입력으로 금지. 공개 5카메라와 구별.
+- 주최 측 자체 검증으로 금지 사용이 확인되면 심사 제외. 코드·데이터 출처·체크포인트
+  검토 및 별도 초기 상태 재평가 규칙을 명시했다.
+- 현재 로컬 스키마 검사/같은 프로세스 Python 평가기를 완전한 보안 격리/부정 탐지기로
+  주장하지 않는다. 최종 심사용 격리·자료 감사는 별도 운영 영역임을 문서에 명시.
+- raw/audit/evaluation geometry는 검증용; 점수·성공은 시연 선별/분석용이고 로더 입력 아님.
+  과거 GT 기반 grasp 연구·진단 스크립트는 참가자 baseline으로 사용하면 안 됨.
+
+## 검증 근거 및 제한
+
+- 기존 CPU48개 + 새 DatasetTests8개 PASS, 정책 contract 체크 PASS.
+- 실제 GPU headless와 SIGTERM 종료: `output/training_checks/054859b6bf/report.json`.
+- 실제 **GUI 및 .runtime 코드 경로**:
+  `output/training_checks/027fe5902d/report.json`, `output/training_gui_check.log`.
+  3 episodes, 7 transitions, 84 physics ticks/90 raw states. 모든 tick 무누락,
+  관절값 및 60Hz 적용 목표가 원본 PhysX 기록과 일치, obs/next_obs 연속성,
+  5개 nonempty RGB-D, viewport/camera/proprioception timestamp 일치,
+  중간 입력 변경의 sample-hold, gripper 의도, reset/LOAD 분리, 종료 저장 PASS.
+- 실제 파일 CPU inspection: output/training_dataset_inspection.json.
+- 최종 점검: output/training_publish_checks.json. AST 비교로 main 외 모든 환경 정의
+  동일, 기존 contract 모든 값 동일(참가 규칙/저장 명세만 추가)임을 확인했다.
+- 위 GPU 시험 이후에는 종료 오류 traceback/exit status와 저장 로그 complete 표시만
+  보강했고 compile/diff 검사를 수행했다. 물리 및 데이터 경로는 해당 시험과 동일하다.
+- 4개 변경/신규 런타임 코드 파일 동기화 완료. asset/물리 설정/사용자 슬롯 변경 없음.
+  시험은 모두 고유 STRETCH4_STATE_DIR 사용. 일반 prepare는 재실행하지 않았다.
+- 20Hz는 simulation time이다. 5 RGBD+viewport 렌더링/무손실 저장은 wall-clock teleop를
+  느리게 할 수 있다. 속도 보장을 하지 않으며 프레임 drop/압축 손실로 대체하지 않는다.
+- viewport는 UI/마우스/overlay 포함 스크린 녹화가 아니며 시작 시 비율의 폭256 별도
+  렌더 결과. GUI 픽셀 전체 동일성을 주장하지 않는다.
+- 테스트는 짧은 동기화/입력/저장 통합 검사이며 완전 착의 학습 성능 검증이 아니다.
+  robomimic offline 구조를 따르지만 온라인 rollout에는 별도 환경 등록/어댑터 필요.
+
+이번 커밋 제목: **Define competition policy rules and record synchronized teleop datasets**.
+실제 게시 HEAD는 `git log -1 --oneline` 및 `git rev-parse HEAD origin/main`으로 확인한다.
+
+---
+
 # 인계 시작점 — 2026-09-13, 누적 구현 게시
 
 ## Git 및 게시 범위

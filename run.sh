@@ -8,6 +8,10 @@ if [[ "$COMMAND" == gui ]]; then
     shift
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --training-record)
+                [[ "${2:-}" == 0 || "${2:-}" == 1 ]] || { printf -- '--training-record requires 0 or 1\n' >&2; exit 2; }
+                export STRETCH4_TRAINING_RECORD="$2"
+                shift 2;;
             --full-record)
                 [[ "${2:-}" == 0 || "${2:-}" == 1 ]] || { printf -- '--full-record requires 0 or 1\n' >&2; exit 2; }
                 export STRETCH4_FULL_RECORD="$2"
@@ -30,6 +34,7 @@ if [[ "$COMMAND" == help ]]; then
     printf 'Usage: ./run.sh {doctor|build|prepare|gui|replay RECORDING [OPTIONS...]|smoke|policy-smoke|train-demo|train-grasp|train-single-grasp|python SCRIPT [ARGS...]|cpu SCRIPT [ARGS...]}\n'
     printf 'Use ./run.sh gui --no-randomization for fixed human and shirt placement.\n'
     printf 'Use ./run.sh gui --full-record 1 to record every teleop physics step.\n'
+    printf 'Use ./run.sh gui --training-record 1 for synchronized RGBD/action HDF5 plus full recording.\n'
     exit 0
 fi
 if [[ "$COMMAND" == doctor ]]; then
