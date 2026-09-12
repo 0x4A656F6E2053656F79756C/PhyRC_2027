@@ -41,6 +41,12 @@ Gymnasium 정책 환경과 작은 모방학습 예제를 포함합니다. 학습
 [정책 인터페이스](docs/POLICY_INTERFACE.md)를 참고하세요.
 학습 복원 전 코드는 GitHub 태그 `pre-grasp-learning-20260911`로 보존했습니다.
 
+Phase 1 채점 함수와 실행 방법은 [평가 스크립트 안내](docs/PHASE1_EVALUATION.md)를
+참고하세요. `python3 scripts/evaluate_phase1.py --demo`로 점수 계산 예제를 실행할 수 있습니다.
+시간당 점수는 옷과 마네킹 충돌 메시의 최초 접촉부터 시간을 계산합니다.
+GUI에서는 **F6 평가 시작 / F7 종료·점수 저장**을 사용합니다. 학습한 정책은
+`./run.sh python /scripts/evaluate_policy.py --help`의 자동 평가 실행기를 사용합니다.
+
 ### 동작 예시 (Demonstration)
 
 ![두 대의 Stretch4로 티셔츠를 조작하는 전면·후면 동시 보기 — 8배속](docs/videos/Front_Back_8x.gif)
@@ -232,6 +238,14 @@ GUI 첫 실행에서도 `Physics Tasks` 준비 화면에 몇 분 머무를 수 �
 기본값 `1`은 기존 작업의 collision 시각화 모드입니다. 렌더용 메시와 충돌 메시 모두 뒤통수 수정이 적용됩니다.
 
 ## 9. 저장, 복원, 녹화
+
+시작부터 모든 teleop 상태를 기록하려면 `./run.sh gui --full-record 1`을 사용합니다.
+종료 시 `output/full_teleop/<실행 ID>/`에 자동 저장하며,
+`./run.sh replay output/full_teleop/<실행 ID>`로 3D 궤적을 재생합니다.
+매 physics 스텝의 실제 로봇·천 상태를 무손실 저장하는 방식입니다.
+시간 정확성의 범위와 검증 옵션은 [전체 기록·replay 안내](docs/FULL_TELEOP_RECORDING.md)를 참고하세요.
+새로 기록한 실행은 `python3 scripts/evaluate_replay.py output/full_teleop/<실행 ID> --output output/evaluation/replay`로
+Isaac/GPU 없이 평가할 수도 있습니다. 기존 v1 기록은 평가에 필요한 앵커 정보가 없어 재생만 지원합니다.
 
 - `F1`은 **실행할 때마다 초기 상태로 덮어씁니다.** 장기 저장에 쓰지 마세요.
 - `F2`~`F5`: 비어 있으면 저장, 이미 있으면 불러오기입니다.

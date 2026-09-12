@@ -202,6 +202,8 @@ class DressingEnv(gym.Env):
         self._step_id = 0
         self._episode += 1
         self._start_time = float(self.world.current_time)
+        if self.sensors:
+            self.sensors.reset_episode()
         observation, info = self._observe()
         speeds = np.linalg.norm(observation['base_twist_world'][:, :3], axis=1)
         finger_error = max(float(np.max(np.abs(array(r['robot'].get_joint_positions())[r['grip_idx']] - self.M.GRIPPER_OPEN))) for r in self.rigs)
@@ -231,6 +233,8 @@ class DressingEnv(gym.Env):
         self._step_id = 0
         self._episode += 1
         self._start_time = float(self.world.current_time)
+        if self.sensors:
+            self.sensors.reset_episode()
         observation, info = self._observe()
         info['reset_settling'] = {'control_ticks': self.settle_ticks, 'mode': 'checkpoint; FEM history not bitwise restored'}
         self._last_observation = {key: value.copy() for key, value in observation.items()}

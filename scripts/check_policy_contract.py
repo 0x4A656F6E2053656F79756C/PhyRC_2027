@@ -32,7 +32,7 @@ def rejects(fn):
 # Configuration changes resize image layouts without touching Python or physics.
 changed = copy.deepcopy(contract)
 changed['default_dimensions'].update(height=128, width=320)
-assert observation_shapes(changed, robots=1, joints=17, profile='actor_rgbd')['rgb'] == (3, 128, 320, 3)
+assert observation_shapes(changed, robots=1, joints=17, profile='actor_rgbd')['rgb'] == (len(changed['cameras']), 128, 320, 3)
 assert observation_shapes(changed, robots=1, joints=17)['joint_position'] == (1, 17)
 
 # Independent, known coordinate example: base +90 Z, world +Y is base +X.

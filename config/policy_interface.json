@@ -1,11 +1,11 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "status": "experimental_learning_environment",
   "task": "two_robot_seated_human_tshirt_dressing",
   "default_dimensions": {
     "robots": 2,
     "joints": 13,
-    "cameras": 3,
+    "cameras": 5,
     "height": 256,
     "width": 256
   },
@@ -37,22 +37,24 @@
       "id": "overview",
       "status": "implemented",
       "resolution_from": "default_dimensions.width,height",
-      "mount": "world",
+      "mount": "human_spawn",
+      "spawn_prim_path": "/World/Human",
+      "placement": "reference world pose transformed by human randomSpawn at episode reset; fixed during rollout",
       "eye_world_m": [
-        2.4,
-        -3.2,
-        2.4
+        0.0,
+        2.8,
+        2.25
       ],
       "target_world_m": [
         0.0,
-        0.1,
-        0.8
+        0.45,
+        1.0
       ],
       "clip_m": [
         0.05,
         10.0
       ],
-      "horizontal_fov_deg": 70
+      "horizontal_fov_deg": 60
     },
     {
       "id": "robot_0_wrist",
@@ -105,6 +107,60 @@
         1,
         0,
         0
+      ],
+      "horizontal_fov_deg": 70
+    },
+    {
+      "id": "robot_0_head",
+      "status": "implemented",
+      "resolution_from": "default_dimensions.width,height",
+      "mount_role": "camera_center_link",
+      "optical_extrinsic": "fixed mount-local view; +X forward and -Z image up; model tilt about 35 degrees downward",
+      "clip_m": [
+        0.05,
+        5.0
+      ],
+      "eye_mount_m": [
+        0.0017,
+        0,
+        0
+      ],
+      "target_mount_m": [
+        1.0017,
+        0,
+        0
+      ],
+      "up_mount": [
+        0,
+        0,
+        -1
+      ],
+      "horizontal_fov_deg": 70
+    },
+    {
+      "id": "robot_1_head",
+      "status": "implemented",
+      "resolution_from": "default_dimensions.width,height",
+      "mount_role": "camera_center_link",
+      "optical_extrinsic": "fixed mount-local view; +X forward and -Z image up; model tilt about 35 degrees downward",
+      "clip_m": [
+        0.05,
+        5.0
+      ],
+      "eye_mount_m": [
+        0.0017,
+        0,
+        0
+      ],
+      "target_mount_m": [
+        1.0017,
+        0,
+        0
+      ],
+      "up_mount": [
+        0,
+        0,
+        -1
       ],
       "horizontal_fov_deg": 70
     }

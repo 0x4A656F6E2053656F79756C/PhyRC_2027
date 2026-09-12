@@ -1,4 +1,4 @@
-# 옷 입히기 정책 인터페이스 — 0.2.0
+# 옷 입히기 정책 인터페이스 — 0.3.0
 
 두 Stretch4와 FEM 티셔츠 장면에 Gymnasium `reset/step`, 실제 로봇 상태,
 RGB-D 센서를 연결한 실험용 환경이다. 명세는
@@ -68,7 +68,11 @@ Isaac 애플리케이션은 프로세스 전역이다. **프로세스당 환경 
 ## 관측과 좌표계
 
 중앙 정책이 두 로봇의 action을 동시에 출력한다. 카메라 순서는
-`overview`, `robot_0_wrist`, `robot_1_wrist`이다. 기본 H=W=256이며
+`overview`, `robot_0_wrist`, `robot_1_wrist`, `robot_0_head`, `robot_1_head`이다.
+0.3.0에서 위쪽 카메라 두 개가 추가되어 기본 영상 배열의 첫 차원이 3에서 5로
+늘었다. 기존 인덱스 0~2는 유지되지만, 3시점으로 학습한 모델에는 이전 관측과
+맞게 RGB/depth/depth_valid의 `[:3]`을 선택하는 어댑터나 기존 config가 필요하다.
+기본 H=W=256이며
 `resolution=(width,height)` 또는 별도 config 파일로 바꾼다.
 
 | 관측 키 | 기본 shape | dtype / 의미 |
@@ -82,9 +86,9 @@ Isaac 애플리케이션은 프로세스 전역이다. **프로세스당 환경 
 | `controller_target` | `(2,9)` | float32, 실제 상태와 구별되는 제어 목표 |
 | `gripper_close_command` | `(2,1)` | bool, 닫힘 의도이며 잡기 성공 센서가 아님 |
 | `simulation_time_s` | scalar | float64, 물리 시간(s) |
-| `rgb` | `(3,H,W,3)` | uint8, RGB |
-| `depth` | `(3,H,W,1)` | float32, 광학축 Z 깊이(m), invalid=0 |
-| `depth_valid` | `(3,H,W,1)` | bool, 유한하고 clipping 범위 내인 깊이 |
+| `rgb` | `(5,H,W,3)` | uint8, RGB |
+| `depth` | `(5,H,W,1)` | float32, 광학축 Z 깊이(m), invalid=0 |
+| `depth_valid` | `(5,H,W,1)` | bool, 유한하고 clipping 범위 내인 깊이 |
 | `previous_action` | `(2,9)` | float32, 이번 관측까지 적용한 action; reset 시 0 |
 
 `measured_state`는 표의 RGB/depth/depth_valid/previous_action을 제외한다.
@@ -124,12 +128,28 @@ base_fwd, **base_strafe(기존 제어기의 오른쪽 양수)**, base_turn 순�
 
 ## RGB-D 센서
 
-overview는 고정 월드 카메라, 손목 두 대는 실제 `gripper_camera_link`를 따라간다.
+overview는 에피소드 시작 시 마네킹의 무작위 위치·yaw에 맞춰 배치한 뒤
+고정하는 외부 카메라이고, 손목 두 대는 실제 `gripper_camera_link`를 따라간다.
 초기 에셋의 이 링크는 +X가 위, −Y가 fingertip 쪽이다. config의 mount-local
 `eye_mount_m`, `target_mount_m`, `up_mount`로 한 번 정한 외부변환을 유지한다.
 그리퍼나 물체를 매번 추적하도록 시선을 바꾸지 않는다.
 
-기본 HFOV 70도, overview clip 0.05–10m, wrist clip 0.03–3m이다.
+overview의 기준 구도는 eye=(0, 2.8, 2.25)m, target=(0, 0.45, 1.0)m,
+HFOV 60도로, 마네킹 뒤에서 상체 쪽을 더 가까이 바라본다.
+`mount=human_spawn`은 reset마다 사람의 `randomSpawn` 변환을 기준 구도에
+적용하므로 마네킹의 평행 이동과 yaw를 함께 따른다. 로봇/옷 추적은 하지 않는다.
+저장 슬롯 reset도 복원한 spawn 변환을 사용하고, 무작위화가 꺼져 있으면 기준
+구도를 사용한다. 카메라의 실제 월드 외부변환은 `info['cameras']`에 반환한다.
+이는 에피소드별 카메라 배치이며 실물에서는 해당 배치를 재현해야 한다.
+GUI의 시작 카메라와 사용자 시점 이동은 별개이며, 기본 정책 해상도는 256×256이다.
+구도는 policy config에서 설정하고 `mount=world`를 쓰면 절대 월드 고정도 가능하다.
+손목 HFOV는 70도이며 overview clip 0.05–10m, wrist clip 0.03–3m이다.
+위쪽 카메라는 각 로봇의 실제 `camera_center_link`를 따라간다. 모델의 장착각을
+유지해 베이스 전방 약 35도 아래를 바라보며, mount +X가 전방, -Z가 영상 위쪽이다.
+광학 중심은 mount에서 +X 1.7mm 위치다. 머리 pan/tilt 행동은 제공하지 않으며,
+베이스 이동/회전에 따라 시점이 움직인다. HFOV 70도, clip 0.05–5m는 시뮬레이션
+설정값이며 실제 제품의 센서 보정값이나 스테레오 오차를 재현한 것은 아니다.
+`obs['rgb'][3]`, `obs['depth'][3]`은 로봇 0 위쪽, 인덱스 4는 로봇 1 위쪽이다.
 각 카메라 info에 다음을 제공한다.
 
 - `intrinsics`: pinhole K, fx=fy, cx=W/2, cy=H/2

@@ -23,7 +23,7 @@ obs, info = env.reset(seed=42)
 assert env.observation_space.contains(obs)
 print('POLICY reset ready', flush=True)
 report = {'passed': False, 'initial': info}
-for i in range(3):
+for i in range(len(info['cameras'])):
     from PIL import Image
     Image.fromarray(obs['rgb'][i]).save(output / f'camera_{i}.png')
     assert obs['depth_valid'][i].mean() > .01, (i, 'empty depth')

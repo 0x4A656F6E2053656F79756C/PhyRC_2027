@@ -4,6 +4,20 @@ ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 cd "$ROOT"
 IMAGE=${PHYRC_IMAGE:-phyrc-2027:isaac-6.0.1}
 COMMAND=${1:-help}
+if [[ "$COMMAND" == gui ]]; then
+    shift
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --full-record)
+                [[ "${2:-}" == 0 || "${2:-}" == 1 ]] || { printf -- '--full-record requires 0 or 1\n' >&2; exit 2; }
+                export STRETCH4_FULL_RECORD="$2"
+                shift 2;;
+            --no-randomization) export STRETCH4_RANDOMIZE=0; shift;;
+            *) printf 'Unknown gui option: %s\n' "$1" >&2; exit 2;;
+        esac
+    done
+    set -- gui
+fi
 if [[ "${2:-}" == --no-randomization ]]; then
     case "$COMMAND" in
         gui|smoke|python|policy-smoke|train-demo|train-grasp|train-single-grasp)
@@ -13,8 +27,9 @@ if [[ "${2:-}" == --no-randomization ]]; then
     esac
 fi
 if [[ "$COMMAND" == help ]]; then
-    printf 'Usage: ./run.sh {doctor|build|prepare|gui|smoke|policy-smoke|train-demo|train-grasp|train-single-grasp|python SCRIPT [ARGS...]|cpu SCRIPT [ARGS...]}\n'
+    printf 'Usage: ./run.sh {doctor|build|prepare|gui|replay RECORDING [OPTIONS...]|smoke|policy-smoke|train-demo|train-grasp|train-single-grasp|python SCRIPT [ARGS...]|cpu SCRIPT [ARGS...]}\n'
     printf 'Use ./run.sh gui --no-randomization for fixed human and shirt placement.\n'
+    printf 'Use ./run.sh gui --full-record 1 to record every teleop physics step.\n'
     exit 0
 fi
 if [[ "$COMMAND" == doctor ]]; then
@@ -95,7 +110,7 @@ while IFS= read -r name; do
         ARGS+=(-e "$name");;
     esac
 done < <(compgen -e)
-if [[ "$COMMAND" == gui ]]; then
+if [[ "$COMMAND" == gui || "$COMMAND" == replay ]]; then
     : "${DISPLAY:?A local graphical desktop with an attached monitor is required}"
     command -v xauth >/dev/null
     touch cache/xauth
@@ -107,6 +122,18 @@ if [[ "$COMMAND" == gui ]]; then
     ARGS+=(-e STRETCH4_HEADLESS=0 -e DISPLAY -e XAUTHORITY=/tmp/.docker.xauth
            -e "STRETCH4_SHOW_COLLIDER=${STRETCH4_SHOW_COLLIDER:-1}"
            -v "$ROOT/cache/xauth:/tmp/.docker.xauth:ro" -v /tmp/.X11-unix:/tmp/.X11-unix:rw)
+    if [[ "$COMMAND" == replay ]]; then
+        shift
+        [[ $# -gt 0 ]] || { printf 'replay requires a recording directory\n' >&2; exit 2; }
+        replay_path="$1"
+        shift
+        case "$replay_path" in
+            "$ROOT"/output/*) replay_path="/output/${replay_path#"$ROOT"/output/}";;
+            output/*) replay_path="/output/${replay_path#output/}";;
+            ./output/*) replay_path="/output/${replay_path#./output/}";;
+        esac
+        exec docker "${ARGS[@]}" "$IMAGE" /scripts/replay_teleop.py "$replay_path" "$@"
+    fi
     exec docker "${ARGS[@]}" "$IMAGE" Env_StandAlone/Teleop_TShirt_Stretch4_Env.py
 elif [[ "$COMMAND" == smoke ]]; then
     exec docker "${ARGS[@]}" -e STRETCH4_HEADLESS=1 "$IMAGE" /scripts/smoke.py

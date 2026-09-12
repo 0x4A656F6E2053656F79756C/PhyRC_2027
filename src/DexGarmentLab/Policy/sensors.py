@@ -28,7 +28,7 @@ class RGBDSensors:
         from pxr import UsdGeom, Gf
         import omni.replicator.core as rep
         rep.orchestrator.set_capture_on_play(False)
-        self.world, self.rigs = world, rigs
+        self.stage, self.world, self.rigs = stage, world, rigs
         dims = config['default_dimensions']
         self.height, self.width = dims['height'], dims['width']
         self.items = []
@@ -42,7 +42,7 @@ class RGBDSensors:
             camera.CreateFocalLengthAttr(float(focal))
             camera.CreateClippingRangeAttr(Gf.Vec2f(*spec['clip_m']))
             item = {'spec': spec, 'op': camera.AddTransformOp(), 'camera': camera}
-            if spec.get('mount') == 'world':
+            if spec.get('mount') in ('world', 'human_spawn'):
                 item['fixed_pose'] = look_at(np.array(spec['eye_world_m'], dtype=float),
                                             spec['target_world_m'], [0, 0, 1])
             else:
@@ -52,8 +52,9 @@ class RGBDSensors:
                 if link_index is None or link_index < 0:
                     raise ValueError('Missing camera mount: ' + spec['mount_role'])
                 item.update(robot_index=index, link_index=link_index)
-                # Fixed extrinsic expressed in the actual mount frame. Asset's
-                # mount has +X upward and -Y toward the fingertips at rest.
+                # Fixed extrinsic expressed in the selected link frame.
+                # Wrist and head links have different bases; config provides
+                # their respective forward/up directions explicitly.
                 # Offset and aim are explicit configuration, never recomputed
                 # from a moving target or a noisy USD display transform.
                 item['mount_from_usd_camera'] = look_at(
@@ -64,6 +65,35 @@ class RGBDSensors:
             item['rgb'].attach([product])
             item['depth'].attach([product])
             self.items.append(item)
+        self.reset_episode()
+
+    def reset_episode(self):
+        """Place overview once using the same rigid spawn delta as the mannequin.
+
+        Use only the outer randomSpawn op, not the human's mesh scale/baked
+        pose rotation. Saved slots retain the equivalent delta as metadata.
+        """
+        from pxr import UsdGeom
+        for item in self.items:
+            spec = item['spec']
+            if spec.get('mount') != 'human_spawn':
+                continue
+            prim = self.stage.GetPrimAtPath(spec['spawn_prim_path'])
+            if not prim:
+                raise ValueError('Missing camera spawn reference: ' + spec['spawn_prim_path'])
+            delta = np.eye(4)
+            restored = prim.GetAttribute('phyrc:cameraSpawnDelta')
+            if restored and restored.HasAuthoredValueOpinion():
+                delta = np.asarray(restored.Get(), dtype=float).T
+            for op in UsdGeom.Xformable(prim).GetOrderedXformOps():
+                if op.GetOpName() == 'xformOp:transform:randomSpawn':
+                    delta = np.asarray(op.Get(), dtype=float).T
+                    break
+            reference = look_at(np.array(spec['eye_world_m'], dtype=float),
+                                spec['target_world_m'], [0, 0, 1])
+            item['fixed_pose'] = delta @ reference
+            if not np.isfinite(item['fixed_pose']).all():
+                raise ValueError('Nonfinite camera spawn transform')
 
     def capture(self):
         from pxr import Gf

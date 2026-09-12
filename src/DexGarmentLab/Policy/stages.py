@@ -16,13 +16,19 @@ def validate_slot(path, revision):
 
 
 def restore_placement(stage, path):
-    from pxr import Gf, Usd, UsdGeom
+    from pxr import Gf, Sdf, Usd, UsdGeom
     from Env_Config.Human.RandomSpawn import placement_matches
     with np.load(path, allow_pickle=False) as data:
         UsdGeom.Xform.Define(stage, '/World/Chair')
         for name in ('Human', 'Chair'):
             prim = stage.GetPrimAtPath('/World/' + name)
             desired = Gf.Matrix4d(data['placement_' + name.lower()].tolist())
+            if name == 'Human':
+                original = UsdGeom.Xformable(prim).ComputeLocalToWorldTransform(Usd.TimeCode.Default())
+                # MakeMatrixXform folds away the named randomSpawn op. Retain
+                # its equivalent delta as camera-only metadata, not an xform.
+                prim.CreateAttribute('phyrc:cameraSpawnDelta', Sdf.ValueTypeNames.Matrix4d,
+                                     custom=True).Set(original.GetInverse() * desired)
             parent = UsdGeom.Xformable(prim.GetParent()).ComputeLocalToWorldTransform(Usd.TimeCode.Default())
             UsdGeom.Xformable(prim).MakeMatrixXform().Set(desired * parent.GetInverse())
         if not placement_matches(stage, data):

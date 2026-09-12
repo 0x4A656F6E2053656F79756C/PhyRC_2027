@@ -2137,6 +2137,12 @@ def pose_arms_at_attention(stage, skel_root_path, arm_dir=None,
             parent_world = new_world[p] if p is not None else Gf.Matrix4d(1.0)
             new_world[i] = local_xforms[i] * parent_world  # USD: row-vector, child = local * parent
 
+    # Read-only evaluation landmarks in skeleton space. The skeleton itself
+    # stays in bind pose after baking, so its queried joints would be stale.
+    skeleton.GetPrim().CreateAttribute(
+        "phyrc:posedJointPositions", Sdf.ValueTypeNames.Point3fArray, custom=True
+    ).Set(Vt.Vec3fArray([Gf.Vec3f(*m.ExtractTranslation()) for m in new_world]))
+
     skinning_xforms = Vt.Matrix4dArray(
         [world_xforms[i].GetInverse() * new_world[i] for i in range(len(joint_order))]
     )
@@ -5076,12 +5082,32 @@ def initialize_manipulation(env):
 
 
 def main():
+    full_record_setting = os.environ.get('STRETCH4_FULL_RECORD', '0')
+    if full_record_setting not in ('0', '1'):
+        raise ValueError('STRETCH4_FULL_RECORD must be 0 or 1')
     env = TeleopTShirtStretch4_Env()
     stage, rig, rig2 = env.stage, env.rig, env.rig2
     garment_cloths, garment_faces, _grab_post_subscription = initialize_manipulation(env)
 
+    from Policy.evaluation_live import EvaluationSession
+    import sys
+    evaluation = EvaluationSession(env, garment_cloths, (rig, rig2), sys.modules[__name__],
+                                   os.environ.get('STRETCH4_EVALUATION_DIR', '/output/evaluation/teleop'))
+    pending_evaluation = {'command': None}
+    full_recorder = None
+    if full_record_setting == '1':
+        from Policy.teleop_recording import FullTeleopRecorder
+        full_recorder = FullTeleopRecorder(env, garment_cloths, (rig, rig2), sys.modules[__name__],
+                                          os.environ.get('STRETCH4_FULL_RECORD_DIR', '/output/full_teleop'))
+
     held = rig["held"]
     quit_flag = {"quit": False}
+    if full_recorder:
+        import signal
+        def request_graceful_exit(signum, _frame):
+            quit_flag['quit'] = True
+        signal.signal(signal.SIGINT, request_graceful_exit)
+        signal.signal(signal.SIGTERM, request_graceful_exit)
 
     # state["grabbed"] is (cloth_index, idx, offsets) -- with 4 garments
     # on the table, "what's within reach" has to be checked against all
@@ -5177,17 +5203,31 @@ def main():
         clear_armed["frame"] = None
         rigs = (rig, rig2)
         if state_slot_exists(key) and not force_save:
-            return load_state_slot(key, garment_cloths, rigs)
+            evaluation.finish(reason='checkpoint_load', valid=False, take_final=False)
+            if full_recorder:
+                full_recorder.begin_discontinuity('load_' + key)
+            loaded = load_state_slot(key, garment_cloths, rigs)
+            if full_recorder:
+                full_recorder.end_discontinuity('load_' + key)
+            return loaded
         if force_save and state_slot_exists(key):
             print(f"[Teleop] {key} overwriting the state already in that slot")
         save_state_slot(key, garment_cloths, rigs)
         return False
 
     def on_keyboard_event(event, *_args, **_kwargs):
+        # Carb CHARACTER events carry text, whereas key events carry enums.
+        # Recording sees both; text must not be treated as a KeyboardInput.
+        name = event.input if isinstance(event.input, str) else event.input.name
+        if full_recorder:
+            full_recorder.event('keyboard', key=name, event_type=event.type.name,
+                                modifiers=int(getattr(event, 'modifiers', 0)))
         if event.type == carb.input.KeyboardEventType.KEY_PRESS:
-            name = event.input.name
             if name == "ESCAPE":
                 quit_flag["quit"] = True
+                return True
+            if name in ('F6', 'F7'):
+                pending_evaluation['command'] = name
                 return True
             if name == RESET_KEY:
                 do_reset()
@@ -5216,7 +5256,7 @@ def main():
                 print(f"[Teleop] key down: {name}")
             held.add(name)
         elif event.type == carb.input.KeyboardEventType.KEY_RELEASE:
-            held.discard(event.input.name)
+            held.discard(name)
         return True
 
     # A handful of keys we use (or that are just easy to hit by accident)
@@ -5251,7 +5291,7 @@ def main():
     # hand a slot key back to a dialog. Quiet on a miss -- unlike the three
     # above, most of these are EXPECTED to be unclaimed.
     for _slot_key in (STATE_SLOT_KEYS + (STATE_CLEAR_KEY,)
-                      + (RECORD_START_KEY, RECORD_STOP_KEY)):
+                      + (RECORD_START_KEY, RECORD_STOP_KEY, 'F6', 'F7')):
         for _ext in ("omni.kit.menu.utils", "omni.kit.window.content_browser"):
             _hk = hotkey_registry.get_hotkey(_ext, _slot_key)
             if _hk is not None:
@@ -5272,6 +5312,7 @@ def main():
 [Teleop] Robot 2 -- Numpad +/- wrist pitch   Numpad 1/3 wrist roll   Arrow Up/Down base fwd/back
 [Teleop] Robot 2 -- Arrow Left/Right base left/right   Numpad divide/multiply base turn   Numpad 0/Enter to grab (fingertip pinch) / release
 [Teleop] {RESET_KEY} reset to start   ESC quit
+[Teleop] Evaluation -- F6 start scoring this attempt; F7 finish and save score (P/slot LOAD invalidates it)
 [Teleop] State slots -- {" ".join(STATE_SLOT_KEYS)}: press an empty slot to SAVE the whole scene (camera included), a filled one to LOAD it
 [Teleop] State slots -- SHIFT+key overwrites a filled slot   {STATE_CLEAR_KEY} twice deletes every slot   saved under {STATE_DIR}
 [Teleop] State slots -- filled right now: {" ".join(k for k in STATE_SLOT_KEYS if state_slot_exists(k)) or "none"}
@@ -5321,6 +5362,9 @@ def main():
             # world.
             if pending_reset["want"]:
                 pending_reset["want"] = False
+                evaluation.finish(reason='scene_reset', valid=False, take_final=False)
+                if full_recorder:
+                    full_recorder.begin_discontinuity('reset')
                 # Before env.reset(), not after: the follow now runs from a
                 # physics callback, and world.reset() steps physics while the
                 # cloth views are being rebuilt. A grab left set across that
@@ -5357,6 +5401,8 @@ def main():
                 blowup_streak = 0
                 paused = False
                 env.world.play()
+                if full_recorder:
+                    full_recorder.end_discontinuity('reset')
                 print("[Teleop] reset to start")
                 continue
 
@@ -5373,6 +5419,22 @@ def main():
                     env.world.play()
                     continue
 
+            if pending_evaluation['command'] is not None:
+                command = pending_evaluation['command']
+                pending_evaluation['command'] = None
+                if command == 'F7':
+                    evaluation.finish()
+                elif evaluation.active:
+                    print('[Evaluation] Already running; press F7 to finish.', flush=True)
+                else:
+                    try:
+                        evaluation.start({'mode': 'teleop', 'garment_spawn': env.garment_spawn,
+                                          'human_spawn': env.human_spawn,
+                                          'source_commit': os.environ.get('PHYRC_SOURCE_COMMIT'),
+                                          'source_dirty': os.environ.get('PHYRC_SOURCE_DIRTY')})
+                    except Exception as exc:
+                        print(f'[Evaluation] Cannot start: {exc}', flush=True)
+
             if _frame % 120 == 0:
                 _p1, _ = rig["robot"].get_world_pose()
                 _p2, _ = rig2["robot"].get_world_pose()
@@ -5381,6 +5443,8 @@ def main():
                       f"robot1_pos={_to_np(_p1)} robot2_pos={_to_np(_p2)}")
 
             if not paused:
+                if full_recorder:
+                    full_recorder.event('control', control_frame=_frame, held_keys=sorted(held), control_dt_s=dt)
                 # [control algorithms: one measurement per cloth per control tick]
                 from Env_Config.Garment.ContinuousClothControl import cloth_control_batch
                 with cloth_control_batch():
@@ -5405,6 +5469,8 @@ def main():
                         _r['attempt_grab']()
 
             simulation_app.update()
+            if full_recorder:
+                full_recorder.check()
             # After update(), so the frame just rendered is the one written.
             record_frame()
 
@@ -5423,6 +5489,10 @@ def main():
                     # recover explicitly from the newest user-visible F-slot
                     # checkpoint rather than from a hidden rolling snapshot.
                     if is_hard:
+                        evaluation.finish(reason='nonfinite_state_recovery', valid=False, take_final=False)
+                        if full_recorder:
+                            full_recorder.check()
+                            full_recorder.begin_discontinuity('watchdog_recovery')
                         blowup_streak = 0
                         checkpoint = latest_state_slot()
                         if checkpoint is not None:
@@ -5439,7 +5509,13 @@ def main():
                                   "exists; paused. Press P to reset the scene.")
                             env.world.pause()
                             paused = True
+                        if full_recorder:
+                            full_recorder.end_discontinuity('watchdog_recovery')
     finally:
+        if full_recorder:
+            full_recorder.close(reason='normal_exit' if sys.exc_info()[0] is None else 'exception',
+                                capture_final=simulation_app.is_running())
+        evaluation.finish(reason='gui_closed')
         input_iface.unsubscribe_to_keyboard_events(keyboard, sub)
         simulation_app.close()
 
