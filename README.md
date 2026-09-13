@@ -1,10 +1,12 @@
 # PhyRC 2027 · Phase 1 참가자 가이드
 
 두 대의 **Stretch4 로봇**으로 마네킹에게 티셔츠를 입히는 Isaac Sim 6.0.1 환경입니다.
-참가자는 키보드 teleop으로 시연을 수집하고, **허용된 카메라·로봇 상태 관측으로 정책을 학습한 뒤 `(2,9)` 로봇 액션으로 실행**합니다.
+참가자는 키보드로 로봇을 직접 조종하는 **teleop**으로 시연을 수집합니다.
+이 시연으로 **카메라 영상·로봇 상태를 보고 다음 동작을 결정하는 정책(학습 모델)**을 학습하고,
+정책이 **로봇마다 9개씩, 두 로봇에 총 18개의 제어 명령**을 보내도록 실행합니다.
 이 `competition` 브랜치는 참가자용 설치·수집·정책 실행·평가 안내를 제공합니다.
 
-[설치](docs/competition/SETUP.md) · [데이터·CSV 열 설명](docs/competition/DATA.md) · [정책 실행](docs/competition/POLICY.md) · [평가](docs/competition/EVALUATION.md) · [참가 규칙](docs/competition/RULES.md) · [실제 데이터 예제](docs/examples/teleop/README.md)
+[용어·배열 표기](docs/competition/GLOSSARY.md) · [설치](docs/competition/SETUP.md) · [데이터·CSV 열 설명](docs/competition/DATA.md) · [정책 실행](docs/competition/POLICY.md) · [평가](docs/competition/EVALUATION.md) · [참가 규칙](docs/competition/RULES.md) · [실제 데이터 예제](docs/examples/teleop/README.md)
 
 ## Teleop 동작 예시
 
@@ -19,6 +21,7 @@ README에서는 GIF가 직접 재생됩니다. [전체 MP4](docs/videos/Back_Fro
 **Linux x86-64 + NVIDIA RTX GPU + Docker + NVIDIA Container Toolkit**을 사용합니다.
 호스트에 Isaac Sim, ROS, Conda 또는 별도의 CUDA Toolkit을 설치할 필요는 없습니다.
 준비부터 확인까지의 명령은 [설치 가이드](docs/competition/SETUP.md)에 있습니다.
+새 체크아웃에서 확인한 [검증 결과와 범위](docs/competition/VERIFICATION.md)도 참고하세요.
 
 Docker의 GPU 접근이 준비됐다면:
 
@@ -39,7 +42,7 @@ NVIDIA 컨테이너의 라이선스·개인정보 관련 실행 옵션은 실행
 
 ## 2. Teleop 조종
 
-Isaac Sim 창의 viewport를 클릭해 키보드 초점을 둡니다. 로봇 번호는 데이터 기준 **robot_0 / robot_1**입니다.
+Isaac Sim 창의 3D 장면 영역(viewport)을 클릭해 키보드 초점을 둡니다. 로봇 번호는 데이터 기준 **robot_0 / robot_1**입니다.
 두 로봇을 동시에 조종할 수 있습니다. 로봇 1 조종에는 숫자 키패드가 필요합니다.
 
 | 조작 | robot_0 | robot_1 |
@@ -108,10 +111,11 @@ output/
 ## 4. 취득할 수 있는 관측
 
 기본 정책 주기는 **20Hz**, 내부 제어는 **60Hz**, 물리는 **240Hz**입니다.
+여기서 Hz는 시뮬레이션 1초당 처리 횟수로, 20Hz는 0.05초마다 한 번 명령을 선택한다는 뜻입니다.
 한 action을 0.05초 동안, 즉 제어 3회·물리 12회에 걸쳐 유지합니다.
 `obs[t] → action[t] → next_obs[t]` 순서로 저장하며 카메라와 로봇 상태의 시뮬레이션 시각을 맞춥니다.
 
-| 데이터 | 실행 시 shape | 의미 |
+| 데이터 | 실행 시 배열 크기(shape) | 의미 |
 |---|---|---|
 | RGB | `(5,256,256,3)` | 외부1 + 두 로봇의 손목2·상단2, uint8 RGB |
 | Depth / 유효 mask | 각각 `(5,256,256,1)` | 광학 Z 거리(m), float32 / bool. 무효 깊이는0 |
@@ -123,7 +127,7 @@ output/
 | 제어 목표 | `(2,9)` | 현재 제어 목표값, 측정 위치와 구분 |
 | 그리퍼 닫힘 의도 | `(2,1)` | bool. 잡기 성공 여부가 아님 |
 | 직전 action | `(2,9)` | 직전 구간의 정규화 명령 |
-| 시뮬레이션 시각 | scalar | 초 |
+| 시뮬레이션 시각 | scalar(숫자 하나) | 초 |
 
 정확한 키·열 순서·단위는 [데이터 가이드](docs/competition/DATA.md)와 [공개 명세](config/policy_interface.json)에 있습니다.
 **위 관측과 아래 action만 학습·추론에 사용합니다.**
@@ -143,14 +147,27 @@ output/
 검정은 무효 또는 최대거리 부근이므로 학습에서는 `depth_valid`를 함께 사용하세요.
 GIF는 일부 구간, MP4는 5fps 미리보기입니다. 원본은 20Hz이며 영상 압축·미리보기 생략은 학습 HDF5에 적용하지 않았습니다.
 
-예제 데이터는 **1,142개 전이, 57.1초**의 실제 수집이며 관측·액션·카메라 동기화 검사를 통과했습니다.
+예제 데이터는 **1,142개 학습 구간(전이), 시뮬레이션 시간 57.1초**의 실제 수집이며 관측·액션·카메라 동기화 검사를 통과했습니다.
 집기5점만 획득한 부분 시연으로, 성공 정책이나 성공 시연 예제가 아닙니다.
 [CSV 및 열람 페이지](docs/examples/teleop/README.md)에서 자세히 확인할 수 있습니다.
 
 ## 5. Action과 숫자의 의미
 
-정책 출력은 float32 **`(2,9)`**, 각 값은 **`[-1,1]`**입니다.
-HDF5에서는 robot_0의9개 다음 robot_1의9개로 펼친 `(18,)`입니다.
+**`(2,9)`는 “로봇 2대 × 로봇마다 명령 9개”를 담는 배열 크기입니다.**
+첫 행은 robot_0, 두 번째 행은 robot_1의 명령입니다. 각 행의 9개 열은 아래 표의 명령에 대응합니다.
+
+```text
+             전진  왼쪽  베이스회전  리프트  팔신장  손목yaw  pitch  roll  그리퍼
+robot_0:     [ 0,    0,       0,       1,      0,       0,     0,    0,     0 ]
+robot_1:     [ 0,    0,       0,       0,      0,       0,     0,    0,     0 ]
+```
+
+위 예시는 robot_0 리프트에 상승 명령을 보내고, 다른 이동·회전 축에는 구동 명령을 보내지 않는 경우입니다.
+그리퍼 0은 이전 개폐 의도를 유지합니다. Python에서는 `action[0,3] = 1`에 해당합니다(인덱스는 0부터 시작).
+
+명령은 `float32`(소수도 표현할 수 있는 32비트 숫자)이고 허용 범위는 **−1 이상 +1 이하**입니다.
+저장할 때는 두 행을 이어 붙여 길이 18의 목록 `(18,)`으로 만듭니다.
+여러 시점의 명령을 쌓은 `(N,18)`에서 `N`은 action 구간 수입니다. 예제의 N은 1,142입니다.
 
 | 로봇당 열 | 명령 | 양의 방향 / 값의 의미 |
 |---|---|---|
@@ -166,7 +183,7 @@ HDF5에서는 robot_0의9개 다음 robot_1의9개로 펼친 `(18,)`입니다.
 키를 누르는 방식이라 `−1,0,1`만 나오는 것이 정상입니다. 정책은 `0.3` 등 중간값도 출력할 수 있습니다.
 `lift_velocity=1`은 **1m/s가 아니라 설정된 리프트 속도 스케일의100%를 요청**한다는 뜻입니다.
 실제 위치·속도는 관측에 따로 있으며, 물리·관절 제한 때문에 요청값과 다를 수 있습니다.
-그리퍼0은 열기가 아니라 **이전 의도 유지**입니다. 닫힘 요청은 매 프레임 반복되지 않습니다.
+그리퍼 0은 열기가 아니라 **이전 의도 유지**입니다. 닫힘 요청은 매 프레임 반복되지 않습니다.
 
 [실제 actions CSV](docs/examples/teleop/demo_0_actions.csv) · [obs CSV](docs/examples/teleop/demo_0_obs.csv) · [next_obs CSV](docs/examples/teleop/demo_0_next_obs.csv) · [모든 CSV 열의 의미](docs/examples/teleop/columns.csv)
 
@@ -177,9 +194,9 @@ CSV의 `[i]`는 배열을 로봇 순서대로 펼친 인덱스입니다. 예를 
 ## 6. 정책 학습과 실행
 
 `policy.hdf5`는 robomimic 스타일의 `data/demo_N/{obs,next_obs,actions,rewards,dones}` 구조입니다.
-기본 모방학습 데이터 로더는 허용된 관측과 action만 반환합니다. RGB는 HWC uint8이므로 모델에 맞게 전처리하고,
+기본 모방학습 데이터 로더는 허용된 관측과 action만 반환합니다. RGB는 HWC(높이·너비·색상채널 순서)의 uint8(0–255 정수)이므로 모델에 맞게 전처리하고,
 depth는 m 단위를 유지하거나 명시적으로 정규화하세요. 에피소드 단위로 학습/검증을 나누고 성공·실패 시연을 구분하세요.
-`reward=0`은 기본 placeholder이고, `done=1`은 종료를 뜻하며 착의 성공과 같지 않습니다.
+`reward=0`은 학습 파일 형식을 위한 기본값이고, `done=1`은 종료를 뜻하며 착의 성공과 같지 않습니다.
 
 학습한 정책은 [정책 어댑터 작성법](docs/competition/POLICY.md)을 따라 다음과 같이 평가합니다.
 
@@ -240,6 +257,8 @@ points/s = (누적 총점 − 실제 획득한 집기 점수)
 **주최 측의 자체 검증 과정에서 위반이 확인되면 심사에서 제외합니다.**
 학습 코드·데이터 출처·생성 방법·체크포인트·실행 로그를 검토하고 별도 초기 상태에서 재평가할 수 있습니다.
 [참가 규칙](docs/competition/RULES.md)을 반드시 확인하세요.
+
+배열 크기, Hz, tick, obs/next_obs, quaternion 등은 [용어·배열 표기 안내](docs/competition/GLOSSARY.md)에서 예시와 함께 설명합니다.
 
 ## 도움이 필요할 때
 

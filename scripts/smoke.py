@@ -14,6 +14,8 @@ output = Path('/output/verification')
 output.mkdir(parents=True, exist_ok=True)
 os.environ['STRETCH4_STATE_DIR'] = tempfile.mkdtemp(prefix='smoke_states_', dir=output)
 sys.path.insert(0, '/workspace/DexGarmentLab')
+from policy_cli import install_failure_handler
+install_failure_handler()
 import numpy as np
 import Env_StandAlone.Teleop_TShirt_Stretch4_Env as M
 from pxr import Usd, UsdGeom
@@ -72,9 +74,12 @@ def observed_save(key, cloths, rigs):
         }
         context['initial_joints'] = [array(r['robot'].get_joint_positions()) for r in rigs]
         context['faces'] = [M.garment_face_labels(c.prim, array(c.get_world_positions())[0]) for c in cloths]
-        assert report['scene']['vertices'] == 15946
-        assert report['scene']['triangles'] == 31464
-        assert report['scene']['solver_iterations'] == 32
+        # Current distributed V-neck asset after the existing midpoint refinement.
+        # These are checks only; do not change scene geometry/physics to fit a test.
+        for field, expected in {'vertices': 15878, 'triangles': 31344,
+                                'solver_iterations': 64}.items():
+            actual = report['scene'][field]
+            assert actual == expected, f'{field}: expected {expected}, got {actual}'
         assert heads, 'Rounded visual head metadata is missing'
         print('PHYRC-SMOKE: full main-loop initialization reached', flush=True)
     return result

@@ -8,6 +8,44 @@
 이번 게시를 막는 지시가 아니다. 향후 새 작업을 자동으로 게시하라는 상시 승인은 아니다.
 또한 사용자는 replay 배속을 더 이상 수정하지 말라고 요청했다.
 
+# 참가자 용어 보강 및 새 체크아웃 검증 — 2026-09-14
+
+- 사용자 요청: 참가팀 설치·실행 가능 여부를 실제 검증하고 `(2,9)` 등 생소한 표현 설명 보강.
+- 작업 브랜치 competition, 시작 HEAD c60bef9. main/origin/main은25ac0d9이며 이번 작업에서는 변경하지 않음.
+  이전 main 업데이트 요청으로25ac0d9까지 이미 main에 반영되어 있음. c60bef9는 competition의 ESC/READY 안내 추가.
+- README의 `(2,9)`를 로봇2대 × 로봇당9명령으로 설명하고 실제2행 배열/Python 인덱스 예시 추가.
+  docs/competition/GLOSSARY.md 신설: 배열/숫자형/좌표/시간/영상/정책·학습 용어,
+  관절13개와 액션9개 차이, controller_target과 action 차이, 옵션1/0 의미 등.
+  DATA/POLICY/SETUP의 설명·링크도 보강. 검증 범위는 VERIFICATION.md에 정리.
+- GitHub remote에서 새 clone: /tmp/phyrc-clean-AC5RlluD/repo (c60bef9).
+  기존 .runtime/assets다운로드/cache/output 미사용. 별도 이미지 phyrc-competition-clean:20260914를
+  docker build --no-cache로 생성. NVIDIA base image는 호스트 캐시를 사용; OS/driver/Docker 재설치 아님.
+  같은 PC Ubuntu22.04.5/X11/i7-11700F/RAM64GB/RTX5080 16GB/driver580.178.04/Docker29.1.3.
+- 새 prepare 성공: 추가 자산4개 실제 다운로드, 필수8개 SHA 검증, 소스43py가 새 runtime과 동일.
+  기존 t_shirt_short.usd와 새 생성파일은 USD layer ExportToString() 전체 내용 동일.
+  USDC 바이너리 파일 SHA는 서로 달라도 레이어 내용은 같았음.
+- 실제 smoke에서 과거 hardcoded15946/31464/solver32 때문에 실패 발견.
+  기존 실제 환경도 현재는15878/31344/solver64임을 기존 실행로그·소스·에셋 비교로 확인.
+  scripts/smoke.py의 기대값만 현재 값으로 수정하고 기존 policy_cli 실패 종료 핸들러 적용.
+  옷 형상/물성/solver/속도 등을 바꿔 테스트를 맞춘 것이 아님.
+- 최초 실패 후 재실행은 초기화가 길어 약4분에서 중단하고, 새 체크아웃의 cache를
+  cache_after_failed_smoke로 보존한 뒤 빈 cache로 재검증. 캐시 손상이 원인이라고 확정하지 않음.
+  최종 smoke PASS(exit0), 약342초. 두 로봇 움직임/그리퍼개폐/저장불러오기/유한천상태,
+  불러온 옷 위치 최대오차0m. 첫 렌더링 준비가 수 분 걸릴 수 있음을 참가 문서에 설명.
+- 실제 GUI 검증: 새 checkout에서 PHYRC_IMAGE=phyrc-competition-clean:20260914
+  ./run.sh gui --training-record 1 --evaluate 1. 약312초에 조종/종료까지 완료(대부분 첫 준비).
+  xdotool로 해당 Isaac 창에만 W/D/ESC 키 입력. F6/F7 또는 수동 export 없이 자동평가+READY(exit0).
+  새 녹화ID 20260913T194022_028604Z_d1af3e; 새 checkout output/full_teleop 및 policy_datasets 아래.
+  1episode/9transitions/.45sim초/108physicsticks/120전체states. capture ready, complete true.
+  W/D가 실제 actions의 lift/arm=1로 저장되고 robot0 lift가 움직인 것 확인; action값0/1.
+  check_deferred_dataset.py PASS: 모든 공개상태/액션/적용목표/카메라+viewport행렬,
+  5RGBD/mask유효값/obs-next_obs연속성 검증. 추가 CPU검사로 tick전수/시각일치/scene SHA 확인.
+  실제 HDF5의5RGB 최종프레임도 그림으로 열어 확인. 자동평가 valid:true/gui_closed, 무접촉0점.
+- 검증로그/결과/그림/추가검사스크립트는 원래 repo output/competition_publish/clean_* 및
+  check_gui_capture.py에 보존. 원본 사용자 기록/슬롯/런타임 자산은 수정하지 않음.
+- 검증범위: 같은 PC의 새 프로젝트 설치, 짧은 조종/저장. 다른 PC/새 OS/장시간 안정성/착의 정책 학습 성공은 미검증.
+- 실제 실행 소스/설정은 그대로이며 smoke 검사코드와 참가 문서만 수정. 원래 runtime 소스 동기화는 추가 작업 불필요.
+
 # 대회용 competition 브랜치 게시 — 2026-09-14
 
 - 사용자 최신 승인: 대회용 새 브랜치 생성, 참가자 문서/영상/데이터 예제 및 실행 옵션을
