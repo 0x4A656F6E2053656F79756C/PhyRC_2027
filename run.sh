@@ -41,7 +41,7 @@ fi
 if [[ "$COMMAND" == help ]]; then
     printf 'Usage: ./run.sh {doctor|build|prepare|gui|replay RECORDING [OPTIONS...]|smoke|policy-smoke|train-demo|train-grasp|train-single-grasp|python SCRIPT [ARGS...]|cpu SCRIPT [ARGS...]}\n'
     printf 'Use ./run.sh gui --no-randomization for fixed human and shirt placement.\n'
-    printf 'Use ./run.sh gui --full-record 1 to record every teleop physics step.\n'
+    printf 'Use ./run.sh gui --full-record 1 for a replay/evaluation state archive only (no training images or HDF5).\n'
     printf 'Use ./run.sh gui --training-record 1 for synchronized RGBD/action HDF5 plus full recording.\n'
     printf 'Use ./run.sh gui --evaluate 1 to score automatically from startup to ESC.\n'
     printf 'Training capture defaults to deferred rendering: HDF5 is generated automatically after ESC.\n'

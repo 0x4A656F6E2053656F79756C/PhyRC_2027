@@ -79,10 +79,10 @@ docker run --rm --gpus all ubuntu:24.04 nvidia-smi
 
 마지막 명령에서 GPU가 표시되어야 합니다. Docker 재시작은 다른 컨테이너에 영향을 줄 수 있으므로 공유 장비에서는 관리자와 일정을 맞춥니다.
 
-## 4. 대회 브랜치 복제
+## 4. 저장소 복제
 
 ```bash
-git clone --branch competition --single-branch \
+git clone \
   https://github.com/0x4A656F6E2053656F79756C/PhyRC_2027.git
 cd PhyRC_2027
 ./run.sh doctor

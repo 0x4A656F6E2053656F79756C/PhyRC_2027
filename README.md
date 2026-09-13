@@ -4,7 +4,7 @@
 참가자는 키보드로 로봇을 직접 조종하는 **teleop**으로 시연을 수집합니다.
 이 시연으로 **카메라 영상·로봇 상태를 보고 다음 동작을 결정하는 정책(학습 모델)**을 학습하고,
 정책이 **로봇마다 9개씩, 두 로봇에 총 18개의 제어 명령**을 보내도록 실행합니다.
-이 `competition` 브랜치는 참가자용 설치·수집·정책 실행·평가 안내를 제공합니다.
+이 저장소는 참가자용 시뮬레이션 환경과 설치·조종·데이터 수집·정책 실행·평가 안내를 제공합니다.
 
 [용어·배열 표기](docs/competition/GLOSSARY.md) · [설치](docs/competition/SETUP.md) · [데이터·CSV 열 설명](docs/competition/DATA.md) · [정책 실행](docs/competition/POLICY.md) · [평가](docs/competition/EVALUATION.md) · [참가 규칙](docs/competition/RULES.md) · [실제 데이터 예제](docs/examples/teleop/README.md)
 
@@ -26,7 +26,7 @@ README에서는 GIF가 직접 재생됩니다. [전체 MP4](docs/videos/Back_Fro
 Docker의 GPU 접근이 준비됐다면:
 
 ```bash
-git clone --branch competition --single-branch \
+git clone \
   https://github.com/0x4A656F6E2053656F79756C/PhyRC_2027.git
 cd PhyRC_2027
 ./run.sh doctor
@@ -36,8 +36,6 @@ cd PhyRC_2027
 ./run.sh gui
 ```
 
-NVIDIA 컨테이너의 라이선스·개인정보 관련 실행 옵션은 실행기가 전달합니다.
-별도의 `PHYRC_ACCEPT_EULA` 환경 변수는 필요하지 않습니다.
 사용 전 [NVIDIA 이용 조건과 설치 안내](https://docs.isaacsim.omniverse.nvidia.com/6.0.1/installation/install_container.html) 및 [자산 출처](THIRD_PARTY.md)를 확인하세요.
 
 ## 2. Teleop 조종
@@ -56,10 +54,9 @@ Isaac Sim 창의 3D 장면 영역(viewport)을 클릭해 키보드 초점을 둡
 | 손목 pitch + / − | `V` / `R` | 키패드 `+` / `-` |
 | 손목 roll + / − | `C` / `Z` | 키패드 `3` / `1` |
 | 그리퍼 개폐 전환 | `Space` 또는 상단 `0` | 키패드 `0` 또는 `Enter` |
-| 장면 초기화 | `P` | 공통 |
+| 장면 초기화·새 시도 시작 | 키보드 `P` | 공통 |
 | 정상 종료·자동 저장 | `ESC` | 공통 |
 
-충돌 메시 표시는 기본적으로 꺼져 있습니다. 물리 충돌 계산은 계속 동작합니다.
 PC가 느리면 실제 조작 시간보다 시뮬레이션 시간이 느리게 흐를 수 있습니다.
 정책 데이터의 시간과 채점은 **시뮬레이션 시간**을 사용합니다.
 
@@ -86,10 +83,10 @@ PC가 느리면 실제 조작 시간보다 시뮬레이션 시간이 느리게 �
 | 학습용 데이터 수집 | `./run.sh gui --training-record 1` |
 | 시작부터 화면을 보며 자동 평가 | `./run.sh gui --evaluate 1` |
 | 학습용 수집 + 조종 중 자동 평가 | `./run.sh gui --training-record 1 --evaluate 1` |
-| 원본 상태 기록만 수집 | `./run.sh gui --full-record 1` |
 | 고정 초기 배치로 조종 연습 | `./run.sh gui --no-randomization` |
 
-`--training-record 1`은 전체 원본 기록도 자동으로 켭니다. 기본 모드는 조종 후 이미지를 생성해 조종 중 부하를 줄입니다.
+`--training-record 1`로 카메라·로봇 상태·액션을 포함한 학습 데이터를 수집합니다.
+재생·검증에 필요한 원본 상태 기록도 함께 저장됩니다. 기본 모드는 조종 후 이미지를 생성해 조종 중 부하를 줄입니다.
 실시간으로 HDF5를 만드는 모드는 `--training-render live`이며 렌더링 부하가 더 큽니다.
 학습 기록은 평가 결과도 자동 저장합니다. `--evaluate 1`을 추가하면 기본 수집 모드에서도 조종 중 점수 변화를 볼 수 있습니다.
 이때 실시간 평가와 이미지 변환 후 평가 결과가 각각 저장됩니다.
@@ -105,8 +102,11 @@ output/
   evaluation/teleop/<평가ID>/   --evaluate 1의 실시간 평가 결과
 ```
 
-`P`는 에피소드를 나눕니다. 창 강제 종료·프로세스 종료로 `complete=false`가 되면 학습 로더가 거부합니다.
-미완료 파일을 정상 파일처럼 표시해 사용하지 마세요. 정상 수집 후 변환만 중단됐다면 [변환 재시도](docs/competition/DATA.md#변환-재시도와-검사)를 사용할 수 있습니다.
+**다시 시도하려면 3D 장면 영역을 클릭한 뒤 키보드의 `P` 키를 누르세요.**
+장면이 초기화되고 새 시도를 시작합니다. 학습 파일에서는 초기화 전후를 서로 다른 에피소드(한 번의 시도)로 저장합니다.
+예를 들어 첫 시도는 `demo_0`, P 키로 초기화한 다음 시도는 `demo_1`에 저장됩니다.
+
+창이나 프로세스를 강제로 종료해 `complete=false`가 된 파일은 학습 로더가 거부합니다. 정상 수집 후 변환만 중단됐다면 [변환 재시도](docs/competition/DATA.md#변환-재시도와-검사)를 사용할 수 있습니다.
 
 ## 4. 취득할 수 있는 관측
 
