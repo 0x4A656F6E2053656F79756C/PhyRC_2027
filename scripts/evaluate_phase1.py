@@ -70,8 +70,12 @@ def main(argv=None):
         print(f"Submission: {submission['submission_id']}")
         for episode in submission['episodes']:
             print(f"  {format_score_items(episode)}")
-            print(f"  seed={episode['seed']}: {episode['raw_points']:.3f}/50 points / "
-                  f"{episode['task_time_s']:.3f} s = {episode['final_score']:.6f} points/s")
+            rate = (f"{episode['final_score']:.6f} points/s" if episode['final_score'] is not None
+                    else f"N/A ({episode['score_status']}); ranking contribution 0")
+            rate_detail = (f" | rate numerator={episode['rate_points']:.3f}/45 (pickup excluded)"
+                           if 'rate_points' in episode else '')
+            print(f"  seed={episode['seed']}: {episode['raw_points']:.3f}/50 points, "
+                  f"{episode['task_time_s']:.3f} s | {rate}{rate_detail}")
         print(f"  Mean score: {submission['final_score']:.6f} points/s")
     print(f"FINAL SCORE: {report['final_score']:.6f} points/s "
           f"(best submission: {report['best_submission_id']})")

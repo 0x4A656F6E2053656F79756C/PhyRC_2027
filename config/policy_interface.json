@@ -501,12 +501,15 @@
     "schema": "phyrc-policy-dataset-v1",
     "format": "robomimic-style HDF5; lossless LZF",
     "sampling": "20Hz sample-and-hold; commands applied for 3 control ticks / 12 physics ticks; no averaging",
-    "alignment": "obs before action, next_obs after exactly 12 physics ticks; synchronous 5-camera RGBD and audit viewport capture without physics advance",
+    "alignment": "20Hz boundary states/camera poses recorded live; images rendered from those exact states after capture, without a new physics solve",
     "actions_on_disk": [
       18
     ],
     "raw_recording": "automatically preserved at 240Hz",
     "audit": "separate audit.hdf5 and evaluation JSON, never returned by PolicyDataset",
-    "backpressure": "synchronous blocking writes, no frame dropping"
+    "backpressure": "bounded asynchronous raw archive; block without dropping; HDF5 generation after teleop",
+    "default_render_mode": "deferred",
+    "live_render_option": "--training-render live",
+    "automatic_export": "run.sh gui starts separate headless exporter after a complete capture; wait for READY"
   }
 }

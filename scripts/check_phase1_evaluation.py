@@ -70,7 +70,7 @@ class ScoringTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 evaluate_episode(changed)
 
-    def test_v3_requires_contact_evidence_and_does_not_rank_undefined_rates(self):
+    def test_v3_requires_contact_evidence_and_zero_ranks_undefined_rates(self):
         data = demo_data()
         data['schema_version'] = 'phase1-measurements-v3'
         del data['submissions'][0]['episodes'][0]['samples'][0]['first_contact_time_s']
@@ -86,8 +86,49 @@ class ScoringTests(unittest.TestCase):
             evaluate_submissions(legacy)
         for s in data['submissions'][0]['episodes'][0]['samples']:
             s['first_contact_time_s'] = None
-        with self.assertRaisesRegex(ValueError, 'No comparable points/s'):
-            evaluate_submissions(data)
+        report = evaluate_submissions(data)
+        self.assertEqual(report['final_score'], (0 + 20 / 8) / 2)
+        episode = report['submissions'][0]['episodes'][0]
+        self.assertEqual(episode['ranking_score'], 0)
+        self.assertEqual(episode['ranking_status'], 'no_contact')
+        self.assertIsNone(episode['final_score'])
+        self.assertEqual(episode['raw_points'], 50)  # Preserve evidence, not a fabricated rate.
+
+    def test_all_no_contact_and_last_tick_contact_complete_batch_and_cli(self):
+        data = demo_data()
+        for episode in data['submissions'][0]['episodes']:
+            for s in episode['samples']:
+                s['first_contact_time_s'] = None
+                s['dressing_complete'] = False
+        report = evaluate_submissions(data)
+        self.assertEqual(report['final_score'], 0)
+        self.assertEqual(report['submissions'][0]['zero_ranked_episode_count'], 2)
+        self.assertEqual(report['submissions'][0]['success_rate'], 0)
+        last = data['submissions'][0]['episodes'][1]['samples'][-1]
+        last['first_contact_time_s'] = last['time_s']
+        report = evaluate_submissions(data)
+        self.assertEqual(report['final_score'], 0)
+        self.assertEqual(report['submissions'][0]['episodes'][1]['ranking_status'], 'awaiting_elapsed_time')
+        with tempfile.TemporaryDirectory() as folder:
+            source, output = Path(folder) / 'input.json', Path(folder) / 'scores.json'
+            source.write_text(json.dumps(data))
+            process = subprocess.run([sys.executable, str(ROOT / 'scripts/evaluate_phase1.py'),
+                                      '--input', str(source), '--output', str(output)], capture_output=True, text=True)
+            self.assertEqual(process.returncode, 0, process.stderr)
+            self.assertIn('ranking contribution 0', process.stdout)
+            self.assertEqual(json.loads(output.read_text())['final_score'], 0)
+
+    def test_max_points_are_not_a_success_label(self):
+        samples = demo_data()['submissions'][0]['episodes'][0]['samples']
+        for s in samples:
+            s['dressing_complete'] = False
+        result = evaluate_episode(samples)
+        self.assertEqual(result['raw_points'], 50)
+        self.assertTrue(result['max_score_achieved'])
+        self.assertTrue(result['success_evaluated'])
+        self.assertFalse(result['success'])
+        self.assertIn('Dressing success: NO', format_score_items(result))
+        self.assertFalse(evaluate_episode(trace())['success_evaluated'])
 
     def test_no_progress_and_zero_time(self):
         self.assertEqual(evaluate_episode(trace())['final_score'], 0)
@@ -147,6 +188,8 @@ class ScoringTests(unittest.TestCase):
         self.assertTrue(result['score_items']['overall_dressing']['full_dressing_override'])
         self.assertEqual(result['score_items']['overall_dressing']['n'], .35)
         self.assertEqual(result['dressing_completed_at_s'], 1.5)
+        self.assertTrue(result['success'])
+        self.assertFalse(result['max_score_achieved'])
         for s in samples[31:]:
             s['dressing_complete'] = False
             s['arm_coverage'] = dict(left=0, right=0)

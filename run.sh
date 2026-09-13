@@ -8,6 +8,14 @@ if [[ "$COMMAND" == gui ]]; then
     shift
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --evaluate)
+                [[ "${2:-}" == 0 || "${2:-}" == 1 ]] || { printf -- '--evaluate requires 0 or 1\n' >&2; exit 2; }
+                export STRETCH4_AUTO_EVALUATE="$2"
+                shift 2;;
+            --training-render)
+                [[ "${2:-}" == deferred || "${2:-}" == live ]] || { printf -- '--training-render requires deferred or live\n' >&2; exit 2; }
+                export STRETCH4_TRAINING_RENDER="$2"
+                shift 2;;
             --training-record)
                 [[ "${2:-}" == 0 || "${2:-}" == 1 ]] || { printf -- '--training-record requires 0 or 1\n' >&2; exit 2; }
                 export STRETCH4_TRAINING_RECORD="$2"
@@ -35,6 +43,8 @@ if [[ "$COMMAND" == help ]]; then
     printf 'Use ./run.sh gui --no-randomization for fixed human and shirt placement.\n'
     printf 'Use ./run.sh gui --full-record 1 to record every teleop physics step.\n'
     printf 'Use ./run.sh gui --training-record 1 for synchronized RGBD/action HDF5 plus full recording.\n'
+    printf 'Use ./run.sh gui --evaluate 1 to score automatically from startup to ESC.\n'
+    printf 'Training capture defaults to deferred rendering: HDF5 is generated automatically after ESC.\n'
     exit 0
 fi
 if [[ "$COMMAND" == doctor ]]; then
@@ -44,10 +54,6 @@ if [[ "$COMMAND" == doctor ]]; then
     printf 'DISPLAY=%s; session=%s\n' "${DISPLAY:-unset}" "${XDG_SESSION_TYPE:-unset}"
     printf 'Read README.md for hardware requirements and NVIDIA license acceptance.\n'
     exit 0
-fi
-if [[ "${PHYRC_ACCEPT_EULA:-0}" != 1 ]]; then
-    printf 'Read NVIDIA EULA/privacy links in README.md, then export PHYRC_ACCEPT_EULA=1 if you agree.\n' >&2
-    exit 2
 fi
 if [[ "$COMMAND" == build ]]; then
     exec docker build -t "$IMAGE" .
@@ -125,7 +131,7 @@ if [[ "$COMMAND" == gui || "$COMMAND" == replay ]]; then
     printf '%s\n' "$cookie" | sed 's/^..../ffff/' | xauth -f cache/xauth nmerge -
     chmod 644 cache/xauth
     ARGS+=(-e STRETCH4_HEADLESS=0 -e DISPLAY -e XAUTHORITY=/tmp/.docker.xauth
-           -e "STRETCH4_SHOW_COLLIDER=${STRETCH4_SHOW_COLLIDER:-1}"
+           -e "STRETCH4_SHOW_COLLIDER=${STRETCH4_SHOW_COLLIDER:-0}"
            -v "$ROOT/cache/xauth:/tmp/.docker.xauth:ro" -v /tmp/.X11-unix:/tmp/.X11-unix:rw)
     if [[ "$COMMAND" == replay ]]; then
         shift
@@ -138,6 +144,20 @@ if [[ "$COMMAND" == gui || "$COMMAND" == replay ]]; then
             ./output/*) replay_path="/output/${replay_path#./output/}";;
         esac
         exec docker "${ARGS[@]}" "$IMAGE" /scripts/replay_teleop.py "$replay_path" "$@"
+    fi
+    if [[ "${STRETCH4_TRAINING_RECORD:-0}" == 1 && "${STRETCH4_TRAINING_RENDER:-deferred}" == deferred ]]; then
+        mkdir -p output/training_export_requests
+        training_request="/output/training_export_requests/$(date -u +%Y%m%dT%H%M%S)_$$.json"
+        if docker "${ARGS[@]}" -e "STRETCH4_TRAINING_EXPORT_REQUEST=$training_request" "$IMAGE" Env_StandAlone/Teleop_TShirt_Stretch4_Env.py; then
+            if [[ -f "$ROOT${training_request}" ]]; then
+                printf 'Teleop finished. Generating synchronized RGBD/HDF5 in a separate headless process...\n'
+                exec docker "${ARGS[@]}" "$IMAGE" /scripts/export_policy_dataset.py --request "$training_request"
+            fi
+            printf 'No complete capture available for automatic export. Check the recording status.\n'
+            exit 0
+        else
+            exit "$?"
+        fi
     fi
     exec docker "${ARGS[@]}" "$IMAGE" Env_StandAlone/Teleop_TShirt_Stretch4_Env.py
 elif [[ "$COMMAND" == smoke ]]; then

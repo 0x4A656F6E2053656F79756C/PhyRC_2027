@@ -47,6 +47,20 @@ class GeometryTests(unittest.TestCase):
         self.assertTrue(report['dressing_complete'])
         self.assertLess(coverage['left'], .4)  # A short sleeve is enough.
         self.assertTrue(all(wrists.values()))
+        # Folded collar-adjacent material reverses the old cloth-side sign.
+        # Clearance must still face the head, including under rigid rotation.
+        geometry.collar_inner = np.array([len(points), len(points) + 1])
+        folded = np.vstack((points, [[0, 3, 1.01], [.01, 3, 1.01]]))
+        measured = geometry.measure(folded, arms, neck, head)[2]
+        self.assertTrue(measured['neck']['neck_out'])
+        rotation = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
+        moved = geometry.measure(folded @ rotation + 7,
+                                 {k: v @ rotation + 7 for k, v in arms.items()},
+                                 neck @ rotation + 7, head @ rotation + 7)[2]
+        self.assertTrue(moved['neck']['neck_out'])
+        self.assertAlmostEqual(moved['neck']['head_min_clearance_above_collar_m'],
+                               measured['neck']['head_min_clearance_above_collar_m'])
+        geometry.collar_inner = np.arange(128, 160)
         # Collar caught on the face, wrong opening, or hand still inside.
         self.assertFalse(geometry.measure(points, arms, neck, head - [0, 0, .3])[2]['dressing_complete'])
         self.assertFalse(geometry.measure(points, arms, neck + [.4, 0, 0], head)[2]['dressing_complete'])
@@ -114,6 +128,37 @@ class FakeMeasurements:
 
 
 class SessionTests(unittest.TestCase):
+    def test_logs_only_changes_without_losing_samples_or_subsecond_events(self):
+        from contextlib import redirect_stdout
+        from io import StringIO
+        class Progress(FakeMeasurements):
+            def measure(self, physical=None):
+                result = super().measure(physical)
+                result['wrist_in_sleeve']['left'] = self.calls >= 61  # 0.25s
+                result['garment_beyond_shoulder']['right'] = self.calls >= 73  # 0.30s
+                return result
+        with tempfile.TemporaryDirectory() as output, redirect_stdout(StringIO()) as captured:
+            session = self.make_session(output)
+            session.start(measurements=Progress())
+            for _ in range(7 * 240):
+                session._physics_step(1 / 240)
+            report = session.finish()
+            first_log = captured.getvalue()
+            lines = [line for line in first_log.splitlines() if line.startswith('[Evaluation] sim ')]
+            self.assertEqual(len(lines), 4)  # initial, sleeve, shoulder, pickup
+            self.assertIn('sim 0.25s', lines[1])
+            self.assertIn('sim 0.30s', lines[2])
+            self.assertIn('sim 3.00s', lines[3])
+            self.assertEqual(first_log.count('FINAL SCORE:'), 1)
+            self.assertNotIn('[Evaluation] ITEMS:', first_log)
+            self.assertEqual(len(session.trace), 141)
+            self.assertEqual(len((session.path / 'samples.jsonl').read_text().splitlines()), 141)
+            self.assertEqual(report['result']['raw_points'], 15)
+            session.start(measurements=Progress())
+            session._physics_step(1 / 240)
+            session.finish()
+            self.assertEqual(captured.getvalue().count('[Evaluation] sim 0.00s'), 2)
+
     def test_precontact_pickup_is_kept_and_clock_uses_first_physics_contact(self):
         class Delayed(FakeMeasurements):
             def contact(self, points):

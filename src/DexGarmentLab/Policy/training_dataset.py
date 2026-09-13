@@ -123,9 +123,11 @@ class DatasetWriter:
             self.episode['truncated'][-1] = 1
         self.episode.attrs.update(complete=bool(valid), termination_reason=reason)
         self.audit_episode.attrs['result_json'] = json.dumps(result, allow_nan=False)
-        self.audit_episode.attrs['success_known'] = bool(result and result.get('valid'))
-        self.audit_episode.attrs['success'] = bool(result and result.get('valid') and
-                                                   (result.get('result') or {}).get('dressing_complete'))
+        score = (result or {}).get('result') or {}
+        known = bool(result and result.get('valid') and score.get('success_evaluated', 'dressing_complete' in score))
+        self.audit_episode.attrs['success_known'] = known
+        self.audit_episode.attrs['success'] = bool(known and score.get('success', score.get('dressing_complete', False)))
+        self.audit_episode.attrs['success_basis'] = score.get('success_basis', 'confirmed sleeves and neck for 0.5s; achieved during episode, not raw_points')
         self.episode = None
         self.policy.flush()
         self.audit.flush()

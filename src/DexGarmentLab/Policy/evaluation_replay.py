@@ -16,7 +16,10 @@ def measurement_context(measurement):
     """Freeze the live evaluator's read-only landmarks/topology, including labels."""
     geometry = measurement.geometry
     return {
-        'version': 1, 'metadata': measurement.metadata,
+        'sleeve_regions': None if getattr(geometry, 'sleeve_regions', None) is None else [v.tolist() for v in geometry.sleeve_regions],
+        'version': 3 if getattr(geometry, 'sleeve_regions', None) is not None else 2 if getattr(geometry, 'front_ids', None) is not None else 1,
+        'front_ids': None if getattr(geometry, 'front_ids', None) is None else geometry.front_ids.tolist(),
+        'metadata': measurement.metadata,
         'contact': measurement.contact_context,
         'geometry': {key: getattr(geometry, key).tolist() for key in ('faces', 'collar', 'collar_inner')},
         'geometry_lists': {key: [v.tolist() for v in getattr(geometry, key)] for key in ('loops', 'cuffs', 'inner')},
@@ -31,18 +34,23 @@ def measurement_context(measurement):
 
 class ReplayMeasurements(IsaacMeasurements):
     def __init__(self, context, metadata):
-        if context.get('version') != 1:
+        if context.get('version') not in (1, 2, 3):
             raise ValueError('Unsupported replay evaluation context')
         self.metadata = context['metadata']
-        # Explicitly reject silently rescoring with different rules/geometry.
-        # Known v2/v3 evidence can be rescored with the contact clock and
-        # independent v4 items. Garment/anchor measurement math is unchanged.
+        # Known historical evidence may be remeasured with v6 upper-arm/neck/
+        # orientation rules when authored front identity is provided. Preserve
+        # recorded hashes and report the current revision; unknown code is rejected.
         previous_sources = {
-            'scoring_source_sha256': {'9abba388fb40a28a30a4cf036ea8a820164ab3e29007b0d9a4b2931f2a9bcc79',
-                                      '47d40e535135c3292468e3cd4da5a810fa58395551bafd5ed9ed3088233cb8dd'},
-            'live_source_sha256': {'ec96427d9c7324eb2f5b251f1faec808fa166347827a8ea81e8bd8a527570387',
+            'scoring_source_sha256': {'3689eae1668caf3815ea25d00a3d4de8a595caf2ae68f3cd3b3d476e8df5dcbf','6bd6e793d3b4e8d360e2602cae97bc49d382530696516fe3e6bccaec16fceaa2','6443bd7c91af4f3d47a753751d748c88ec3512f046db6c23487bee4607dd484a','9abba388fb40a28a30a4cf036ea8a820164ab3e29007b0d9a4b2931f2a9bcc79',
+                                      '47d40e535135c3292468e3cd4da5a810fa58395551bafd5ed9ed3088233cb8dd',
+                                      '0ec41cc2d74564944f20c438b163675b161b18bc0fc3852f2f93c3ae3774bd84',
+                                      '9025e8a6587fc3b656143f5bb1ddf043bc95eef2db2c2f79e0d9878b91876eff'},
+            'geometry_source_sha256': {'7830e67178dd844bd0cda2843824a41f79f4dde41a7ed1dbfbbba87b16d6e5a8','ff26fa6c20b5d51a9479fd2d56433a98764bf9d286671a395ac50fdd2c698f7b','2e17e9c6325fa441382ca6f763eae9d2cc029a01d59a30e8b40de83bed209e13'},
+            'live_source_sha256': {'db376ba72d6663ef104aa3de55bc6c7b6fa7c1b6d7797f4428d313c5b088286d','630b68312a978ee932347d2a56dbfc1d26c84987c1fbd4c30ee6f2d3b5188654','301a36c68a3b9802e60e98661a976979738943c1f56cd31e26e169b9e52dcfac','7f964221ffc3e6c045cfc4c0930636555aa15d93b707665f23b2a511074711f6','ec96427d9c7324eb2f5b251f1faec808fa166347827a8ea81e8bd8a527570387',
+                                   'a287c74ecb8c8a158a5ee3f503b3c18cbcc2052603c91cd317783e93f58af6de',
                                    'f31681f0ef1e0b7f5c3abe1fe1523587179611b9f90b05aea66635652b2ddff6'}}
         self.metadata = dict(self.metadata)
+        self.metadata['neck_clearance_normal_basis'] = 'anatomical_chest_to_head'
         self.metadata['recorded_coverage_definition'] = self.metadata.get('coverage_definition')
         self.metadata['coverage_definition'] = ('best arm centreline progress; confirmed short-sleeve completion '
                                                 'gives overall dressing 30/30; each 5-point milestone requires its own evidence')
@@ -60,6 +68,14 @@ class ReplayMeasurements(IsaacMeasurements):
         for key, values in context['geometry_lists'].items():
             setattr(self.geometry, key, [np.asarray(value, dtype=int) for value in values])
         self.geometry.coverage_samples = context['coverage_samples']
+        self.geometry.front_ids = None if context.get('front_ids') is None else np.asarray(context['front_ids'], int)
+        if self.geometry.front_ids is not None:
+            self.metadata['measurement_version'] = 'upper-arm-neck-front-v6'
+            self.metadata['coverage_definition'] = 'upper arms only (35% target), neck and V-neck orientation; no forearm points'
+        if context.get('sleeve_regions') is not None:
+            self.geometry.set_sleeve_regions(context['sleeve_regions'])
+            self.metadata['measurement_version'] = 'pickup-excluded-last-award-v9'
+            self.metadata['coverage_definition'] = 'binary upper-arm enclosure by its routed sleeve; hand exits cuff; torso and forearm excluded'
         for key, value in context['arrays'].items():
             setattr(self, key, np.asarray(value, dtype=float))
         for key, value in context['thresholds'].items():
@@ -118,7 +134,7 @@ class ReplayEvaluation:
     so a range may start immediately after a reset. A reset INSIDE an attempt
     invalidates it, exactly as in live evaluation.
     """
-    def __init__(self, metadata, output, start_tick=0, end_tick=None, contact_context=None):
+    def __init__(self, metadata, output, start_tick=0, end_tick=None, contact_context=None, quality_context=None):
         if metadata.get('evaluation_state_version') != 1:
             raise ValueError('This older recording lacks native attachment evidence and evaluation landmarks. '
                              'Exact replay scoring requires a new --full-record 1 recording; '
@@ -132,6 +148,7 @@ class ReplayEvaluation:
         self.last_tick, self.finished = start_tick, False
         self.human = None
         self.fallback_contact_context = contact_context
+        self.fallback_quality_context = quality_context
 
     def consume(self, header, values):
         if self.finished:
@@ -141,6 +158,12 @@ class ReplayEvaluation:
             self.context = json.loads(str(values['evaluation_context']))
             if 'contact' not in self.context and self.fallback_contact_context is not None:
                 self.context['contact'] = self.fallback_contact_context
+            if (self.context.get('front_ids') is None or self.context.get('sleeve_regions') is None) and self.fallback_quality_context is not None:
+                if self.fallback_quality_context['faces'] != self.context['geometry']['faces']:
+                    raise ValueError('V-neck annotation topology differs from recorded garment')
+                self.context['front_ids'] = self.fallback_quality_context['front_ids']
+                self.context['sleeve_regions'] = self.fallback_quality_context.get('sleeve_regions')
+                self.context['version'] = 3 if self.context['sleeve_regions'] is not None else 2
         if tick < self.start_tick:
             return
         if self.end_tick is not None and tick > self.end_tick:

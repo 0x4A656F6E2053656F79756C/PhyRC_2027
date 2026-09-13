@@ -1,5 +1,8 @@
 # 참가자 정책 입력·행동 규칙 및 teleop 학습 데이터
 
+참가자는 [대회 데이터 가이드](competition/DATA.md)와 [참가 규칙](competition/RULES.md)부터 읽으세요.
+이 문서는 상세 형식과 이전 구현 기록을 포함합니다.
+
 이 문서와 [`config/policy_interface.json`](../config/policy_interface.json)이 참가자용
 관측·행동의 허용 목록이다. 학습 및 정책 실행에는 아래 공개 관측과 로봇 행동만
 사용한다. 환경 설정·물리·형상·마찰·구동 속도·파지 알고리즘은 이 기능에서 바꾸지 않는다.
@@ -87,11 +90,11 @@ baseline이 아니다. 규정 적용 시 허용 관측만 사용하는 코드로
 ## 수집 실행
 
 ```bash
-PHYRC_ACCEPT_EULA=1 ./run.sh gui --training-record 1
+./run.sh gui --training-record 1
 ```
 
 기존 환경 변수 옵션은 그대로 사용할 수 있다. `--training-record 1`은 240Hz 전체
-기록도 자동으로 켠다. 일반 `gui` 및 `--full-record 1`만 사용한 teleop의 입력 방식은
+기록도 자동으로 켠다. 기본 렌더링 모드는 **deferred**이다. 일반 `gui` 및 `--full-record 1`만 사용한 teleop의 입력 방식은
 바뀌지 않는다. h5py 3.16.0이 필요하며 Docker 의존성에 명시되어 있다. 기존 준비된
 런타임에는 변경된 코드 파일을 동기화하거나 설치 절차에 따라 준비해야 한다.
 
@@ -101,8 +104,10 @@ PHYRC_ACCEPT_EULA=1 ./run.sh gui --training-record 1
   중간 키 변경은 다음 경계에 반영되며, 키 이벤트 자체는 원본 기록에 남는다.
   같은 구간에서 두 번 toggle하면 서로 상쇄된다.
 - `ESC` 또는 SIGINT/SIGTERM으로 종료하면 진행 중인 최대 1개 정책 구간을 마친 뒤
-  저장한다. P reset 또는 저장 슬롯 LOAD는 구간 경계에서 처리하고 새 episode를 만든다.
-  SAVE는 episode를 나누지 않는다. F6/F7 수동 평가와 별도로 수집 전체 구간을 자동 평가한다.
+  원본을 저장한다. GUI 실행기는 별도 headless 프로세스로 RGBD/HDF5 생성을 자동 시작한다.
+  터미널의 `[Dataset export] READY`까지 기다려야 이미지가 포함된 학습 파일이 완성된다. P reset 또는 저장 슬롯 LOAD는 구간 경계에서 처리하고 새 episode를 만든다.
+  SAVE는 episode를 나누지 않는다. F6/F7 수동 평가는 유지한다. live 모드는 수집 중 자동 평가하고, deferred 모드는
+  기록된 매 physics tick으로 종료 후 자동 평가한다.
 - 프로세스 강제 종료, 디스크 오류, 실제 앱이 먼저 닫혀 마지막 구간을 마칠 수 없는 경우
   `complete=false`로 남거나 파일 복구가 필요하다. 불완전 파일은 기본 학습 로더가 거부한다.
   마지막 부분 구간의 상태·이벤트는 full recording에 남으며 정상 20Hz sample로 위장하지 않는다.
@@ -115,7 +120,9 @@ PHYRC_ACCEPT_EULA=1 ./run.sh gui --training-record 1
 ## 시간 동기화와 viewport
 
 순서는 `obs[t] 캡처 → action[t] 선택/적용 → 12 physics ticks → obs[t+1] 캡처`다.
-5개 카메라는 같은 시뮬레이션 시점에 동기 렌더링하고 PhysX 로봇 상태를 읽는다.
+live 모드는 5개 카메라를 같은 시뮬레이션 시점에 동기 렌더링하고 PhysX 로봇 상태를 읽는다.
+기본 deferred 모드는 해당 시점의 측정 상태·카메라 자세를 기록하고, 종료 후 저장된
+3D 상태를 적용해 이미지를 생성한다. 로봇 위치·속도·명령은 실행 당시 측정값을 쓴다.
 렌더링 전후 full recorder의 tick과 시뮬레이션 시간이 변하지 않았는지 검사한다.
 카메라 timestamp와 로봇 timestamp가 다르거나 제어 구간이 정확히 12 tick이 아니면
 기록을 오류로 종료한다. 이전 이미지를 복제해서 누락을 채우지 않는다.
@@ -128,10 +135,45 @@ render product이며, UI 패널·마우스·collider overlay를 포함하는 화
 GUI 해상도나 renderer 차이까지 포함한 화면 픽셀 동일성을 보장하지 않는다.
 **이 자유 시점 viewport 영상은 허용된 5개 정책 카메라와 별개이고 정책 입력으로 금지한다.**
 
-저장은 압축 손실이 없는 HDF5 LZF이며 RGB는 uint8, 깊이는 float32 m, mask는 bool이다.
-쓰기/렌더링이 느리면 시뮬레이션의 실제 시간 진행이 느려진다. 프레임을 버려 속도를
+최종 학습 파일은 압축 손실이 없는 HDF5 LZF이며 RGB는 uint8, 깊이는 float32 m, mask는 bool이다.
+live 모드에서는 쓰기/렌더링이 느리면 시뮬레이션의 실제 시간 진행이 느려진다.
+기본 deferred 모드에서는 이 비용을 종료 후로 옮긴다. 원본 저장 큐가 가득 차면
+조작을 기다리게 하며 원본 프레임을 버리지 않는다. 프레임을 버려 속도를
 맞추지 않는다. 20Hz는 wall-clock FPS가 아니라 시뮬레이션 시간 주기다. 기존 raw 기록은
 모든 240Hz 물리 상태를 계속 보존한다. 배속·물리 파라미터는 변경하지 않는다.
+
+## 조작 중 렌더링을 분리한 기본 수집 모드
+
+```bash
+# 빠른 조작: 원본 기록 → ESC 종료 → 별도 프로세스에서 자동 이미지/HDF5 생성
+./run.sh gui --training-record 1
+
+# 실행 중 직접 RGBD/HDF5를 저장하는 이전 방식이 필요한 경우
+./run.sh gui --training-record 1 --training-render live
+
+# 완료된 deferred 기록의 이미지 생성 재시도 또는 별도 실행
+./run.sh python /scripts/export_policy_dataset.py \
+  /output/full_teleop/<실행ID>
+```
+
+수집 도중에는 `capture.json`에 `recording`, 종료 직후에는 `awaiting_export`,
+이미지 생성 완료 후에는 `ready`가 기록된다. 조작 중에는 HDF5 파일이 아직 없다.
+GUI를 실행한 터미널을 이미지 생성 완료 전에 닫으면 자동 변환이 중단될 수 있다.
+원본은 보존되므로 위 명령으로 다시 생성할 수 있다. 기존 HDF5를 덮어쓰지 않는다.
+`run.sh python`을 이용한 자체 수집 스크립트에서는 자동 후속 프로세스를 실행하지 않으므로
+수집 후 exporter를 명시적으로 실행해야 한다.
+
+20Hz 공개 관측·이전 action·카메라 행렬·viewport 크기·실제 적용 제어 목표를
+원본 archive의 `policy_observation` 경계 프레임에 추가 저장한다. 키/명령/episode
+시작·종료 이벤트도 남긴다. 모든 240Hz 상태와 기존 20Hz sample-and-hold는 유지한다.
+변환기는 같은 episode의 모든 physics tick으로 평가하고, 정책 경계에서만 이미지를
+생성하며, 원본 명령 이벤트와 HDF5 action이 동일한지 확인한다.
+
+후속 영상은 기록 당시의 기하·카메라로 **새로 렌더링한 이미지**이다. 물리를 새로 풀거나
+정점/로봇 상태를 추정하지 않는다. 라이브 렌더러의 temporal history, 조명/외부 texture
+자산 변경 등에 따라 원래 GUI와 픽셀 단위로 동일하지 않을 수 있다. 렌더용 원본 자산과
+동일한 설치 환경을 유지해야 한다. 힘·토크를 재계산한 것처럼 기록하지 않는다.
+기존의 카메라 위치·해상도·render subframes·로봇·옷·마네킹 설정은 변경하지 않았다.
 
 ## 파일 및 로딩
 
@@ -156,14 +198,29 @@ robomimic의 온라인 rollout에는 PhyRC 환경 등록/어댑터가 별도로 
 감사 파일에는 obs/next_obs에 대응하는 영상·메타데이터, `(3,2,9)` 제어 목표,
 3개 control 시작 tick, action 시작/종료 tick, 항목별 점수와 최초 접촉 tick을 저장한다.
 점수 열 순서는 pickup, first_sleeve, opposite_shoulder, second_sleeve, overall_dressing이다.
+v9의 `score_time_s`는 최초 접촉부터 마지막 착의 득점까지이며 이후 대기로 늘지 않는다.
+`raw_points`는 집기 포함 최대50점이고 points/s의 분자는 여기서 pickup 열 값을 뺀 최대45점이다.
+과거 파일의 분모 의미는 당시 `result_json.scoring_revision`을 따른다.
 최초 접촉 tick은 **해당 episode 시작 기준**이며 -1은 무접촉이다. action tick은 raw archive
 기준이다. 각 episode metadata의 start_tick을 더하면 같은 기준으로 비교할 수 있다.
 최종 성공 여부·종료 사유·점수는 episode attribute의 result_json과 평가 JSON에 있다.
 성공 라벨은 평가기의 정의이며 실제 완전 착의를 독립적으로 보증하는 라벨은 아니다.
+성공 시연을 고를 때는 `audit.hdf5`의 episode attribute 중 `success_known=true`와
+`success=true`를 함께 사용한다. `raw_points=50`이나 `dones=1`로 선별하지 않는다.
+`success_basis`는 적용된 평가 개정의 완료 조건을 명시한다. v6는 양쪽 소매·목 노출과
+올바른 브이넥 앞뒤가 에피소드 중 0.5초 연속 확인됐음을 뜻한다. 누적 점수/완료 이력을
+유지하므로 종료 프레임의 착의 상태를 보증하지 않는다. 이전 파일의 성공 라벨은
+자동 재작성하지 않으며 당시 평가 개정의 기준이다.
+v8에서도 성공 시연의 동시 착의 확인 0.5초는 유지한다. 목 10점만 통과가 확인되는 즉시
+Overall에 부여하므로 목 점수 획득과 성공 시연 판정은 구분한다.
+완료 측정이 없는 결과는 `success_known=false`이며 실패 정답으로 취급하지 않는다.
+점수 집계 v5에서는 무접촉/접촉 직후 종료도 집계 기여도 0으로 포함하고 전체 평가를 계속한다.
+이 규칙은 v6에서도 유지한다. v6 Overall 30점은 상박 10점(좌우 각 5), 목 10점,
+브이넥 앞뒤 10점이며 하박은 제외한다. 자세한 기준은 [평가 문서](PHASE1_EVALUATION.md)를 따른다.
 
 ```bash
 # Isaac/GPU 없이 파일 검사 (프로젝트 컨테이너의 Python/h5py 사용)
-PHYRC_ACCEPT_EULA=1 ./run.sh cpu /scripts/inspect_policy_dataset.py \
+./run.sh cpu /scripts/inspect_policy_dataset.py \
   /output/policy_datasets/<실행ID>/policy.hdf5
 ```
 

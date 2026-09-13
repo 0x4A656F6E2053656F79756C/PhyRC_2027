@@ -57,6 +57,23 @@ class DatasetTests(unittest.TestCase):
             self.writer.append(self.obs, self.action, self.next, start_tick=24, end_tick=36, audit={})
         self.assertEqual(self.writer.data.attrs['total'], 1)
 
+    def test_perfect_score_does_not_select_unsuccessful_demo(self):
+        self.append()
+        self.writer.finish_episode('gui_closed', {'valid': True, 'result': {
+            'raw_points': 50, 'dressing_complete': False, 'success_evaluated': True, 'success': False}})
+        self.writer.close()
+        with h5py.File(self.writer.path / 'audit.hdf5') as f:
+            self.assertTrue(f['demo_0'].attrs['success_known'])
+            self.assertFalse(f['demo_0'].attrs['success'])
+
+    def test_unknown_completion_is_not_labeled_failure(self):
+        self.append()
+        self.writer.finish_episode('gui_closed', {'valid': True, 'result': {'raw_points': 0}})
+        self.writer.close()
+        with h5py.File(self.writer.path / 'audit.hdf5') as f:
+            self.assertFalse(f['demo_0'].attrs['success_known'])
+            self.assertFalse(f['demo_0'].attrs['success'])
+
     def test_stale_camera_clock_rejected(self):
         self.next['simulation_time_s'][...] = .049
         with self.assertRaisesRegex(ValueError, 'clock'):

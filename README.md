@@ -1,355 +1,241 @@
-> **현재 작업: 목둘레 보존 높이 축소·스폰 랜덤화·손 충돌 정렬 (2026-09-11)**
->
-> 접촉 정지 수정 기준점은 `6c73e5c`이며 GitHub에 push했습니다.
-> 그 이후 작업은 옷 높이를 10/12로 줄이되 목둘레와 인접 정점을 그대로 유지합니다.
-> FEM solver는 64회, 로봇 속도는 원래 설정의 90%, 접촉 보정은 기본 24회입니다.
-> 접촉 보정의 마지막 결과를 재검사하도록 수정했으며, 해결되지 않은 교차의
-> 안전 되돌림은 유지합니다. 재현 시험 결과와 한계는
-> [접촉 정지 수정 기록](docs/CONTACT_GUARD_FIX_20260911.md)을 참고하세요.
-> 과거 복구 상태와 시험 기록은 현재 설정을 뜻하지 않습니다.
+# PhyRC 2027 · Phase 1 참가자 가이드
 
-### 현재 배치 및 손 충돌 설정
+두 대의 **Stretch4 로봇**으로 마네킹에게 티셔츠를 입히는 Isaac Sim 6.0.1 환경입니다.
+참가자는 키보드 teleop으로 시연을 수집하고, **허용된 카메라·로봇 상태 관측으로 정책을 학습한 뒤 `(2,9)` 로봇 액션으로 실행**합니다.
+이 `competition` 브랜치는 참가자용 설치·수집·정책 실행·평가 안내를 제공합니다.
 
-`./run.sh prepare`로 런타임 코드와 옷 에셋을 다시 준비한 뒤 실행하세요.
-이미 실행 중인 GUI에는 파일 수정이 즉시 적용되지 않습니다.
+[설치](docs/competition/SETUP.md) · [데이터·CSV 열 설명](docs/competition/DATA.md) · [정책 실행](docs/competition/POLICY.md) · [평가](docs/competition/EVALUATION.md) · [참가 규칙](docs/competition/RULES.md) · [실제 데이터 예제](docs/examples/teleop/README.md)
 
-```bash
-./run.sh gui                          # 사람·의자: 반경 10cm, 회전 ±30° / 옷: 상자 네 곳 중 하나
-./run.sh gui --no-randomization       # 랜덤화 해제, 원래 사람 위치 및 세 번째 상자
-STRETCH4_RANDOMIZE=0 ./run.sh gui     # 같은 기능의 환경 변수
-HUMAN_SPAWN_SEED=42 STRETCH4_GARMENT_SPAWN_SEED=42 ./run.sh gui
-```
+## Teleop 동작 예시
 
-사람과 의자는 함께 움직입니다. 옷의 방향·크기와 상자·로봇의 위치는 랜덤화하지 않습니다.
-손 충돌의 기본값은 `STRETCH4_HUMAN_HAND_COLLIDER=fitted`입니다. 시각 메쉬의 손 전체와
-손목 경계로 닫힌 볼록 메쉬를 만들며, 손가락 사이의 틈만 매끈하게 연결합니다.
-기존 손목 구는 `STRETCH4_HUMAN_HAND_COLLIDER=sphere`로 비교할 수 있습니다.
-손 메쉬의 최대 확장 여유는 `STRETCH4_HUMAN_HAND_HULL_MARGIN=0.001`m입니다.
+![동기화된 teleop 화면과 마네킹 정면 화면, 32배속](docs/videos/Back_Front_32x.gif)
 
-새 F슬롯은 `output/states_neckfixed_shortheight_handfit_mesh4/`에 저장합니다.
-옛 슬롯은 삭제하지 않지만 변경 전 옷·손 형상이나 다른 사람 배치의 슬롯은 불러오지 않습니다.
-F슬롯은 solver·속도 등 Python 설정을 과거 값으로 되돌리지 않습니다.
-세부 내용은 [형상 및 배치 변경 기록](docs/GEOMETRY_PLACEMENT_20260911.md)을 참고하세요.
+수집 중 teleop 화면과 마네킹 정면 화면을 동기화한 **32배속** 예시입니다.
+README에서는 GIF가 직접 재생됩니다. [전체 MP4](docs/videos/Back_Front_32x.mp4)로 더 선명하게 볼 수 있습니다.
+이 시연 영상과 아래 학습 데이터 예제는 서로 다른 실행입니다. 영상 배속은 정책 주기나 평가 시간을 바꾸지 않습니다.
 
-# PhyRC 2027
+## 1. 설치하고 실행하기
 
-Isaac Sim **6.0.1**에서 두 대의 Stretch4로 티셔츠를 조작하는 로컬 GUI teleop 환경입니다.
-이 저장소는 현재 작동 중인 FEM 천 시뮬레이션과 사용자 수정 사항을 분리한 유지보수용 스냅샷입니다.
-Gymnasium 정책 환경과 작은 모방학습 예제를 포함합니다. 학습 데이터, 과거 백업,
-개인 F1-F5 저장 파일은 Git에 포함하지 않습니다.
-옷 집기 실험은 [학습 복원 기록](docs/GRASP_LEARNING_20260911.md), 관측·행동 명세는
-[정책 인터페이스](docs/POLICY_INTERFACE.md)를 참고하세요.
-참가자의 **허용 관측·행동, 내부 정답 정보 사용 금지 및 위반 시 심사 제외 규정**은
-[정책 데이터·참가 규칙](docs/POLICY_DATASET.md)에 명시되어 있습니다.
-학습과 실행에는 명시된 공개 관측 및 `(2,9)` action만 사용해야 합니다.
-옷 정점·물체 정답 위치를 직접 읽는 제어/시연 생성/교사 학습 등의 우회 사용은 금지합니다.
-주최 측의 별도 검증에서 위반이 확인되면 심사에서 제외합니다.
+**Linux x86-64 + NVIDIA RTX GPU + Docker + NVIDIA Container Toolkit**을 사용합니다.
+호스트에 Isaac Sim, ROS, Conda 또는 별도의 CUDA Toolkit을 설치할 필요는 없습니다.
+준비부터 확인까지의 명령은 [설치 가이드](docs/competition/SETUP.md)에 있습니다.
+
+Docker의 GPU 접근이 준비됐다면:
 
 ```bash
-PHYRC_ACCEPT_EULA=1 ./run.sh gui --training-record 1
-```
-
-이 모드는 20Hz로 입력을 받아 60Hz 제어 3회 동안 유지하고, 같은 physics tick의
-5개 RGB-D 카메라·로봇 상태·action/next observation을 HDF5로 저장합니다.
-`ESC`로 종료하면 `output/policy_datasets/<실행ID>/policy.hdf5`에 저장됩니다.
-240Hz 전체 기록도 자동 보존하며 viewport 영상·점수·내부 검증 정보는 별도 감사 파일에
-저장합니다. 자세한 파일 구조·동기화·로딩·검증 범위는 위 문서를 참고하세요.
-학습 복원 전 코드는 GitHub 태그 `pre-grasp-learning-20260911`로 보존했습니다.
-
-Phase 1 채점 함수와 실행 방법은 [평가 스크립트 안내](docs/PHASE1_EVALUATION.md)를
-참고하세요. `python3 scripts/evaluate_phase1.py --demo`로 점수 계산 예제를 실행할 수 있습니다.
-시간당 점수는 옷과 마네킹 충돌 메시의 최초 접촉부터 시간을 계산합니다.
-GUI에서는 **F6 평가 시작 / F7 종료·점수 저장**을 사용합니다. 학습한 정책은
-`./run.sh python /scripts/evaluate_policy.py --help`의 자동 평가 실행기를 사용합니다.
-
-### 동작 예시 (Demonstration)
-
-![두 대의 Stretch4로 티셔츠를 조작하는 전면·후면 동시 보기 — 8배속](docs/videos/Front_Back_8x.gif)
-
-전체 동작을 README에서 자동 반복 재생합니다. 고화질 영상은 [원본 MP4](docs/videos/Front_Back_8x.mp4)를 참고하세요.
-
-**설치 경로는 Docker 방식 하나로 통일합니다.** Isaac Sim을 호스트에 별도로 설치하거나
-Conda/ROS/시스템 CUDA Toolkit을 추가로 설치할 필요는 없습니다. NVIDIA 드라이버는 호스트에 필요합니다.
-아래 순서를 처음부터 따르면 컨테이너 안에 Isaac Sim 6.0.1과 프로젝트 실행 환경이 설치됩니다.
-
-## 1. 준비할 컴퓨터와 계정
-
-1. NVIDIA RTX GPU가 있는 x86-64 PC에 Ubuntu Desktop 22.04 또는 24.04 LTS를 설치합니다.
-2. 실제 모니터를 GPU에 연결하고 로컬 데스크톱에 로그인합니다. 이 튜토리얼은 SSH/VNC/WSL GUI 경로를 지원하지 않습니다.
-3. RAM 32GB 이상, VRAM 16GB급 RTX GPU, SSD 여유 공간 100GB 이상을 프로젝트 준비 기준으로 잡습니다. 큰 컨테이너와 최초 셰이더 캐시를 위한 여유입니다.
-4. 인터넷 연결과 `sudo` 권한이 필요합니다. 비공개 저장소이므로 소유자에게 GitHub 계정의 저장소 접근 권한을 받아야 합니다.
-
-하드웨어 호환성의 최종 기준은 [NVIDIA Isaac Sim 요구사항](https://docs.isaacsim.omniverse.nvidia.com/latest/installation/requirements.html)입니다.
-CPU 전용 PC나 RTX 기능이 없는 GPU에서 작동한다고 보장하지 않습니다.
-기존 작업 호스트는 Ubuntu 22.04.5 / RTX 5080 16GB / 드라이버 580.178.04였습니다.
-다른 호스트의 드라이버 버전을 무조건 이 숫자로 내리지 말고 해당 GPU와 Isaac 버전의 호환성을 확인하세요.
-
-## 2. Ubuntu와 NVIDIA 드라이버
-
-Ubuntu가 없다면 [Ubuntu Desktop 설치 안내](https://ubuntu.com/tutorials/install-ubuntu-desktop)를 따라 설치합니다.
-설치 시 기존 디스크를 지우는 선택지는 데이터가 삭제되므로 주의하세요.
-이후 `Ctrl+Alt+T`로 터미널을 열고 기본 도구를 설치합니다.
-
-```bash
-sudo apt-get update
-sudo apt-get install -y git curl ca-certificates gnupg python3 xauth util-linux unzip gh ubuntu-drivers-common
-ubuntu-drivers devices
-```
-
-`소프트웨어 및 업데이트 > 추가 드라이버`에서 GPU에 맞는 NVIDIA 권장 드라이버를 선택하고 재부팅합니다.
-Secure Boot 사용 시 설치 중 안내되는 MOK 등록도 완료해야 합니다.
-재부팅 후 다음 명령이 GPU 정보를 출력해야 합니다.
-
-```bash
-nvidia-smi
-```
-
-드라이버 설치에 문제가 있으면 [NVIDIA 드라이버 설치 안내](https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/)를 확인합니다.
-로그인 화면의 톱니바퀴에서 `Ubuntu on Xorg`를 선택하면 아래 Xauthority 기반 GUI 실행 경로가 단순해집니다.
-
-## 3. Docker Engine
-
-아래는 새 Ubuntu용 설치 흐름입니다. 이미 Docker/Podman이 설치된 PC라면 먼저
-[Docker 공식 Ubuntu 설치 문서](https://docs.docker.com/engine/install/ubuntu/)의 충돌 패키지 안내를 확인하세요.
-
-```bash
-sudo install -d -m 0755 /etc/apt/keyrings
-curl --fail --silent --show-error --location https://download.docker.com/linux/ubuntu/gpg \
-  | sudo tee /etc/apt/keyrings/docker.asc >/dev/null
-sudo chmod 0644 /etc/apt/keyrings/docker.asc
-. /etc/os-release
-printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu %s stable\n' \
-  "$(dpkg --print-architecture)" "$VERSION_CODENAME" \
-  | sudo tee /etc/apt/sources.list.d/docker.list
-sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-sudo systemctl enable --now docker
-sudo usermod -aG docker "$USER"
-```
-
-**로그아웃 후 다시 로그인**하여 그룹 변경을 적용합니다. `docker` 그룹은 사실상 관리자 수준 권한을 줍니다.
-프로젝트 전체를 `sudo ./run.sh ...`로 실행하면 호스트 파일 권한과 GUI 인증이 꼬일 수 있으므로 사용하지 않습니다.
-
-```bash
-docker run --rm hello-world
-```
-
-## 4. NVIDIA Container Toolkit
-
-[NVIDIA 공식 설치 문서](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)에 따라
-Docker가 호스트 GPU를 사용할 수 있도록 설정합니다. 이 단계의 Docker 재시작은 다른 실행 중 컨테이너에도 영향을 줄 수 있습니다.
-
-```bash
-curl -fSL https://nvidia.github.io/libnvidia-container/gpgkey \
-  | sudo gpg --dearmor --yes --output /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-curl -fSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
-  | sed 's|deb https://|deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://|g' \
-  | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
-sudo apt-get update
-sudo apt-get install -y nvidia-container-toolkit
-sudo nvidia-ctk runtime configure --runtime=docker
-sudo systemctl restart docker
-docker run --rm --gpus all ubuntu:24.04 nvidia-smi
-```
-
-마지막 명령에서도 같은 GPU가 보여야 다음 단계로 진행할 수 있습니다.
-
-## 5. GitHub 인증과 프로젝트 복제
-
-브라우저에서 본인 계정으로 로그인해 저장소 접근 권한을 확인한 후 다음을 실행합니다.
-`gh auth login`이 보여 주는 일회용 코드를 브라우저에 입력합니다. 비밀번호나 토큰을 README나 커밋에 넣지 마세요.
-
-```bash
-gh auth login --hostname github.com --git-protocol https --web
-gh auth setup-git
-mkdir -p "$HOME/Documents"
-cd "$HOME/Documents"
-git clone https://github.com/0x4A656F6E2053656F79756C/PhyRC_2027.git
+git clone --branch competition --single-branch \
+  https://github.com/0x4A656F6E2053656F79756C/PhyRC_2027.git
 cd PhyRC_2027
 ./run.sh doctor
-```
-
-현재는 submodule이 없으므로 `--recursive`가 필요 없습니다. 이유와 자산별 출처는 [THIRD_PARTY.md](THIRD_PARTY.md)에 있습니다.
-소유자 계정의 SSH 키를 다른 컴퓨터에 복사하지 마세요. 각 사용자는 자기 계정과 인증 수단을 사용합니다.
-
-## 6. Isaac Sim 6.0.1 설치와 자산 생성
-
-먼저 [Isaac Sim 컨테이너 설치 및 라이선스 안내](https://docs.isaacsim.omniverse.nvidia.com/latest/installation/install_container.html),
-[NVIDIA 소프트웨어 라이선스](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-software-license-agreement/),
-[개인정보 정책](https://www.nvidia.com/en-us/about-nvidia/privacy-policy/)을 읽습니다.
-동의하는 경우에만 다음 변수를 설정합니다. 실행기는 이를 NVIDIA 컨테이너의 EULA/개인정보 동의 변수로 전달합니다.
-새 터미널을 열면 이 `export`를 다시 해야 합니다.
-
-```bash
-export PHYRC_ACCEPT_EULA=1
 ./run.sh build
 ./run.sh prepare
-```
-
-`build`가 공식 NVIDIA 컨테이너를 내려받고 최소 Python 의존성을 설치합니다.
-기반 이미지는 **6.0.1 태그와 SHA256 digest**로 고정되어 있습니다. `latest`나 다른 Isaac 버전으로 바꾸지 마세요.
-처음에는 이미지 다운로드와 설치로 시간이 걸립니다. 인터넷 속도와 저장장치에 따라 달라집니다.
-NGC 다운로드가 인증을 요구하면 공식 컨테이너 문서에 따라 자신의 NGC 계정/API 키로 `docker login nvcr.io`를 수행합니다.
-
-`prepare`는 외부 파일의 SHA256을 검사하고 `.runtime/`에 실행용 복사본과 티셔츠 USD를 생성합니다.
-기존 `PhyRC_6.0.1`, 별도 DexGarmentLab/RCareWorld 폴더, 수동으로 복사한 캐시가 필요하지 않습니다.
-전체 `Garment.zip`, `Human.zip`, `Robots.zip`, 학습 데이터는 받지 않습니다.
-
-| 항목 | 저장 위치 | Git 포함 여부 |
-|---|---|---|
-| 수정된 실행 Python 16개 | `src/DexGarmentLab/` | 포함 |
-| 필수 로컬 입력 USD/텍스처 | `assets/custom/` | 포함, 재배포 권리 확인 필요 |
-| 외부 바닥 JPEG | `assets/downloads/` | 제외, 잠긴 HF revision에서 다운로드 |
-| 기본 천 재질 USD와 참조 텍스처 2개 | `assets/downloads/Material/` | 제외, 잠긴 GitHub commit에서 다운로드 |
-| 생성 USD와 실행 복사본 | `.runtime/` | 제외, `prepare`로 재생성 |
-| Isaac/셰이더/패키지 캐시 | `cache/` | 제외 |
-| 사용자 저장과 녹화 | `output/` | 제외 |
-
-## 7. 설치 확인
-
-다른 Isaac Sim GUI/시뮬레이션을 종료한 뒤 실행합니다. 동일 GPU에서 여러 SimulationApp을 동시에 띄우지 않습니다.
-
-```bash
 ./run.sh smoke
-```
-
-실제 teleop 메인 루프가 장면을 생성한 다음 두 로봇에 짧은 lift 입력을 전달하고,
-그리퍼 토글과 천 상태의 저장/변경/복원을 수행합니다. 성공하면 `PHYRC-SMOKE-PASS`가 출력됩니다.
-결과는 `output/verification/smoke.json`이며, 사용자 슬롯과 분리된 임시 슬롯만 사용합니다.
-초기 실행에는 물리 충돌 메시 준비와 셰이더·GPU 커널 생성으로 시간이 걸릴 수 있습니다.
-이관 검증 호스트에서 새 프로젝트 캐시를 사용한 첫 검사는 약 5분 37초가 걸렸습니다.
-장면 초기화 뒤 한동안 출력이 없을 수 있으므로 최초 실행을 몇 초 만에 실패로 판단하지 마세요.
-GUI 첫 실행에서도 `Physics Tasks` 준비 화면에 몇 분 머무를 수 있습니다.
-이 검사는 설치 smoke test이지 강한 당김/완전 착의/장시간 안정성을 보증하는 시험은 아닙니다.
-
-## 8. GUI teleop 튜토리얼
-
-```bash
 ./run.sh gui
 ```
 
-1. 초기 로딩이 끝나고 터미널에 두 로봇의 조작 설명과 초기 F1 저장 메시지가 나타날 때까지 기다립니다.
-2. 파란 티셔츠와 노란 아랫단 및 브이넥 줄무늬, 두 로봇, 네 테이블, 앉아 있는 마네킹과 의자가 보이는지 확인합니다.
-3. 뷰포트를 클릭해 키보드 포커스를 줍니다. `W`를 짧게 눌러 로봇 1의 lift가 올라가는지 확인하고 `S`로 내립니다.
-4. `I/K`, `J/L`, `U/O`로 베이스 위치와 방향을 맞춘 뒤 `A/D`로 팔을 조절하여 손가락 끝을 옷 가장자리에 접근시킵니다.
-5. 손가락 끝이 천을 집을 위치에 있을 때 `Space`를 한 번 누릅니다. 가까이 갔다고 자동으로 잡히지는 않습니다.
-6. `W/S`와 손목 키로 천을 조작합니다. `Space`를 다시 누르면 놓습니다. 키는 길게 누르기보다 짧게 나눠 처음 동작을 확인하세요.
-7. 로봇 2는 방향키와 숫자 키패드로 조작합니다. 일반 상단 숫자키와 키패드는 다릅니다. 키패드가 있는 키보드와 Num Lock 상태를 확인하세요.
-8. 원하는 자세에서 빈 `F2`를 눌러 저장하고 조금 움직인 뒤 다시 `F2`를 눌러 복원합니다. 종료는 `Esc`입니다.
+NVIDIA 컨테이너의 라이선스·개인정보 관련 실행 옵션은 실행기가 전달합니다.
+별도의 `PHYRC_ACCEPT_EULA` 환경 변수는 필요하지 않습니다.
+사용 전 [NVIDIA 이용 조건과 설치 안내](https://docs.isaacsim.omniverse.nvidia.com/6.0.1/installation/install_container.html) 및 [자산 출처](THIRD_PARTY.md)를 확인하세요.
 
-| 기능 | 로봇 1 | 로봇 2 |
+## 2. Teleop 조종
+
+Isaac Sim 창의 viewport를 클릭해 키보드 초점을 둡니다. 로봇 번호는 데이터 기준 **robot_0 / robot_1**입니다.
+두 로봇을 동시에 조종할 수 있습니다. 로봇 1 조종에는 숫자 키패드가 필요합니다.
+
+| 조작 | robot_0 | robot_1 |
 |---|---|---|
-| 베이스 전진 / 후진 | `I` / `K` | `↑` / `↓` |
-| 베이스 좌 / 우 | `J` / `L` | `←` / `→` |
-| 베이스 회전 | `U` / `O` | 키패드 `/` / `*` |
-| lift 위 / 아래 | `W` / `S` | 키패드 `8` / `2` |
-| 팔 수축 / 확장 | `A` / `D` | 키패드 `4` / `6` |
-| 손목 yaw | `Q` / `E` | 키패드 `7` / `9` |
-| 손목 pitch | `R` / `V` | 키패드 `-` / `+` |
-| 손목 roll | `Z` / `C` | 키패드 `1` / `3` |
-| 잡기 / 놓기 토글 | 상단 `0` 또는 `Space` | 키패드 `0` 또는 `Enter` |
+| 전진 / 후진 | `I` / `K` | `↑` / `↓` |
+| 왼쪽 / 오른쪽 이동 | `J` / `L` | `←` / `→` |
+| 베이스 회전 + / − | `U` / `O` | 키패드 `/` / `*` |
+| 리프트 상승 / 하강 | `W` / `S` | 키패드 `8` / `2` |
+| 팔 신장 / 수축 | `D` / `A` | 키패드 `6` / `4` |
+| 손목 yaw + / − | `E` / `Q` | 키패드 `9` / `7` |
+| 손목 pitch + / − | `V` / `R` | 키패드 `+` / `-` |
+| 손목 roll + / − | `C` / `Z` | 키패드 `3` / `1` |
+| 그리퍼 개폐 전환 | `Space` 또는 상단 `0` | 키패드 `0` 또는 `Enter` |
+| 장면 초기화 | `P` | 공통 |
+| 정상 종료·자동 저장 | `ESC` | 공통 |
 
-`STRETCH4_SHOW_COLLIDER=0 ./run.sh gui`로 충돌 메시 표시 없이 볼 수 있습니다.
-기본값 `1`은 기존 작업의 collision 시각화 모드입니다. 렌더용 메시와 충돌 메시 모두 뒤통수 수정이 적용됩니다.
+충돌 메시 표시는 기본적으로 꺼져 있습니다. 물리 충돌 계산은 계속 동작합니다.
+PC가 느리면 실제 조작 시간보다 시뮬레이션 시간이 느리게 흐를 수 있습니다.
+정책 데이터의 시간과 채점은 **시뮬레이션 시간**을 사용합니다.
 
-## 9. 저장, 복원, 녹화
-
-시작부터 모든 teleop 상태를 기록하려면 `./run.sh gui --full-record 1`을 사용합니다.
-종료 시 `output/full_teleop/<실행 ID>/`에 자동 저장하며,
-`./run.sh replay output/full_teleop/<실행 ID>`로 3D 궤적을 재생합니다.
-매 physics 스텝의 실제 로봇·천 상태를 무손실 저장하는 방식입니다.
-시간 정확성의 범위와 검증 옵션은 [전체 기록·replay 안내](docs/FULL_TELEOP_RECORDING.md)를 참고하세요.
-새로 기록한 실행은 `python3 scripts/evaluate_replay.py output/full_teleop/<실행 ID> --output output/evaluation/replay`로
-Isaac/GPU 없이 평가할 수도 있습니다. 기존 v1 기록은 평가에 필요한 앵커 정보가 없어 재생만 지원합니다.
-
-- `F1`은 **실행할 때마다 초기 상태로 덮어씁니다.** 장기 저장에 쓰지 마세요.
-- `F2`~`F5`: 비어 있으면 저장, 이미 있으면 불러오기입니다.
-- `Shift+F2`~`Shift+F5`: 기존 슬롯을 현재 상태로 덮어씁니다.
-- `F12` 두 번: 슬롯 전체 삭제입니다. 복구 기능이 없으므로 주의하세요.
-- `P`: 현재 실행의 시작 상태로 초기화합니다.
-- `F9` / `F10`: 녹화 시작 / 종료. 영상은 `output/recordings/`에 남습니다.
-- 기본 슬롯은 `output/states_shortheight_roundhead_mesh4/`입니다. `output/`은 Git에 들어가지 않으므로 따로 백업하세요.
+## 3. 학습 데이터 수집하기
 
 ```bash
-# 저장해 둔 F2에서 시작
-STRETCH4_LOAD_SLOT=F2 ./run.sh gui
-# 다른 실험의 저장 슬롯과 분리
-STRETCH4_STATE_DIR=/output/my_experiment ./run.sh gui
+./run.sh gui --training-record 1
 ```
 
-이전 옷 형상/사람 위치로 만든 슬롯을 최신 형상에 로드하지 마세요. 정점 수가 같아도 물리 rest shape가 다를 수 있습니다.
-기존 프로젝트의 사용자 저장 슬롯은 이 저장소로 복사하지 않았으며 원래 위치에 그대로 있습니다.
+1. 시작하면 자동으로 기록합니다. 별도의 기록 시작 키는 필요 없습니다.
+2. teleop으로 시연한 뒤 **Isaac Sim 창에서 `ESC`**를 누릅니다.
+3. 창이 닫힌 뒤 자동으로 RGB-D와 HDF5를 생성합니다. **터미널을 닫지 말고 `[Dataset export] READY ...`까지 기다립니다.**
 
-## 10. 현재 유지하는 설정
-
-| 항목 | 현재 기준 |
+| 목적 | 명령 |
 |---|---|
-| 물리 | Isaac Sim 6.0.1 surface-deformable FEM, 240Hz, TGS, solver 32 |
-| 렌더 / 제어 | 60Hz 기준, 물리 스텝에서 접촉 보호 및 그립 처리 |
-| 티셔츠 | 한 벌, 15,946 정점 / 31,464 삼각형, T자 rest sleeves |
-| 크기 | 기존 +20% 전체 확대 후 높이 방향만 `10/12`, 넓어진 폭 유지 |
-| 목구멍 | 중간 단계 면적 확대 후 높이 복원도 적용됨; 최종 면적을 여전히 +20%라고 해석하지 않음 |
-| 질량 / 두께 | 약 129.763g / 10mm, 면적 변화에 따라 밀도 보정 |
-| 사람 / 의자 | 원래보다 박스 방향으로 총 1m, 사람 기본 Y=0.45 |
-| 팔 / 머리 | 양팔 spread 각 10도, elevation 입력 20도, 둥글게 다듬은 뒤통수의 visual/collision 동기화 |
+| 조종 연습 | `./run.sh gui` |
+| 학습용 데이터 수집 | `./run.sh gui --training-record 1` |
+| 시작부터 화면을 보며 자동 평가 | `./run.sh gui --evaluate 1` |
+| 학습용 수집 + 조종 중 자동 평가 | `./run.sh gui --training-record 1 --evaluate 1` |
+| 원본 상태 기록만 수집 | `./run.sh gui --full-record 1` |
+| 고정 초기 배치로 조종 연습 | `./run.sh gui --no-randomization` |
 
-형상 생성 입력은 `config/geometry.json`, 실제 제어/물성 기본값은 `src/DexGarmentLab/`가 기준입니다.
-과거 코드 주석에 남은 4.5/5.1 버전 이름은 수정 이력이며 이 저장소의 지원 Isaac 버전을 의미하지 않습니다.
-`STRETCH4_SHIRT=original/wearable` 또는 `STRETCH4_HUMAN=biped` 같은 과거 대체 자산 모드는 최소 배포에 포함하지 않습니다.
+`--training-record 1`은 전체 원본 기록도 자동으로 켭니다. 기본 모드는 조종 후 이미지를 생성해 조종 중 부하를 줄입니다.
+실시간으로 HDF5를 만드는 모드는 `--training-render live`이며 렌더링 부하가 더 큽니다.
+학습 기록은 평가 결과도 자동 저장합니다. `--evaluate 1`을 추가하면 기본 수집 모드에서도 조종 중 점수 변화를 볼 수 있습니다.
+이때 실시간 평가와 이미지 변환 후 평가 결과가 각각 저장됩니다.
 
-## 11. 문제 해결
-
-- `permission denied /var/run/docker.sock`: 로그아웃/로그인 후 `id`에 `docker` 그룹이 있는지 확인합니다.
-- `could not select device driver ... gpu`: Container Toolkit 설정과 `docker ... nvidia-smi`부터 확인합니다.
-- 검은 화면/창 생성 실패: 실제 로컬 모니터, Xorg 세션, `echo "$DISPLAY"`, `xauth list`를 확인합니다. `xhost +`로 전체 접근을 허용하지 마세요.
-- 권한 오류: 저장소를 일반 사용자로 clone/실행했는지 확인합니다. 컨테이너는 UID 1234와 호스트 사용자의 GID를 사용하며 실행 폴더만 그룹 쓰기 가능하게 준비합니다.
-- 첫 실행이 느림: 최초 셰이더/확장/GPU 커널 준비를 기다립니다. 드라이버가 멈춘 경우와 구분해서 로그를 확인하세요.
-- `Asset checksum mismatch`: 임의 파일로 덮어쓰지 말고 manifest에 적힌 정확한 입력을 복원합니다.
-- 프록시가 HTTP Range를 막음: 다음 전체 압축파일 대체 경로를 사용합니다. 다운로드량은 약 2.49GB입니다.
-
-```bash
-mkdir -p assets/downloads
-curl -fL --retry 3 -o assets/downloads/Scene.zip \
-  https://huggingface.co/datasets/wayrise/DexGarmentLab/resolve/2ba4092676006bc98c257e7b822de39526fd9692/Scene.zip
-unzip -p assets/downloads/Scene.zip Scene/kitchen/kitchen_7/textures/2K-tiling_30_basecolor.jpg \
-  > assets/downloads/2K-tiling_30_basecolor.jpg
-python3 scripts/fetch_assets.py --check
-./run.sh prepare
+```text
+output/
+  full_teleop/<실행ID>/          원본 상태·입력 기록: 재현·검증용
+  policy_datasets/<실행ID>/
+    policy.hdf5                정책 학습용 관측·액션
+    audit.hdf5                 검증용 상태·화면·점수: 정책 입력 금지
+    capture.json               수집/변환 완료 여부
+    evaluation/                에피소드별 평가 결과
+  evaluation/teleop/<평가ID>/   --evaluate 1의 실시간 평가 결과
 ```
 
-## 12. 유지보수 흐름
+`P`는 에피소드를 나눕니다. 창 강제 종료·프로세스 종료로 `complete=false`가 되면 학습 로더가 거부합니다.
+미완료 파일을 정상 파일처럼 표시해 사용하지 마세요. 정상 수집 후 변환만 중단됐다면 [변환 재시도](docs/competition/DATA.md#변환-재시도와-검사)를 사용할 수 있습니다.
+
+## 4. 취득할 수 있는 관측
+
+기본 정책 주기는 **20Hz**, 내부 제어는 **60Hz**, 물리는 **240Hz**입니다.
+한 action을 0.05초 동안, 즉 제어 3회·물리 12회에 걸쳐 유지합니다.
+`obs[t] → action[t] → next_obs[t]` 순서로 저장하며 카메라와 로봇 상태의 시뮬레이션 시각을 맞춥니다.
+
+| 데이터 | 실행 시 shape | 의미 |
+|---|---|---|
+| RGB | `(5,256,256,3)` | 외부1 + 두 로봇의 손목2·상단2, uint8 RGB |
+| Depth / 유효 mask | 각각 `(5,256,256,1)` | 광학 Z 거리(m), float32 / bool. 무효 깊이는0 |
+| 관절 위치·속도 | 각각 `(2,13)` | 관절별 m 또는 rad / m/s 또는 rad/s |
+| 로봇 베이스 자세 | `(2,7)` | 월드 xyz(m) + quaternion wxyz |
+| 로봇 베이스 속도 | `(2,6)` | 월드 선속도 xyz + 각속도 xyz |
+| 그리퍼 자세 | `(2,7)` | 로봇 base 기준 xyz + quaternion wxyz |
+| 손끝 위치·원점 간 거리 | `(2,2,3)`, `(2,1)` | base 기준 링크 원점, m |
+| 제어 목표 | `(2,9)` | 현재 제어 목표값, 측정 위치와 구분 |
+| 그리퍼 닫힘 의도 | `(2,1)` | bool. 잡기 성공 여부가 아님 |
+| 직전 action | `(2,9)` | 직전 구간의 정규화 명령 |
+| 시뮬레이션 시각 | scalar | 초 |
+
+정확한 키·열 순서·단위는 [데이터 가이드](docs/competition/DATA.md)와 [공개 명세](config/policy_interface.json)에 있습니다.
+**위 관측과 아래 action만 학습·추론에 사용합니다.**
+
+### 실제 RGB-D 예시
+
+![5개 정책 카메라 RGB 예시](docs/videos/sample_cameras_rgb.gif)
+
+왼쪽부터 **외부 → 로봇0 손목 → 로봇1 손목 → 로봇0 상단 → 로봇1 상단**입니다.
+아래 링크로 각 카메라의 전체 예시 MP4를 볼 수 있습니다.
+
+[외부](docs/videos/sample_overview.mp4) · [로봇0 손목](docs/videos/sample_robot_0_wrist.mp4) · [로봇1 손목](docs/videos/sample_robot_1_wrist.mp4) · [로봇0 상단](docs/videos/sample_robot_0_head.mp4) · [로봇1 상단](docs/videos/sample_robot_1_head.mp4) · [5개 RGB 모음](docs/videos/sample_all_cameras_rgb.mp4)
+
+![동일 시점의 5개 depth 미리보기](docs/videos/sample_cameras_depth.gif)
+
+[전체 depth MP4](docs/videos/sample_all_cameras_depth.mp4). 밝을수록 가까우며 카메라별 표시된 범위를 사용합니다.
+검정은 무효 또는 최대거리 부근이므로 학습에서는 `depth_valid`를 함께 사용하세요.
+GIF는 일부 구간, MP4는 5fps 미리보기입니다. 원본은 20Hz이며 영상 압축·미리보기 생략은 학습 HDF5에 적용하지 않았습니다.
+
+예제 데이터는 **1,142개 전이, 57.1초**의 실제 수집이며 관측·액션·카메라 동기화 검사를 통과했습니다.
+집기5점만 획득한 부분 시연으로, 성공 정책이나 성공 시연 예제가 아닙니다.
+[CSV 및 열람 페이지](docs/examples/teleop/README.md)에서 자세히 확인할 수 있습니다.
+
+## 5. Action과 숫자의 의미
+
+정책 출력은 float32 **`(2,9)`**, 각 값은 **`[-1,1]`**입니다.
+HDF5에서는 robot_0의9개 다음 robot_1의9개로 펼친 `(18,)`입니다.
+
+| 로봇당 열 | 명령 | 양의 방향 / 값의 의미 |
+|---|---|---|
+| 0 | base_forward_velocity | 전진 |
+| 1 | base_left_velocity | 로봇 왼쪽 |
+| 2 | base_yaw_velocity | 베이스 +Z 반시계 회전 |
+| 3 | lift_velocity | 리프트 상승 |
+| 4 | arm_extension_velocity | 팔 신장 |
+| 5–7 | wrist_yaw / pitch / roll_velocity | 해당 관절의 양의 회전 |
+| 8 | gripper_command | +1 닫기, −1 열기, 0 이전 개폐 의도 유지 |
+
+키보드 시연의 이동·회전 값은 **+1=양의 방향 구동, −1=음의 방향 구동, 0=구동 명령 없음**입니다.
+키를 누르는 방식이라 `−1,0,1`만 나오는 것이 정상입니다. 정책은 `0.3` 등 중간값도 출력할 수 있습니다.
+`lift_velocity=1`은 **1m/s가 아니라 설정된 리프트 속도 스케일의100%를 요청**한다는 뜻입니다.
+실제 위치·속도는 관측에 따로 있으며, 물리·관절 제한 때문에 요청값과 다를 수 있습니다.
+그리퍼0은 열기가 아니라 **이전 의도 유지**입니다. 닫힘 요청은 매 프레임 반복되지 않습니다.
+
+[실제 actions CSV](docs/examples/teleop/demo_0_actions.csv) · [obs CSV](docs/examples/teleop/demo_0_obs.csv) · [next_obs CSV](docs/examples/teleop/demo_0_next_obs.csv) · [모든 CSV 열의 의미](docs/examples/teleop/columns.csv)
+
+CSV 한 행은 하나의0.05초 action 구간입니다. `obs`는 구간 직전, `next_obs`는 구간 직후입니다.
+CSV의 `[i]`는 배열을 로봇 순서대로 펼친 인덱스입니다. 예를 들어 `joint_position[13]`은 robot_1의 첫 관절입니다.
+[데이터 가이드](docs/competition/DATA.md)에 각 필드·인덱스·물리 단위와 실제 값 예시를 설명했습니다.
+
+## 6. 정책 학습과 실행
+
+`policy.hdf5`는 robomimic 스타일의 `data/demo_N/{obs,next_obs,actions,rewards,dones}` 구조입니다.
+기본 모방학습 데이터 로더는 허용된 관측과 action만 반환합니다. RGB는 HWC uint8이므로 모델에 맞게 전처리하고,
+depth는 m 단위를 유지하거나 명시적으로 정규화하세요. 에피소드 단위로 학습/검증을 나누고 성공·실패 시연을 구분하세요.
+`reward=0`은 기본 placeholder이고, `done=1`은 종료를 뜻하며 착의 성공과 같지 않습니다.
+
+학습한 정책은 [정책 어댑터 작성법](docs/competition/POLICY.md)을 따라 다음과 같이 평가합니다.
 
 ```bash
-git switch -c change/short-description
-# src/, scripts/, config/에서 필요한 부분만 수정
-# 실행 중 GUI를 종료한 다음:
-./run.sh prepare
-./run.sh smoke
-./run.sh gui
-# GUI 확인 후 종료하고 필요한 파일만 명시적으로 stage
-git status --short
-git add <changed-source-or-document-paths>
-git commit -m "Describe the behavior change"
-git push -u origin HEAD
+./run.sh python /scripts/evaluate_policy.py \
+  --policy /project/participant/policy.py \
+  --checkpoint /output/checkpoints/policy.pt \
+  --seeds 42 43 --seconds 60 --output /output/evaluation/my_policy
 ```
 
-`.runtime/`를 직접 고치면 다음 `prepare`에서 소스 복사본으로 덮어써집니다. 수정은 `src/`에서 합니다.
-물성/형상/노드 수를 바꿀 때는 저장 슬롯 경로도 분리하고, 새 기준값과 검증 범위를 함께 기록합니다.
-외부 자산을 바꿀 때는 다운로드 revision, SHA256, 출처와 권리를 갱신합니다.
-`config/source-snapshot.sha256`는 최초 이관 당시 스냅샷 기록이며, 이후 정상 수정에 맞춰 무조건 덮어쓰는 최신 파일 목록이 아닙니다.
-이미지/패키지 버전 변경은 별도 작업으로 검증하세요.
+위 policy/checkpoint 경로는 참가자가 작성·학습한 파일로 바꿉니다.
+공개 연습 seed의 로컬 점수는 최종 심사 점수가 아닙니다. 제출은 코드·체크포인트·의존성·데이터 출처와 실행 방법을 재현 가능하게 준비합니다.
+구체적인 일정·최종 seed·제출처·제한 시간은 주최 측 공지를 따릅니다.
 
-이관 검증 결과와 한계는 [docs/VERIFICATION.md](docs/VERIFICATION.md)에 기록합니다.
+## 7. 평가 항목과 points/s
 
-### Gripper friction trial
+```bash
+# 버튼 없이 시작부터 평가, ESC로 종료·결과 저장
+./run.sh gui --evaluate 1
+```
 
-Finger and fingertip contacts default to coefficient **0.2**, the cloth coefficient
-used immediately before the historical frictionless patch. Cloth and mannequin
-materials remain zero; native grasp attachments remain enabled. Set
-`STRETCH4_GRIPPER_CONTACT_FRICTION=0 ./run.sh gui` to restore the previous zero
-contact friction on the next launch. This override is forwarded by the launcher.
-No extra friction controls or diagnostic windows are created in the GUI.
-For code rollback, change the `STRETCH4_GRIPPER_CONTACT_FRICTION` fallback
-from `0.2` to `0` in `Env_Config/Garment/ZeroSceneFriction.py`, then synchronize
-the maintained source to the runtime (normally `./run.sh prepare` with GUI closed).
-See [trial evidence and preserved F1–F5 stages](docs/GRIPPER_FRICTION_20260911.md).
+| 항목 | 점수 | 조건 |
+|---|---:|---|
+| Pick up | 5 | 같은 그리퍼로 잡은 부분을 들어 올려3초 유지 |
+| First sleeve | 5 | 첫 손이 소매 구멍 밖으로 나옴 |
+| Opposite shoulder | 5 | 옷 일부가 반대 어깨 관절을 넘어감 |
+| Second sleeve | 5 | 다른 손이 다른 소매 구멍 밖으로 나옴 |
+| Overall: 왼쪽 상박 | 5 | 해당 소매가 상박 일부를 덮음 |
+| Overall: 오른쪽 상박 | 5 | 해당 소매가 상박 일부를 덮음 |
+| Overall: 목 통과 | 10 | 목 구멍 통과가 확인되면 즉시 획득 |
+| Overall: 브이넥 방향 | 10 | 목이 나온 상태에서 앞면 방향이 맞음을0.5초 확인 |
+| **합계** | **50** | Overall은 위4개 합계30점 |
+
+하박은 채점하지 않습니다. 달성 점수는 보존합니다. 성공 시연은 양손·목·브이넥 방향의 동시 착의 확인으로 판단하며 누적50점과 구분합니다.
+
+```text
+points/s = (누적 총점 − 실제 획득한 집기 점수)
+           / (마지막 착의 득점 시각 − 최초 옷·마네킹 접촉 시각)
+```
+
+시간은 시뮬레이션 tick 기준입니다. 집기 제외 최대45점을 사용하고 마지막 득점 후 대기로 분모가 늘지 않습니다.
+접촉은 옷과 마네킹의 충돌 메시를 기준으로 판정합니다. 무접촉 실패나 분모0인 시도도 다중 에피소드 집계에서0점으로 포함합니다.
+[평가 가이드](docs/competition/EVALUATION.md)에 실패 처리·성공 판정·결과 필드와 replay 재채점 명령이 있습니다.
+
+## 8. 허용 정보와 공정한 참가
+
+허용된 **RGB·depth·mask·로봇 상태·직전 action**으로 학습하고, 명세의 **`(2,9)` action**으로만 로봇을 제어합니다.
+로봇 자체의 베이스 pose·관절 상태를 관측하는 것은 허용됩니다. 이미지에서 물체 위치를 추정하는 것도 허용됩니다.
+
+다음 방식은 금지합니다.
+
+- 옷 정점/입자·정확한 옷/마네킹/의자 위치·충돌 메시·내부 파지/평가 정답을 읽어 제어하기.
+- 그런 정답 정보로 시연·행동 라벨·교사 정책을 생성해 우회 학습하기.
+- 저장된 로봇·옷 상태 궤적을 그대로 재생하거나 직접 설정해 정책 실행으로 제출하기.
+- `audit.hdf5`, raw replay, 자유롭게 이동한 teleop viewport를 정책 입력으로 사용하기.
+- 평가 환경의 로봇·옷·마네킹 물리 설정이나 구동 제한을 바꾸거나 평가 결과를 조작하기.
+
+**주최 측의 자체 검증 과정에서 위반이 확인되면 심사에서 제외합니다.**
+학습 코드·데이터 출처·생성 방법·체크포인트·실행 로그를 검토하고 별도 초기 상태에서 재평가할 수 있습니다.
+[참가 규칙](docs/competition/RULES.md)을 반드시 확인하세요.
+
+## 도움이 필요할 때
+
+설치 오류에는 OS/GPU/드라이버, 실행 명령과 마지막 오류를 함께 알려주세요.
+데이터 오류에는 `capture.json`의 상태와 실행ID를 포함하세요. 비밀번호·토큰은 공유하지 마세요.
+전체 수집 HDF5와 raw archive는 크므로 Git에 추가하지 않습니다. 이 저장소의 예제는 영상과 CSV 열람 사본입니다.

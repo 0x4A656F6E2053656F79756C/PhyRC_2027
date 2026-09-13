@@ -1,5 +1,8 @@
 # 옷 입히기 정책 인터페이스 — 0.3.0
 
+참가자는 [정책 실행 가이드](competition/POLICY.md)와 [데이터 정의](competition/DATA.md)부터 읽으세요.
+이 문서에는 참가자 입력으로 허용되지 않는 개발/진단 API 설명도 포함되어 있습니다.
+
 두 Stretch4와 FEM 티셔츠 장면에 Gymnasium `reset/step`, 실제 로봇 상태,
 RGB-D 센서를 연결한 실험용 환경이다. 명세는
 [`config/policy_interface.json`](../config/policy_interface.json), 구현은
@@ -30,7 +33,6 @@ HDF5 구조, 금지 정보 사용 및 심사 제외 규정은 [POLICY_DATASET.md
 이미 준비된 checkout에서는 다음 두 명령으로 검증·학습한다.
 
 ```bash
-export PHYRC_ACCEPT_EULA=1
 ./run.sh policy-smoke
 ./run.sh train-demo
 ```
@@ -57,7 +59,7 @@ env = DressingEnv(profile='actor_rgbd', resolution=(256, 256),
 # Torch는 Isaac 애플리케이션이 시작된 다음 import한다.
 obs, info = env.reset(seed=42)
 action = np.zeros(env.action_space.shape, dtype=np.float32)
-action[0, 3] = 0.1  # 현재 기본값에서 robot_0 lift 속도 0.126 m/s 요청
+action[0, 3] = 0.1  # robot_0 lift에 런타임 LIFT_RATE의 10% 요청
 obs, reward, terminated, truncated, info = env.step(action)
 image = env.render()  # 마지막 관측의 overview RGB; 물리 진행 없음
 # 여기서 결과를 먼저 저장한다. Isaac close()는 프로세스를 즉시 종료할 수 있다.

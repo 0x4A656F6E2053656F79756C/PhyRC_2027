@@ -258,7 +258,7 @@ class FullTeleopRecorder:
         measurement = IsaacMeasurements(self.backend, self.cloths, self.rigs, self.M)
         self._evaluation_context = np.array(json.dumps(measurement_context(measurement), allow_nan=False))
 
-    def capture(self, kind):
+    def capture(self, kind, extra=None):
         from pxr import Usd, UsdGeom
         values = {'simulation_time_s': np.array(float(self.backend.world.current_time)),
                   'capture_monotonic_ns': np.array(time.monotonic_ns(), dtype=np.int64)}
@@ -294,6 +294,10 @@ class FullTeleopRecorder:
             values['camera_world'] = np.asarray(UsdGeom.Xformable(camera).ComputeLocalToWorldTransform(Usd.TimeCode.Default()))
             values['camera_lens'] = np.array([camera.GetFocalLengthAttr().Get(), camera.GetHorizontalApertureAttr().Get(),
                                               camera.GetVerticalApertureAttr().Get(), *camera.GetClippingRangeAttr().Get()])
+        if extra:
+            if set(extra) & set(values):
+                raise ValueError('Extra capture fields overwrite raw physics state')
+            values.update(extra)
         self.archive.append(self.tick, kind, values)
 
     def _physics_step(self, dt, context=None):

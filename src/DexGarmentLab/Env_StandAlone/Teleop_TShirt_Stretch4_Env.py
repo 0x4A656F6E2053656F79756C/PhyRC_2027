@@ -5082,6 +5082,10 @@ def initialize_manipulation(env):
 
 
 def main():
+    auto_evaluate_setting = os.environ.get('STRETCH4_AUTO_EVALUATE', '0')
+    if auto_evaluate_setting not in ('0', '1'):
+        raise ValueError('STRETCH4_AUTO_EVALUATE must be 0 or 1')
+    auto_evaluate = auto_evaluate_setting == '1'
     training_setting = os.environ.get('STRETCH4_TRAINING_RECORD', '0')
     if training_setting not in ('0', '1'):
         raise ValueError('STRETCH4_TRAINING_RECORD must be 0 or 1')
@@ -5124,10 +5128,20 @@ def main():
     toggle_gripper2 = _make_gripper_toggle(rig2, "robot2")
     training = None
     if training_setting == '1':
-        from Policy.training_teleop import TrainingTeleop
+        training_render = os.environ.get('STRETCH4_TRAINING_RENDER', 'deferred')
+        if training_render == 'deferred':
+            from Policy.training_deferred import DeferredTrainingTeleop as TrainingTeleop
+        elif training_render == 'live':
+            from Policy.training_teleop import TrainingTeleop
+        else:
+            raise ValueError('STRETCH4_TRAINING_RENDER must be deferred or live')
         training = TrainingTeleop(env, garment_cloths, (rig, rig2), sys.modules[__name__], full_recorder,
                                   (toggle_gripper1, toggle_gripper2),
                                   os.environ.get('STRETCH4_TRAINING_RECORD_DIR', '/output/policy_datasets'))
+        if training_render == 'live':
+            # Live training already owns an automatic evaluator for each episode.
+            auto_evaluate = False
+    auto_evaluation_pending = auto_evaluate
 
     # world.reset() puts every physics prim on the stage (both robots'
     # articulations, all 4 garments' cloth particles) back to the pose
@@ -5220,7 +5234,7 @@ def main():
             loaded = load_state_slot(key, garment_cloths, rigs)
             if full_recorder:
                 full_recorder.end_discontinuity('load_' + key)
-            if training:
+            if training and training.sensors:
                 training.sensors.reset_episode()
             return loaded
         if force_save and state_slot_exists(key):
@@ -5378,6 +5392,7 @@ def main():
                 if training:
                     training.boundary('scene_reset')
                 evaluation.finish(reason='scene_reset', valid=False, take_final=False)
+                auto_evaluation_pending = auto_evaluate
                 if full_recorder:
                     full_recorder.begin_discontinuity('reset')
                 # Before env.reset(), not after: the follow now runs from a
@@ -5418,7 +5433,7 @@ def main():
                 env.world.play()
                 if full_recorder:
                     full_recorder.end_discontinuity('reset')
-                if training:
+                if training and training.sensors:
                     training.sensors.reset_episode()
                 print("[Teleop] reset to start")
                 continue
@@ -5430,11 +5445,19 @@ def main():
             # just restored.
             if pending_slot["key"] is not None and (not training or not training.inflight):
                 if service_slot(_frame):
+                    auto_evaluation_pending = auto_evaluate
                     blowup_streak = 0
                     paused = False
                     held.clear()
                     env.world.play()
                     continue
+
+            if auto_evaluation_pending and not paused:
+                auto_evaluation_pending = False
+                evaluation.start({'mode': 'teleop_auto', 'garment_spawn': env.garment_spawn,
+                                  'human_spawn': env.human_spawn,
+                                  'source_commit': os.environ.get('PHYRC_SOURCE_COMMIT'),
+                                  'source_dirty': os.environ.get('PHYRC_SOURCE_DIRTY')})
 
             if pending_evaluation['command'] is not None:
                 command = pending_evaluation['command']
@@ -5553,7 +5576,8 @@ def main():
             if full_recorder:
                 full_recorder.close(reason='normal_exit' if sys.exc_info()[0] is None else 'exception',
                                     capture_final=simulation_app.is_running())
-        evaluation.finish(reason='gui_closed')
+        evaluation.finish(reason='gui_closed' if failure is None else 'exception',
+                          valid=failure is None, take_final=simulation_app.is_running())
         input_iface.unsubscribe_to_keyboard_events(keyboard, sub)
         simulation_app.close(exit_code=1 if failure is not None else 0)
 

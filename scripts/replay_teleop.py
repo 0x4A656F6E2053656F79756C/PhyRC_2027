@@ -29,6 +29,7 @@ def main():
     parser.add_argument('--evaluation-start-tick', type=int, default=0)
     parser.add_argument('--evaluation-end-tick', type=int)
     parser.add_argument('--contact-context', type=Path, help='Exported collision context for older v2 recordings')
+    parser.add_argument('--quality-context', type=Path, help='Exported V-neck identity for recordings before v6')
     args = parser.parse_args()
     if not math.isfinite(args.speed) or args.speed < 0:
         parser.error('--speed must be finite and nonnegative')
@@ -44,9 +45,11 @@ def main():
             parser.error('Incomplete recordings cannot produce a valid evaluation')
         from Policy.evaluation_replay import ReplayEvaluation
         from Policy.evaluation_contact import recording_contact_context
+        from Policy.evaluation_quality import recording_quality_context
         evaluation = ReplayEvaluation(reader.manifest['metadata'], args.evaluate,
                                       args.evaluation_start_tick, args.evaluation_end_tick,
-                                      recording_contact_context(reader, args.contact_context))
+                                      recording_contact_context(reader, args.contact_context),
+                                      recording_quality_context(reader, args.quality_context))
     scene_path = args.recording / 'scene.usdc'
     if hashlib.sha256(scene_path.read_bytes()).hexdigest() != reader.manifest['scene_sha256']:
         parser.error('Recorded scene checksum mismatch')
@@ -137,7 +140,8 @@ def main():
         if args.report:
             args.report.parent.mkdir(parents=True, exist_ok=True)
             args.report.write_text(json.dumps(report, indent=2) + '\n')
-        print('REPLAY ' + json.dumps(report), flush=True)
+        # EvaluationSession already prints changed scores and the final score.
+        print('REPLAY ' + json.dumps({k: v for k, v in report.items() if k != 'evaluation'}), flush=True)
     except BaseException:
         if evaluation and evaluation.session and evaluation.session.active:
             evaluation.session.finish(reason='replay_interrupted_or_failed', valid=False, take_final=False)

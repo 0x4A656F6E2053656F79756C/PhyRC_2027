@@ -8,6 +8,225 @@
 이번 게시를 막는 지시가 아니다. 향후 새 작업을 자동으로 게시하라는 상시 승인은 아니다.
 또한 사용자는 replay 배속을 더 이상 수정하지 말라고 요청했다.
 
+# 대회용 competition 브랜치 게시 — 2026-09-14
+
+- 사용자 최신 승인: 대회용 새 브랜치 생성, 참가자 문서/영상/데이터 예제 및 실행 옵션을
+  구현하고 GitHub에 명시. 기존 미커밋 평가/수집 개선도 현재 작동 환경으로 함께 게시.
+- `competition`을 main b078bce에서 생성했고 main은 이동하지 않음.
+- run.sh의 PHYRC_ACCEPT_EULA 입력 guard 제거. NVIDIA 컨테이너의 기존 동의 관련
+  환경 전달은 유지하며 참가자 설치 문서에 이용 조건 링크 명시.
+- `./run.sh gui --evaluate 1`: 첫 제어 전 자동 평가, P/성공한 슬롯LOAD 뒤 새 평가,
+  ESC 결과 저장. reset/LOAD는 이전 실시간 평가를 무효화. 오류 종료도 유효점수로 오인하지 않음.
+  live training은 이미 자체 자동 평가를 가지므로 별도 중복 자동 session을 생성하지 않음.
+  deferred + --evaluate 1은 실시간 평가와 export후 데이터 평가를 각각 제공.
+- 참가자 README 전면 재작성. docs/competition/ SETUP/DATA/POLICY/EVALUATION/RULES
+  5개 가이드. 내부 개발 기록은 참가자 첫 안내에서 제외하고 기존 상세 문서는 보존.
+  로봇 proprioception은 허용, 옷/물체 정답/궤적복사/privileged teacher 등 금지 및
+  주최측 검증에서 적발시 심사 제외를 명시. 실제학습 baseline 성공 주장은 하지 않음.
+- docs/examples/teleop: 실제1142전이/57.1sim초의 CSV6개, 열사전356개,
+  contract/schema/validation 및 로컬 index.html. 예제는 집기5점의 부분시연이며
+  raw/HDF5와 audit 정답 정보는 Git에 싣지 않음. applied targets/점수는 감사용 명시.
+- 사용자32x영상은 요청경로의 날짜하위 폴더
+  /home/seoyul/Documents/PhyRC_Video/20260914/Back_Front_32x.mp4 에서 발견.
+  docs/videos/Back_Front_32x.mp4는 원본과 SHA256동일. README GIF4.9MiB 생성.
+  실제 학습 시연의 RGB5시점/depth/viewport MP48개 및 RGB/depth GIF2개 추가.
+  GitHub README에는 GIF직접표시, MP4링크; example HTML은 clone후 브라우저에서 사용.
+- 실제 GPU 검증:
+  check_auto_evaluation.py: 버튼없이 자동시작/P reset/ESC 정상결과 PASS.
+  check_training_teleop.py --deferred --runtime + STRETCH4_AUTO_EVALUATE=1:
+  3episode/7transition/84physicsticks; 정상저장/후속 export/전체원본-HDF5 검사 PASS.
+  examples/zero_policy.py 어댑터를 actor_rgbd, seeds42/43, .1sim초로 실제평가 PASS(무접촉0).
+- CPU: 평가62개 + deferred4개, dataset10개 회귀검사. 명세/링크/CSV열/MP4 decode 검사.
+  검증산출물 output/competition_publish/; 테스트용 상태는 모두 별도폴더.
+- 로봇/옷/그리퍼/마네킹 물리/형상/속도 변경 없음. runtime Env main과 변경된
+  Policy코드는 동기화되어 있음. 사용자 원본수집자료/상태는 변경하지 않음.
+
+# 최신 points/s 분자·종료 시점 수정 — 2026-09-13
+
+- 사용자 요청: points/s에서 집기 점수를 제외하고, 분모 종료 시점은 마지막 새 득점 시점.
+- 기존 구현은 종료 tick까지 시간이 늘었음(출력만 변화 시 표시라 멈춘 것처럼 보였음).
+  이제 `pickup-excluded-last-award-v9`: `(raw_points - 실제 pickup 획득점수) /
+  (마지막 non-pickup 득점 tick - 최초 접촉 tick) * physics_hz`.
+  raw_points 및 Overall 배점은 그대로 최대50, rate_points는 최대45.
+  임의로 항상5를 빼지 않음. 집기 나중 획득/추가 득점 없이 대기/성공 라벨만 변화는
+  마지막 득점 시점을 갱신하지 않음. 다음 득점 때 누적 점수/최초 접촉부터 시간을 재계산.
+- 신규 측정 schema `phase1-measurements-v7`, 집계 `phase1-scores-v9`.
+  각 표본은 v6 증거 + `rate_rule=pickup-excluded-last-award-v9`. 점수 분류는
+  `score_breakdown_version=instant-neck-overall-v8` 유지(배점 변경 없음).
+  과거 측정로그는 당시 points/s공식 보존, 혼합 거부. 원본 replay는 현 규칙으로 재측정.
+- 분모 `task_time_s`; 종료점 `last_score_award_time_s`/`last_score_award_tick`;
+  분자 `rate_points`, 차감 `excluded_pickup_points`, 최대 `max_rate_points=45`.
+  `elapsed_episode_time_s` 전체시간, `contact_elapsed_time_s` 접촉 이후 전체시간 별도.
+  콘솔 TOTAL/50과 RATE/45 over Ns 분리. contact+는 실제 경과 시간으로 계속 진단.
+- 무접촉은 null rate/집계0 유지. 접촉하고 착의0점이면 no_dressing_points/rate0.
+  양수 점수가 최초 접촉 이전/동시에만 발생했다면 awaiting_elapsed_time/null rate/집계0;
+  기다린다고 분모가 생기거나 무한대 점수가 되지 않음.
+- `EvaluationSession.clock_result()` 공통 경로로 실시간 표시/최종 결과/학습 audit 및
+  deferred exporter의 score_time_s를 일치. 기존 ContactClock은 240Hz 접촉 감시와
+  legacy 결과용으로 보존. 평가 환경/자산/로봇속도 등 변경 없음.
+- 회귀62개 통과: last-award5 + instant-neck4 + base22 + live10 + replay6 + sleeve7 + quality8.
+  live/replay 결과 일치, 최종 종점 override 방지, 집기/대기 무영향, 240Hz 접촉 tick,
+  다음 득점 누적 계산, 무접촉/착의0/0초분모/구버전 및 schema혼합 거부 검증.
+- 기존 replay `20260912T155015_750407Z_b796e7` 568표본 전체 재측정:
+  raw40, pickup제외 rate35, 접촉tick4496(18.733333s), 마지막목득점tick6492(27.05s),
+  분모1996/240=8.316666667sim초, 최종4.208416833667335points/s.
+  전체episode28.333333초/접촉후전체9.6초는 분모에 사용하지 않음.
+  `output/evaluation/last_award_rate_v9/20260913T135116_028423Z_e0a0ce/result.json`.
+- runtime Policy evaluation/live/replay/training_teleop 동기화. 이번 작업 커밋/푸시 없음.
+
+# 최신 목 통과 즉시 채점 — 2026-09-13
+
+- 사용자 최종 지시: **몸통 평가는 보류. 기존 배점/Overall grouping 유지, 목만
+  유지 시간 없는 통과 성공/실패 판정으로 변경.** 별도 neck/front 항목 분리 제안은 취소됨.
+- `instant-neck-overall-v8`: 기존 4개 milestone 각5(20점), Overall30(상박 좌/우 각5,
+  목10, 브이넥10), 총50. 목은 기하 `neck_passed`가 참인 최초 20Hz 표본에서 즉시10점
+  확정/보존. 0.5초 neck dwell 제거. 목 통과 기하 기준 자체는 그대로.
+- 브이넥 방향 및 성공 시연 선별의 동시 착의 확인 0.5초는 유지. 목 점수를 받았다는
+  것만으로 성공 시연이 되는 것은 아님. 상박/소매/집기/반대 어깨 기존 조건 유지.
+- 모든 시간/points/s는 기존 시뮬레이션 tick 기준. 최초 충돌 메시 접촉부터 분모 계산.
+  과거 `recorded_wall_v7`은 실제 시간 비교 실험일 뿐 현재 공식 채점이 아님.
+- 입력 `phase1-measurements-v6` 추가: 기존 v5 필드 + `neck_passed` 불리언
+  (`neck_out`과 같은 현재 기하 증거). 집계 `phase1-scores-v8`. 옛 측정 로그의
+  v7 목 dwell 보존, 새/구 규칙 혼합 거부. 원본 replay 상태는 v8으로 다시 측정 가능.
+- `evaluation_live.py`/`evaluation_replay.py` 공통 경로에 새 증거 제공,
+  `evaluate_policy.py` 배치 입력 schema 갱신. 저장 score_items는 계속5개,
+  Overall components 4개이므로 학습 audit 열수 변경 없음.
+- 회귀: instant-neck4, sleeve7, quality8, base22, live10, replay6 =57개 통과.
+  단일 표본 즉시 획득/후속 보존, legacy dwell 유지, 브이넥/완료 sim시간,
+  무접촉 다중seed, 50점 배점, live/replay 표본·결과 일치 포함.
+- 기존 전체 replay `20260912T155015_750407Z_b796e7` 재측정 완료: 568개 표본,
+  목 최초 통과 27.05sim초에 즉시10점(이전 v7은27.55초), 최종40/50,
+  Overall20/30(상박5+5, 목10, 브이넥0), 접촉이후9.6sim초,4.166667points/s.
+  `output/evaluation/instant_neck_v8/20260913T131934_739671Z_b95d3f/result.json`
+  및 상위 `instant_neck_v8.log`. 원본 기록 변경 없음.
+- runtime Policy evaluation/live/replay 3개 동기화. 환경 자산/물리/속도 수정 없음.
+  이번 작업 커밋/푸시 없음.
+
+# 최신 출력·목 판정 수정 — 2026-09-13
+
+- 사용자 요청: 평가 출력의 중복을 줄이고, 사양이 다른 참가자들의 대회 시간 기준 검토.
+- `evaluation_live.py`: 매 20Hz 표본에서 표시 점수/성공 여부/최초 접촉 tick 변화만
+  콘솔 출력. 시간/hold 카운터/rate 변화만으로 반복하지 않음. sim(평가시작부터)와
+  contact +(최초접촉부터)를 명시. 시작 상태 1회, 종료 최종점수는 항상 출력.
+  240Hz 물리/접촉/파지 검사와 20Hz samples.jsonl 전체 저장 유지.
+- `evaluate_replay.py`는 전체 JSON의 콘솔 중복 출력을 기본 생략(`--json`으로 요청).
+  visual `replay_teleop.py`는 마지막 REPLAY 요약에서 이미 출력한 평가 JSON 제외.
+  결과 파일에는 전체 내용 저장. 이전 실행 명령 그대로 사용 가능.
+- 기존 replay의 목 0점 원인을 추가 조사하여 **기하 판정 버그** 발견:
+  tick6588(27.45s)→6600(27.50s)에 collar 인접 천 기반 법선 방향이 거의180도 반전
+  (normal dot=-.999135), head clearance +1.7mm→-161mm. 목 구멍 중심은 약2mm 이동.
+  근거 `output/evaluation/neck_normal_discontinuity.json`.
+- `evaluation_geometry.py`: 머리 노출 검사의 collar 평면 법선을 가슴→머리 방향으로
+  고정. 0.5초 유지 시간 및 5mm 여유 허용치는 변경하지 않음. 기하 해석만 수정하며
+  로봇/옷/마네킹/그리퍼 형상·물리·설정 변경 없음.
+  metadata `neck_clearance_normal_basis=anatomical_chest_to_head`.
+  이전 v7 geometry/live SHA를 ReplayMeasurements whitelist에 추가, runtime Policy3개 동기화.
+- 회귀: live10(중복 출력·1초 미만 이벤트·표본 보존·세션 재시작·접힌 collar와 회전 포함),
+  replay6(모든 trace와 점수 live 일치), v7sleeve7 통과.
+- 시간 권장: 기본 채점의 집기3초/착의.5초 및 points/s는 모두 시뮬레이션 시간 유지.
+  실제 시간은 처리성능/별도 추론 제한 진단용. 이전 실제시간40점 분석은 별도 실험이며
+  공식 기준 변경 아님. 앞서 목 점수 미달을 시간 문제로만 설명한 것은 이 버그를 놓침.
+- 전체 기존 replay 재평가: 목10점 인정, 총40/50, 접촉4496tick/task9.6s,
+  4.166667 points/s, success=false(브이넥 방향0). 최초 목 확인27.55s.
+  `output/evaluation/neck_normal_fix_v7/20260913T125711_828911Z_575ad1/result.json`.
+  568개 측정 표본 전체 보존, 콘솔 총10행(시작/상태변경/최종 포함).
+- 이번 작업 커밋/푸시 없음. 다른 누적 미커밋 작업 보존.
+
+# 최신 평가 수정 — 2026-09-13, 소매 영역 상박 이진 점수·손 노출 v7
+
+- 최신 사용자 지시: 좌우 상박은 **소매**가 덮으면 각각 5점, 비율/35% 목표 폐기.
+  첫/둘째 소매는 손목 삽입이 아니라 해당 커프 밖으로 손목·손끝이 나온 시점에 각각 5점.
+  추가 선택: 항목별 채점을 유지하고 성공 시연은 착의 완료 `success=true`로 선별.
+  Overall 완료 30점 일괄 override 없음. 나머지 집기/어깨/목/앞뒤 및 접촉 시간 규칙 유지.
+- `evaluation_geometry.py`: 원래 평평한 셔츠 X축에서 밑단의 몸통 경계 바깥 전체
+  삼각형 중 각 커프에 연결된 성분만 소매로 고정. 소매 뿌리/커프 계산용 cap으로
+  해당 팔 어깨–팔꿈치 선분이 소매 내부에 들어가는지 검사. 몸통/하박/표면 접촉 제외.
+  선분 교차 구간 중점을 사용해 40개 표본 사이의 작은 덮임도 인정. 구멍 routing의
+  최소 길이 표본 의존도 exact fallback으로 제거. 실제 USD/물리/환경 설정 변경 없음.
+  소매 뿌리 경계를 걸치는 삼각형 한 띠는 보수적으로 제외되는 기하 프록시임.
+- `evaluation.py/live.py`: `upper_arm_sleeve_covered`, `hand_out_of_sleeve` left/right
+  bool 추가. first_arm은 처음 손이 나온 팔. 같은 커프에 두 팔이면 무효.
+  배점은 누적 유지. success는 양손/목/앞면 동시 0.5초 조건, raw50과 별개.
+  측정 schema `phase1-measurements-v5`, 점수 `phase1-scores-v7`, revision
+  `sleeve-cover-hand-exit-v7`. v4 측정 로그는 과거 v6 배점으로만 호환하며 혼합 금지.
+- `evaluation_replay.py/quality.py`: context v3에 소매 face IDs 저장. 기존 원본 scene의
+  rest mesh/front subset을 읽어 sidecar로 업그레이드. 이전 v6 sidecar도 재생성 필요.
+  원본 기록은 수정하지 않음. 기존 v6 evaluator SHA 3개 whitelist 추가.
+  `/output/full_teleop/20260912T155015_750407Z_b796e7`의 sidecar는 재생성 완료.
+  다른 기록은 필요시 `PHYRC_ACCEPT_EULA=1 ./run.sh cpu /scripts/export_replay_quality.py
+  /output/full_teleop/<ID>` 실행. 변경한 Policy 5개는 `.runtime`에도 동기화 완료.
+- 검증: legacy/failure22 + live9 + v6quality8 + v7sleeve7 + replay6 + HDF510 = 62개 통과.
+  v7 테스트에 몸통만 감쌈 0, 짧은 소매 겹침 5, 손목 삽입 0, 손 노출 순서, 동일커프
+  거부, 누적 유지, 45점 성공/50점 미완료, 무접촉 집계 포함. live/replay 샘플 전체 일치.
+  실제 Isaac zero-policy seed42/43 각0.1s 실행 및 무접촉 평균0 정상:
+  `output/evaluation/sleeve_v7_policy/summary_20260913T121155_592016Z_b4c60c/scores.json`.
+- 기존 replay 전체6800 ticks 재평가: 총30/50, Overall10(좌우상박5+5/목0/앞뒤0),
+  first sleeve25.8s, second25.95s, contact4496tick=18.7333s, task9.6s, rate3.125,
+  success=false. `output/evaluation/sleeve_v7_replay/20260913T120907_115876Z_aef3f2/result.json`.
+  실행 중 마지막 exact routing fallback 추가는 실제 전체568샘플에서 적용 대상이0이라
+  결과 변화 없음을 별도 `output/evaluation/sleeve_v7_verification.json`에 확인 기록.
+- 이 회차 커밋/푸시 없음. 이전 미커밋 학습/평가 작업 그대로 보존.
+
+# 인계 시작점 — 2026-09-13, 느린 학습 기록을 deferred 렌더링으로 분리
+
+이 회차 사용자는 실제 기록 검사·PNG 추출 후, teleop 기록이 느리므로 로직 분리 등
+최적화를 요청했다. 이 변경은 로컬 작업이며 커밋/푸시하지 않았다. 기존 게시 HEAD는
+b078bce이고 아래 동기 live 수집 인계보다 이 절이 최신이다.
+
+- 사용자 기록 `output/full_teleop/20260913T093528_038495Z_fb1b1f`는 창 직접 닫기로
+  종료했다고 사용자가 설명함. manifest reason=exception, raw357상태/356physics ticks,
+  HDF529 transitions(1.45s), 종료 직전8ticks는12tick구간을 마치지 못함. 기록 형태가
+  설명과 일치하지만 정확한 예외 traceback은 확보하지 못했다.
+- chunk/event/scene 해시, tick연속성, public값/시간/action, 원본관절속도 및 적용목표
+  대조 정상. 파일/episode는 complete=false 그대로이며 자동 학습 로더는 거부함.
+  검사결과: `output/policy_datasets/<ID>/inspection/report.json`.
+- 동일 dataset폴더 `images/`에 PNG631개 생성(30개 관측상태×5카메라 RGB/깊이preview/
+  uint16 mm 깊이/valid + viewport, preview_rgb.png). HDF5원본 수정없음.
+  depth_preview는 확인용, depth_mm은mm반올림이며 정확한float깊이는원래HDF5에있음.
+
+## 최적화 구현
+
+- `./run.sh gui --training-record 1` 기본은 이제 **deferred**.
+  `--training-render live`로 이전 동기 RGBD/HDF5 수집 가능.
+- `Policy/training_deferred.py`: teleop중5카메라/viewport render product 및 HDF5쓰기,
+  자동기하평가를 생성하지 않음. 기존240Hz원본/20Hzsample-hold를 유지하며
+  `policy_observation` 동일tick경계 프레임에 공개상태,previous_action,5camera월드행렬,
+  viewport크기,3control목표를추가저장. episode/action이벤트는기존journal에저장.
+- `FullTeleopRecorder.capture(kind, extra=None)`만 확장; 기존원본필드덮기거부.
+- 종료후 `run.sh`가 별도headless컨테이너로 `scripts/export_policy_dataset.py`를 실행.
+  raw상태를ReplayScene에적용하고physics비활성화후5RGBD+viewport 생성. 각capture후
+  geometry/pose readback 검증, 원본actionjournal과 HDF5action을대조.
+  매physics tick의 기록으로 ReplayEvaluation 실행해 감사점수저장.
+- raw원본과모든상태의측정속도를유지하며새물리계산없음. viewport/RGBD는원래기하·
+  카메라로다시렌더링하므로live temporal history에따른픽셀동일성은보장하지않음.
+- `capture.json`: recording → awaiting_export → ready. HDF5는종료후생성되므로
+  터미널 `[Dataset export] READY`까지기다려야함. ESC권장, 강제/창닫기부분기록은거부.
+- 재시도: `PHYRC_ACCEPT_EULA=1 ./run.sh python /scripts/export_policy_dataset.py /output/full_teleop/<ID>`.
+  기존출력HDF5는덮지않으므로다른출력은 `--output` 사용. 이전 live/full-only archive는
+  deferred 정책관측이없어이exporter입력으로사용불가. user기록PNG는기존HDF5에서추출했음.
+- 자동변환은run.sh gui에서실행. python으로자체수집스크립트를실행하면명시적export필요.
+- 원본장면외부texture경로는동일설치유지필요. exporter는원본scene해시검사및source파일
+  상태를사용하며실행중renderer 자산변경까지pixel재현하는시스템이라고주장하지않음.
+
+## 검증
+
+- 같은입력/seed로3episodes7transitions84ticks 비교: live11.023477s,
+  deferred5.443597s, 약2.03배/수집시간50.62%감소. 이미지생성비용을종료후로옮긴
+  수집구간비교이며전체end-to-end작업시간단축보장이아님.
+- `output/training_checks/a57b54a5e1/report.json` deferred; aafc815bb9 live.
+  deferred→export→CPU대조7transitions PASS.
+- 실제 `run.sh gui` 및 .runtime코드/실제키입력(W,ESC)→자동별도export
+  `output/training_auto_gui_20260913_0954/` PASS. 41transitions42관측536raw상태,
+  HDF5정확한public/action/camera대조,5개유효RGBD,obs/next_obs연속성 PASS.
+  로그 `output/training_auto_gui_check.log`, `output/training_auto_gui_validation.json`.
+- CPU deferred4, archive6, dataset8, replay4 및 contract 검사 PASS.
+- `output/training_optimization_report.json`: 수치/환경보존/동기화검사결과.
+- AST로main밖환경정의동일, contract는training_recording명세만변경 확인.
+  로봇/옷/마네킹물성·속도·카메라위치·해상도·subframes/replay배속 변경없음.
+  runtime main/teleop_recording/training_deferred 파일동기화완료. 시험은고유STATE_DIR.
+
+---
+
 # 인계 시작점 — 2026-09-13, 정책 학습 데이터 수집 및 참가 규칙
 
 이번 사용자는 공개 observation/action 명시, teleop와 동기화된 일반 학습 데이터 저장,
@@ -1229,3 +1448,20 @@ shirt-height, placement-randomization, and hand-collider changes.
 - Shirt height is still the enlarged value at this checkpoint. The requested
   10/12 height reduction with unchanged collar geometry, placement randomization,
   and visual-hand collider alignment are the NEXT changes, not verified here.
+# Evaluation failure aggregation and success labels (2026-09-13 follow-up)
+
+- User requested handling no-contact episodes in policy evaluation and clarification of full dressing vs 50 points. Existing independent item rules remain: confirmed dressing grants Overall 30, with four independent 5-point milestones. Do not silently turn dressing completion into a blanket 50-point override. An optional clarification question offered that alternative; no answer had arrived during implementation.
+- `evaluation.py` now reports `scoring_revision=separate-dressing-items-v5`, aggregate schema `phase1-scores-v5`. Per-episode undefined contact-based `final_score` stays null with `no_contact` / `awaiting_elapsed_time`; aggregate adds `ranking_score=0` for these completed attempts and includes every seed. Valid positive-denominator rates and raw item points are unchanged. Invalid evidence still raises.
+- Added explicit `success_evaluated`, `success`, `success_basis`, `max_score_achieved`; success uses confirmed sleeves/neck for 0.5s, latched during the episode, not raw score or final-frame-only condition. Legacy traces without completion evidence report unknown success. Aggregate adds success count/rate and zero-ranked episode count. Console item display includes Dressing success YES/NO/UNKNOWN.
+- HDF5 audit labels use completion evidence, have `success_basis`, and do not mark unknown completion as known failure. Existing files are not rewritten; success labels remain audit-only, not policy inputs.
+- Fixed offline CLI null-rate formatting; old v4 replay scoring hash is explicitly accepted for rescoring with unchanged geometry. Updated PHASE1_EVALUATION and POLICY_DATASET docs. Runtime copies of evaluation.py, evaluation_replay.py, training_dataset.py synchronized. No robot/cloth/mannequin/gripper settings changed; no commit/push requested or performed.
+- CPU checks: scoring 22, live 9, replay 4, contact clock 4, HDF5 10 tests passed (49 total). Actual GPU zero-policy evaluation, seeds 42/43, 0.1s each, exited 0 with both no_contact and aggregate 0; report `output/evaluation/failure_handling_v5/verification.json`. Archived no-contact replay ticks 0..24 also passed; ending at tick 36 correctly rejects the reset there. Previous learning-readiness review artifacts are in `output/learning_readiness_review/`.
+# Overall dressing v6 — upper arms, neck, V-neck front (2026-09-13)
+
+- Latest user explicitly replaced Overall's full-arm coverage formula. New 30 points: left/right upper arms 5 each (`5*min(u/0.35,1)`, shoulder-elbow centreline only), exposed neck/head 10 after 0.5s, front-facing V-neck 10 after 0.5s with neck out. Existing four independent 5-point milestones unchanged. No forearm points, no blanket completion override. Scores still latch achieved progress.
+- Front identity uses authored `vneck` face subset, not current-pose/color guesses. Track its vertices relative to collar centre and anatomical forward = (left shoulder-right shoulder) cross spine/head up. Require projected separation >=2cm and angle <=45deg. Success adds correct V-neck orientation to sleeves/neck completion, held 0.5s.
+- New live measurements add upper_arm_coverage, neck_out, front_facing. Input schema phase1-measurements-v4; scoring/breakdown upper-arm-neck-front-v6; aggregate phase1-scores-v6. Old v1-v3 measurements explicitly retain legacy v5 scoring and cannot mix with new measurements.
+- New full recording context v2 contains front_ids. Old archives can export authored V-neck identity using `./run.sh cpu /scripts/export_replay_quality.py /output/full_teleop/ID` (PHYRC_ACCEPT_EULA=1). Hash-bound sidecars live outside originals in evaluation/quality_contexts; new helper evaluation_quality.py loads them, or reads USD when available. Headless and visual replay CLI accept --quality-context and require this upgrade for old archives instead of silently omitting new scores. Deferred export also supplies the upgrade. Geometry/scoring/live old hashes are explicitly migrated and current revision reported.
+- User asked for headless and visual commands for recording 20260912T155015_750407Z_b796e7. Its quality sidecar is already generated. Use `python3 scripts/evaluate_replay.py output/full_teleop/20260912T155015_750407Z_b796e7 --output output/evaluation/overall_v6_headless`; visual `PHYRC_ACCEPT_EULA=1 ./run.sh replay output/full_teleop/20260912T155015_750407Z_b796e7 --evaluate /output/evaluation/overall_v6_visual`.
+- Actual whole archived attempt remeasured: 30/50, Overall 10/30 (upper arms 5+5, neck 0, front 0 gated by neck), 3.125 points/s, success false. Result `output/evaluation/quality_v6_replay/20260913T115240_124822Z_c30744/result.json`. Actual GPU zero policy seeds42/43,0.1s each finished with aggregate0 under v6. No simulation remains running. Verification JSON `output/evaluation/quality_v6_verification.json`.
+- CPU tests: quality8, legacy/failure scoring22, live geometry9, replay5 (includes v6 live/replay exact equality), HDF510. Updated docs; maintained evaluator/runtime copies synced. No environment properties/settings changed. No commit/push performed. Existing unrelated deferred optimization changes remain uncommitted.

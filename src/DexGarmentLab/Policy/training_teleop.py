@@ -169,7 +169,7 @@ class TrainingTeleop:
                      first_contact_tick=np.int64(-1 if self.evaluation.clock.first_contact_tick is None else
                                                 self.evaluation.clock.first_contact_tick),
                      raw_points=np.float32(score['raw_points']))
-        audit['score_time_s'] = np.float64(self.evaluation.clock.result(score['raw_points'])['task_time_s'])
+        audit['score_time_s'] = np.float64(self.evaluation.clock_result(score)['task_time_s'])
         self.writer.append(self.current[0], self.action, following[0], start_tick=self.start_tick,
                            end_tick=self.recorder.tick, audit=audit)
         self.current = following

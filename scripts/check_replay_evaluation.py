@@ -65,8 +65,13 @@ def state(points, tick, interrupted=False):
 
 
 class ReplayTests(unittest.TestCase):
-    def run_comparison(self, interrupted):
+    def run_comparison(self, interrupted, quality=False, sleeve=False):
         points, measurement = fixture()
+        if quality:
+            # Synthetic collar patch on the anatomical front (-X in this fixture).
+            measurement.geometry.front_ids = np.array([176])
+        if sleeve:
+            measurement.geometry.set_sleeve_regions([list(range(64)), list(range(64, 128))])
         context = measurement_context(measurement)
         current = [None]
         measurement.cloths = [SimpleNamespace(get_world_positions=lambda: np.array([current[0]['g0_positions']]))]
@@ -106,16 +111,30 @@ class ReplayTests(unittest.TestCase):
                 replay.consume(header, values)
             actual = replay.finish()
             self.assertTrue(actual['valid'])
+            if sleeve:
+                self.assertEqual(actual['result']['scoring_revision'], 'pickup-excluded-last-award-v9')
+                overall = actual['result']['score_items']['overall_dressing']
+                self.assertEqual(overall['neck_confirmed_at_s'], 0.0)
+                self.assertEqual(overall['max_points'], 30)
             self.assertEqual(actual['result'], expected['result'])
             self.assertEqual(replay.session.trace, live.trace)
             self.assertEqual(actual['result']['raw_points'], 45 if interrupted else 50)
-            self.assertAlmostEqual(actual['result']['task_time_s'], 745 / 240)
+            self.assertAlmostEqual(actual['result']['task_time_s'], .5 if sleeve else 745 / 240)
+            if sleeve:
+                self.assertEqual(actual['result']['rate_points'], 45)
+                self.assertEqual(actual['result']['final_score'], 90)
 
     def test_nonzero_live_replay_scores_and_every_sample_identical(self):
         self.run_comparison(False)
 
     def test_single_physics_tick_attachment_loss_is_preserved(self):
         self.run_comparison(True)
+
+    def test_v9_live_replay_last_award_rate_and_measurements_match(self):
+        self.run_comparison(False, quality=True, sleeve=True)
+
+    def test_v6_live_replay_quality_and_success_match(self):
+        self.run_comparison(False, quality=True)
 
     def test_legacy_evidence_is_rejected(self):
         with self.assertRaisesRegex(ValueError, 'older recording'):

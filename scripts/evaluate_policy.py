@@ -77,7 +77,7 @@ def main():
             if not report['valid']:
                 raise RuntimeError(f'Invalid evaluation: {report}')
             episodes.append({'seed': seed, 'samples': session.trace})
-        data = {'schema_version': 'phase1-measurements-v3',
+        data = {'schema_version': 'phase1-measurements-v7',
                 'submissions': [{'submission_id': args.policy.stem if args.policy else 'zero-policy', 'episodes': episodes}]}
         results = evaluate_submissions(data)
         results['run_metadata'] = metadata

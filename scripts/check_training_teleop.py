@@ -5,16 +5,24 @@ from pathlib import Path
 import sys
 from types import SimpleNamespace
 import uuid
+import time
 
 sys.path.insert(0, '/workspace/DexGarmentLab' if '--runtime' in sys.argv else '/project/src/DexGarmentLab')
 root = Path('/output/training_checks') / uuid.uuid4().hex[:10]
+mode = 'deferred' if '--deferred' in sys.argv else 'live'
 os.environ.update(STRETCH4_STATE_DIR=str(root / 'slots'), STRETCH4_TRAINING_RECORD='1',
+                  STRETCH4_TRAINING_RENDER=mode,
                   STRETCH4_FULL_RECORD_DIR=str(root / 'raw'), STRETCH4_TRAINING_RECORD_DIR=str(root / 'datasets'))
+if '--benchmark' in sys.argv:
+    os.environ.update(HUMAN_SPAWN_SEED='42', STRETCH4_GARMENT_SPAWN_SEED='42')
 if '--gui' in sys.argv:
     os.environ['STRETCH4_HEADLESS'] = '0'
 from policy_cli import install_failure_handler
 install_failure_handler()
-import Policy.training_teleop as training
+if mode == 'deferred':
+    import Policy.training_deferred as training
+else:
+    import Policy.training_teleop as training
 import Env_StandAlone.Teleop_TShirt_Stretch4_Env as M
 import h5py
 import numpy as np
@@ -46,7 +54,7 @@ def key(name, pressed=True):
     callback(SimpleNamespace(type=kind, input=SimpleNamespace(name=name), modifiers=0))
 
 
-OriginalTraining = training.TrainingTeleop
+OriginalTraining = training.DeferredTrainingTeleop if mode == 'deferred' else training.TrainingTeleop
 
 
 class Training(OriginalTraining):
@@ -57,6 +65,8 @@ class Training(OriginalTraining):
         self.controls = 0
 
     def before_control(self, held):
+        if self.controls == 0:
+            self.collection_started = time.monotonic()
         self.controls += 1
         schedule = {1: [('W', True), ('NUMPAD_8', True), ('SPACE', True)],
                     2: [('W', False), ('NUMPAD_8', False), ('D', True)],
@@ -73,6 +83,10 @@ class Training(OriginalTraining):
             raise RuntimeError('Test did not terminate')
         return super().before_control(held)
 
+    def close(self, *args, **kwargs):
+        super().close(*args, **kwargs)
+        self.collection_wall_s = time.monotonic() - self.collection_started
+
 
 def close(*args, **kwargs):
     M.simulation_app.close = original_close
@@ -83,6 +97,21 @@ def close(*args, **kwargs):
     raw = {h['tick']: v for h, v in frames if h['kind'] == 'physics'}
     ticks = [h['tick'] for h, _ in frames if h['kind'] == 'physics']
     assert ticks == list(range(1, instance.recorder.tick + 1))
+    if mode == 'deferred':
+        observations = [(h,v) for h,v in frames if h['kind']=='policy_observation']
+        assert len(observations) == 10
+        for h, v in observations:
+            expected = np.stack([v[f'r{i}_joint_positions'] for i in range(2)]).astype(np.float32)
+            np.testing.assert_array_equal(v['policy_obs/joint_position'], expected)
+            assert v['policy_camera_world'].shape == (5,4,4)
+            assert not any('rgb' in key or 'depth' in key for key in v)
+        report = dict(passed=True, mode=mode, dataset=str(instance.path), raw_archive=str(reader.path),
+                      episodes=3, transitions=7, physics_ticks=len(ticks), observation_frames=len(observations),
+                      collection_wall_s=instance.collection_wall_s)
+        (root / 'report.json').write_text(json.dumps(report, indent=2))
+        print('TRAINING-TELEOP-PASS ' + json.dumps(report), flush=True)
+        original_close()
+        return
     comparisons = 0
     with h5py.File(instance.writer.path / 'policy.hdf5') as f, h5py.File(instance.writer.path / 'audit.hdf5') as audit:
         assert f.attrs['complete'] and audit.attrs['complete']
@@ -113,7 +142,8 @@ def close(*args, **kwargs):
         assert first[0, 0, 3] == first[0, 1, 3] == 1
         assert first[0, 0, 4] == 0 and first[1, 0, 4] == 1
         assert first[0, 0, 8] == 1
-        report = dict(passed=True, gui='--gui' in sys.argv, signal_stop='--signal-stop' in sys.argv,
+        report = dict(passed=True, mode=mode, collection_wall_s=instance.collection_wall_s,
+                      gui='--gui' in sys.argv, signal_stop='--signal-stop' in sys.argv,
                       dataset=str(instance.writer.path), raw_archive=str(reader.path),
                       episodes=len(f['data']), transitions=comparisons, physics_ticks=len(ticks),
                       checks=['20Hz contiguous intervals', '60Hz input changes held until next boundary',
@@ -125,7 +155,10 @@ def close(*args, **kwargs):
     original_close()
 
 
-training.TrainingTeleop = Training
+if mode == 'deferred':
+    training.DeferredTrainingTeleop = Training
+else:
+    training.TrainingTeleop = Training
 M.carb.input.acquire_input_interface = lambda: Input()
 M.simulation_app.close = close
 M.main()

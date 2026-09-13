@@ -8,8 +8,8 @@ import uuid
 
 import numpy as np
 
-from .evaluation import Phase1Scorer, ScoringConfig, format_score_items
-from .evaluation_geometry import GarmentGeometry
+from .evaluation import Phase1Scorer, ScoringConfig, format_score_items, RATE_RULE
+from .evaluation_geometry import GarmentGeometry, vneck_front_vertices
 from .state import array
 from .evaluation_clock import ContactClock
 from .evaluation_contact import CollisionContact, contact_context_from_stage
@@ -28,7 +28,8 @@ class IsaacMeasurements:
         if not np.all(counts == 3):
             raise ValueError('Expected triangle garment mesh')
         rest = np.asarray(mesh.GetPointsAttr().Get(), float)
-        self.geometry = GarmentGeometry(rest, np.asarray(mesh.GetFaceVertexIndicesAttr().Get()).reshape(-1, 3))
+        self.geometry = GarmentGeometry(rest, np.asarray(mesh.GetFaceVertexIndicesAttr().Get()).reshape(-1, 3),
+                                        front_ids=vneck_front_vertices(mesh))
         self.pickup_references = {}
         skeleton = next((UsdSkel.Skeleton(p) for p in Usd.PrimRange(self.stage.GetPrimAtPath('/World/Human'))
                          if p.IsA(UsdSkel.Skeleton)), None)
@@ -73,8 +74,9 @@ class IsaacMeasurements:
         self.contact_context = contact_context_from_stage(self.stage, str(cloths[0].prim.GetPath()))
         self.contact_detector = CollisionContact(self.contact_context, root)
         self.metadata = {
-            'measurement_version': 'short-sleeve-completion-v2',
-            'coverage_definition': 'best arm centreline progress; confirmed short-sleeve completion gives overall dressing 30/30; each 5-point milestone requires its own evidence',
+            'measurement_version': RATE_RULE,
+            'neck_clearance_normal_basis': 'anatomical_chest_to_head',
+            'coverage_definition': 'binary upper-arm enclosure by its routed sleeve; hand exits its cuff; torso and forearm excluded',
             'pickup_definition': 'same healthy attachment for 3s with median anchor rise >=5cm from that grasp acquisition; hem may remain on table',
             'pickup_rise_m': self.pickup_rise_m,
             'neck_chain_world_m': self.neck_chain.tolist(),
@@ -150,11 +152,19 @@ class IsaacMeasurements:
         lateral /= np.linalg.norm(lateral)
         beyond = {'left': bool(np.any((points - left) @ lateral > 0)),
                   'right': bool(np.any((points - right) @ (-lateral) > 0))}
+        quality = {}
+        if 'orientation' in details:
+            quality = {'upper_arm_coverage': {side: details[side]['upper_arm_coverage'] for side in self.arms},
+                       'neck_out': details['neck']['neck_out'],
+                       'front_facing': details['orientation']['front_facing']}
+        if quality and getattr(self.geometry, 'sleeve_regions', None) is not None:
+            quality.update(rate_rule=RATE_RULE, neck_passed=details['neck']['neck_out'], upper_arm_sleeve_covered={s: details[s]['upper_arm_sleeve_covered'] for s in self.arms},
+                           hand_out_of_sleeve={s: details[s]['hand_out'] for s in self.arms})
         return {'gripper_holding': holding, 'garment_lifted_clear': clear,
                 'gripper_lifted': lifted, 'pickup_diagnostics': self.pickup_diagnostics,
                 'dressing_complete': details['dressing_complete'],
                 'wrist_in_sleeve': wrists, 'garment_beyond_shoulder': beyond,
-                'arm_coverage': coverage, 'geometry_diagnostics': details}
+                'arm_coverage': coverage, 'geometry_diagnostics': details, **quality}
 
 
 class EvaluationSession:
@@ -192,6 +202,7 @@ class EvaluationSession:
         self.interval_clear = True
         self.interval_lifted = [True, True]
         self.trace = []
+        self._last_progress_key = None
         physical = self.measurements.physical_sample()
         self.clock.update(0, self.measurements.contact(physical[0]))
         initial = self.measurements.measure(physical)
@@ -203,11 +214,11 @@ class EvaluationSession:
         self.path.mkdir(parents=True, exist_ok=False)
         self.stream = (self.path / 'samples.jsonl').open('w', encoding='utf-8')
         self.active = True
+        print(f'[Evaluation] START {self.path}', flush=True)
         self._record(initial)
         if subscribe:
             self.subscription = self.backend.world._physics_context._physics_sim_interface.subscribe_physics_on_step_events(
                 pre_step=False, order=200, on_update=self._physics_step)
-        print(f'[Evaluation] START {self.path}', flush=True)
         return self.path
 
     def _record(self, sample):
@@ -219,6 +230,32 @@ class EvaluationSession:
         self.trace.append(sample)
         self.stream.write(json.dumps(sample, allow_nan=False) + '\n')
         self.stream.flush()
+        if self.active:
+            self._print_progress()
+
+    def clock_result(self, points):
+        result = self.clock.result(points['raw_points'])
+        if self.scorer.rate_rule == RATE_RULE:
+            result.update(self.scorer.rate_result())
+        return result
+
+    def _print_progress(self):
+        result = self.scorer.points()
+        items = format_score_items(result)
+        # Elapsed time, hold counters and rate change continuously, even when
+        # nothing new has been achieved. They must not trigger repeated lines.
+        key = (items, self.clock.first_contact_tick)
+        if key == self._last_progress_key:
+            return
+        self._last_progress_key = key
+        result.update(self.clock_result(result))
+        rate = ('waiting for contact/time' if result['final_score'] is None
+                else f"{result['final_score']:.4f} points/s")
+        rate_detail = (f" | RATE {result['rate_points']:.2f}/45 over {result['task_time_s']:.3f}s"
+                       if 'rate_points' in result else '')
+        print(f"[Evaluation] sim {result['elapsed_episode_time_s']:.2f}s | "
+              f"contact +{result.get('contact_elapsed_time_s', result['task_time_s']):.2f}s | {items} | "
+              f"TOTAL {result['raw_points']:.2f}/50 | rate {rate}{rate_detail}", flush=True)
 
     def _physics_step(self, dt, context=None):
         if not self.active:
@@ -241,15 +278,6 @@ class EvaluationSession:
                 self._record(sample)
                 self.interval_holding, self.interval_clear = [True, True], True
                 self.interval_lifted = [True, True]
-                if self.ticks % (20 * self.stride) == 0:
-                    result = self.scorer.result()
-                    hold = max(result['pickup_hold_seconds'])
-                    pickup_status = 'earned' if result['breakdown']['pickup'] else f'hold {hold:.2f}/3s'
-                    rate = 'waiting for contact/time' if result['final_score'] is None else f"{result['final_score']:.4f} points/s"
-                    print(f"[Evaluation] {result['task_time_s']:.1f}s | "
-                          f"{format_score_items(result)} | pickup {pickup_status} | "
-                          f"TOTAL {result['raw_points']:.2f}/50 | "
-                          f"rate {rate}", flush=True)
         except Exception as exc:
             # Invalid evidence must not quietly yield a valid partial score.
             self.finish(reason=f'measurement_error: {exc}', valid=False, take_final=False)
@@ -267,7 +295,7 @@ class EvaluationSession:
                 sample['gripper_lifted'] = [a and b for a, b in zip(self.interval_lifted, sample['gripper_lifted'])]
                 self._record(sample)
             result = self.scorer.result()
-            result.update(self.clock.result(result['raw_points']))
+            result.update(self.clock_result(result))
             detector = getattr(self.measurements, 'contact_detector', None)
             self.metadata['first_contact_collider'] = getattr(detector, 'last_collider', None)
             if 'recording_start_tick' in self.metadata:
@@ -281,10 +309,14 @@ class EvaluationSession:
         (self.path / 'result.json').write_text(json.dumps(report, indent=2, allow_nan=False) + '\n')
         self.last_report = report
         if valid:
-            print(f"[Evaluation] ITEMS: {format_score_items(result)}", flush=True)
+            items = format_score_items(result)
+            if (items, self.clock.first_contact_tick) != self._last_progress_key:
+                print(f"[Evaluation] ITEMS: {items}", flush=True)
             rate = f"{result['final_score']:.6f} points/s" if result['final_score'] is not None else f"N/A ({result['score_status']})"
+            rate_detail = (f"; numerator {result['rate_points']:.2f}/45, pickup excluded"
+                           if 'rate_points' in result else '')
             print(f"[Evaluation] FINAL SCORE: {rate} "
-                  f"({result['raw_points']:.2f}/50, {result['task_time_s']:.3f}s) | {self.path / 'result.json'}", flush=True)
+                  f"({result['raw_points']:.2f}/50, {result['task_time_s']:.3f}s{rate_detail}) | {self.path / 'result.json'}", flush=True)
         else:
             print(f"[Evaluation] INVALID: {reason} | {self.path / 'result.json'}", flush=True)
         return report
